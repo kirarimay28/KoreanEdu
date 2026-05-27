@@ -7,6 +7,8 @@ import ReflectionTab from './components/Reflection/ReflectionTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon } from 'lucide-react';
+import AppLogo from './components/common/AppLogo';
+import DailyVocab from './components/common/DailyVocab';
 
 const SESSION_KEY = 'korean_edu_session';
 
@@ -57,7 +59,7 @@ export default function App() {
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-sm">임용 스터디</span>
+            <AppLogo className="h-5 text-gray-900" />
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
@@ -76,6 +78,7 @@ export default function App() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4">
+        <DailyVocab date={date} />
         {activeTab !== 'attendance' && (
           <DateNavigator date={date} onChange={setDate} />
         )}
