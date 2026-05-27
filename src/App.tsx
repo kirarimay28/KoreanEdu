@@ -77,8 +77,8 @@ export default function App() {
   if (loadError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4 p-8 text-center">
-        <p className="text-red-500 font-semibold">Firebase 연결에 실패했습니다.</p>
-        <p className="text-gray-500 text-sm">.env.local 파일의 Firebase 설정값을 확인해 주세요.</p>
+        <p className="text-red-500 font-semibold">Supabase 연결에 실패했습니다.</p>
+        <p className="text-gray-500 text-sm">.env.local 파일의 Supabase 설정값을 확인해 주세요.</p>
       </div>
     );
   }
