@@ -66,13 +66,22 @@ export interface ReflectionEntry {
   improvementDirection: string;
 }
 
+export interface AttendanceEntry {
+  id: string;
+  date: string;
+  userId: string;
+  username: string;
+  markedAt: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
   modernEntries: ModernLiteratureEntry[];
   personalStudyEntries: PersonalStudyEntry[];
   reflectionEntries: ReflectionEntry[];
+  attendanceEntries: AttendanceEntry[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance';
 export type StudySubTab = 'classical' | 'modern';

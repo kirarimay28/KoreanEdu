@@ -4,19 +4,17 @@ import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
 import PersonalStudyTab from './components/Personal/PersonalStudyTab';
 import ReflectionTab from './components/Reflection/ReflectionTab';
-import DateNavigator from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, LogOut, User as UserIcon } from 'lucide-react';
+import AttendanceTab from './components/Attendance/AttendanceTab';
+import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon } from 'lucide-react';
 
 const SESSION_KEY = 'korean_edu_session';
 
-function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
 const TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study', label: '스터디', icon: BookOpen },
-  { id: 'personal', label: '개인 공부', icon: GraduationCap },
-  { id: 'reflection', label: '반성 및 피드백', icon: ClipboardList },
+  { id: 'personal', label: '개인공부', icon: GraduationCap },
+  { id: 'reflection', label: '반성', icon: ClipboardList },
+  { id: 'attendance', label: '출석', icon: CalendarCheck },
 ];
 
 export default function App() {
@@ -29,7 +27,7 @@ export default function App() {
     }
   });
   const [activeTab, setActiveTab] = useState<MainTab>('study');
-  const [date, setDate] = useState<string>(getTodayStr());
+  const [date, setDate] = useState<string>(getKSTToday());
 
   useEffect(() => {
     if (currentUser) {
@@ -53,7 +51,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -78,12 +75,11 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main content */}
       <main className="max-w-2xl mx-auto px-4 py-4">
-        {/* Date navigator */}
-        <DateNavigator date={date} onChange={setDate} />
+        {activeTab !== 'attendance' && (
+          <DateNavigator date={date} onChange={setDate} />
+        )}
 
-        {/* Main tabs */}
         <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
           {TABS.map(tab => {
             const Icon = tab.icon;
@@ -91,7 +87,7 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs rounded-lg transition-all font-medium ${
+                className={`flex-1 flex items-center justify-center gap-1 py-2 text-xs rounded-lg transition-all font-medium ${
                   activeTab === tab.id ? 'tab-active' : 'tab-inactive'
                 }`}
               >
@@ -102,17 +98,11 @@ export default function App() {
           })}
         </div>
 
-        {/* Tab content */}
         <div>
-          {activeTab === 'study' && (
-            <StudyTab date={date} currentUser={currentUser} />
-          )}
-          {activeTab === 'personal' && (
-            <PersonalStudyTab date={date} currentUser={currentUser} />
-          )}
-          {activeTab === 'reflection' && (
-            <ReflectionTab date={date} currentUser={currentUser} />
-          )}
+          {activeTab === 'study' && <StudyTab date={date} currentUser={currentUser} />}
+          {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
+          {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
+          {activeTab === 'attendance' && <AttendanceTab />}
         </div>
       </main>
     </div>

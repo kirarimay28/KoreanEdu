@@ -1,4 +1,4 @@
-import type { AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry, PersonalStudyEntry, ReflectionEntry, Feedback } from './types';
+import type { AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry, PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry } from './types';
 
 const STORAGE_KEY = 'korean_edu_data';
 
@@ -8,13 +8,15 @@ const defaultData: AppData = {
   modernEntries: [],
   personalStudyEntries: [],
   reflectionEntries: [],
+  attendanceEntries: [],
 };
 
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultData };
-    return JSON.parse(raw) as AppData;
+    const parsed = JSON.parse(raw) as AppData;
+    return { ...defaultData, ...parsed };
   } catch {
     return { ...defaultData };
   }
@@ -133,4 +135,33 @@ export function upsertReflectionEntry(entry: ReflectionEntry): void {
 
 export function getReflectionEntryForDate(date: string, userId: string): ReflectionEntry | undefined {
   return loadData().reflectionEntries.find(e => e.date === date && e.userId === userId);
+}
+
+export function markAttendance(date: string, userId: string, username: string): void {
+  const data = loadData();
+  const exists = data.attendanceEntries.find(e => e.date === date && e.userId === userId);
+  if (!exists) {
+    data.attendanceEntries.push({
+      id: crypto.randomUUID(),
+      date,
+      userId,
+      username,
+      markedAt: new Date().toISOString(),
+    });
+    saveData(data);
+  }
+}
+
+export function getAttendanceEntries(): AttendanceEntry[] {
+  return loadData().attendanceEntries;
+}
+
+export function hasStudyRecordOnDate(date: string): boolean {
+  const data = loadData();
+  return (
+    data.classicalEntries.some(e => e.date === date) ||
+    data.modernEntries.some(e => e.date === date) ||
+    data.personalStudyEntries.some(e => e.date === date) ||
+    data.reflectionEntries.some(e => e.date === date)
+  );
 }

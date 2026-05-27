@@ -4,6 +4,7 @@ import {
   getClassicalEntriesForDate,
   upsertClassicalEntry,
   addFeedbackToClassical,
+  markAttendance,
 } from '../../store';
 import FeedbackSection from '../common/FeedbackSection';
 import { Plus, ChevronDown, ChevronUp, Save } from 'lucide-react';
@@ -189,6 +190,7 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
 
   function handleSave(entry: ClassicalLiteratureEntry) {
     upsertClassicalEntry(entry);
+    markAttendance(entry.date, currentUser.id, currentUser.username);
     reload();
   }
 

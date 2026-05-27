@@ -4,8 +4,10 @@ import {
   getPersonalStudyEntriesForDate,
   upsertPersonalStudyEntry,
   deletePersonalStudyEntry,
+  markAttendance,
 } from '../../store';
-import { Plus, Trash2, Save, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { usePdfExport } from '../../hooks/usePdfExport';
+import { Plus, Trash2, Save, Clock, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -198,6 +200,7 @@ function SubjectCard({ entry, onSave, onDelete }: {
 
 export default function PersonalStudyTab({ date, currentUser }: Props) {
   const [entries, setEntries] = useState<PersonalStudyEntry[]>([]);
+  const { contentRef, exportToPDF, isExporting } = usePdfExport(`개인공부_${date}.pdf`);
 
   function reload() {
     setEntries(getPersonalStudyEntriesForDate(date).filter(e => e.userId === currentUser.id));
@@ -213,6 +216,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
 
   function handleSave(entry: PersonalStudyEntry) {
     upsertPersonalStudyEntry(entry);
+    markAttendance(entry.date, currentUser.id, currentUser.username);
     reload();
   }
 
@@ -225,29 +229,42 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
 
   return (
     <div className="space-y-4">
-      {entries.length > 0 && (
-        <div className="flex items-center justify-between bg-primary-50 rounded-xl px-4 py-3">
-          <span className="text-sm font-medium text-primary-700">오늘 총 공부 시간</span>
-          <span className="text-lg font-bold text-primary-700">{totalHours}시간</span>
-        </div>
-      )}
+      <div className="flex justify-end">
+        <button
+          onClick={exportToPDF}
+          disabled={isExporting}
+          className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs px-3 py-2 rounded-xl transition disabled:opacity-50"
+        >
+          <FileDown className="w-3.5 h-3.5" />
+          {isExporting ? '생성 중...' : 'PDF 저장'}
+        </button>
+      </div>
 
-      {entries.map(entry => (
-        <SubjectCard
-          key={entry.id}
-          entry={entry}
-          onSave={handleSave}
-          onDelete={handleDelete}
-        />
-      ))}
+      <div ref={contentRef} className="space-y-4">
+        {entries.length > 0 && (
+          <div className="flex items-center justify-between bg-primary-50 rounded-xl px-4 py-3">
+            <span className="text-sm font-medium text-primary-700">오늘 총 공부 시간</span>
+            <span className="text-lg font-bold text-primary-700">{totalHours}시간</span>
+          </div>
+        )}
 
-      <button
-        onClick={handleAdd}
-        className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary-200 text-primary-500 hover:border-primary-400 hover:text-primary-700 rounded-2xl py-6 transition-all"
-      >
-        <Plus className="w-5 h-5" />
-        <span className="font-medium">과목 추가</span>
-      </button>
+        {entries.map(entry => (
+          <SubjectCard
+            key={entry.id}
+            entry={entry}
+            onSave={handleSave}
+            onDelete={handleDelete}
+          />
+        ))}
+
+        <button
+          onClick={handleAdd}
+          className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary-200 text-primary-500 hover:border-primary-400 hover:text-primary-700 rounded-2xl py-6 transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="font-medium">과목 추가</span>
+        </button>
+      </div>
     </div>
   );
 }

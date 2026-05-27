@@ -4,6 +4,7 @@ import {
   getModernEntriesForDate,
   upsertModernEntry,
   addFeedbackToModern,
+  markAttendance,
 } from '../../store';
 import FeedbackSection from '../common/FeedbackSection';
 import { Plus, ChevronDown, ChevronUp, Save } from 'lucide-react';
@@ -187,6 +188,7 @@ export default function ModernLiterature({ date, currentUser }: Props) {
 
   function handleSave(entry: ModernLiteratureEntry) {
     upsertModernEntry(entry);
+    markAttendance(entry.date, currentUser.id, currentUser.username);
     reload();
   }
 
