@@ -4,10 +4,11 @@ import {
   getClassicalEntriesForDate,
   upsertClassicalEntry,
   addFeedbackToClassical,
+  deleteClassicalEntry,
   markAttendance,
 } from '../../store';
 import FeedbackSection from '../common/FeedbackSection';
-import { Plus, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Save, Trash2 } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -53,10 +54,11 @@ function normalize(entry: ClassicalLiteratureEntry): ClassicalLiteratureEntry {
   return { ...emptyEntry(entry.date, entry.userId), ...entry };
 }
 
-function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
+function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
   entry: ClassicalLiteratureEntry;
   currentUser: User;
   onSave: (e: ClassicalLiteratureEntry) => void;
+  onDelete: (id: string) => void;
   onAddFeedback: (entryId: string, content: string) => void;
 }) {
   const [draft, setDraft] = useState<ClassicalLiteratureEntry>(() => normalize(entry));
@@ -151,7 +153,17 @@ function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
             </span>
           )}
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        <div className="flex items-center gap-1">
+          {isOwner && (
+            <button
+              onClick={e => { e.stopPropagation(); if (window.confirm('이 기록을 삭제할까요?')) onDelete(entry.id); }}
+              className="p-1 text-gray-300 hover:text-red-400 transition rounded"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </div>
       </button>
 
       {expanded && (
@@ -327,6 +339,11 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
     reload();
   }
 
+  function handleDelete(id: string) {
+    deleteClassicalEntry(id);
+    reload();
+  }
+
   function handleAddFeedback(entryId: string, content: string) {
     const fb: Feedback = {
       id: crypto.randomUUID(),
@@ -348,6 +365,7 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
             entry={myEntry}
             currentUser={currentUser}
             onSave={handleSave}
+            onDelete={handleDelete}
             onAddFeedback={handleAddFeedback}
           />
         ) : (
@@ -371,6 +389,7 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
                 entry={entry}
                 currentUser={currentUser}
                 onSave={handleSave}
+                onDelete={handleDelete}
                 onAddFeedback={handleAddFeedback}
               />
             ))}

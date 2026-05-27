@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { ReflectionEntry, User } from '../../types';
-import { getReflectionEntryForDate, upsertReflectionEntry, markAttendance } from '../../store';
+import { getReflectionEntryForDate, upsertReflectionEntry, deleteReflectionEntry, markAttendance } from '../../store';
 import { usePdfExport } from '../../hooks/usePdfExport';
-import { Save, CheckCircle, FileDown } from 'lucide-react';
+import { Save, CheckCircle, FileDown, Trash2 } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -22,26 +22,46 @@ function emptyEntry(date: string, userId: string): ReflectionEntry {
 export default function ReflectionTab({ date, currentUser }: Props) {
   const [entry, setEntry] = useState<ReflectionEntry>(emptyEntry(date, currentUser.id));
   const [saved, setSaved] = useState(false);
+  const [isSavedEntry, setIsSavedEntry] = useState(false);
   const { contentRef, exportToPDF, isExporting } = usePdfExport(`반성피드백_${date}.pdf`);
 
   useEffect(() => {
     const existing = getReflectionEntryForDate(date, currentUser.id);
     setEntry(existing ?? emptyEntry(date, currentUser.id));
+    setIsSavedEntry(!!existing);
     setSaved(false);
   }, [date, currentUser.id]);
 
   function handleSave() {
     upsertReflectionEntry(entry);
     markAttendance(entry.date, currentUser.id, currentUser.username);
+    setIsSavedEntry(true);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  }
+
+  function handleDelete() {
+    if (!window.confirm('이 반성 기록을 삭제할까요?')) return;
+    deleteReflectionEntry(entry.id);
+    const fresh = emptyEntry(date, currentUser.id);
+    setEntry(fresh);
+    setIsSavedEntry(false);
   }
 
   const hasContent = entry.insufficientParts.trim() || entry.improvementDirection.trim();
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {isSavedEntry && (
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 bg-white border border-red-100 hover:bg-red-50 text-red-400 hover:text-red-500 text-xs px-3 py-2 rounded-xl transition"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            삭제
+          </button>
+        )}
         <button
           onClick={exportToPDF}
           disabled={isExporting}

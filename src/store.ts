@@ -201,6 +201,21 @@ export function getAttendanceEntries(): AttendanceEntry[] {
   return mem.attendanceEntries;
 }
 
+export function deleteClassicalEntry(id: string): void {
+  mem.classicalEntries = mem.classicalEntries.filter(e => e.id !== id);
+  remove('classicalEntries', id);
+}
+
+export function deleteModernEntry(id: string): void {
+  mem.modernEntries = mem.modernEntries.filter(e => e.id !== id);
+  remove('modernEntries', id);
+}
+
+export function deleteReflectionEntry(id: string): void {
+  mem.reflectionEntries = mem.reflectionEntries.filter(e => e.id !== id);
+  remove('reflectionEntries', id);
+}
+
 export function hasStudyRecordOnDate(date: string): boolean {
   return (
     mem.classicalEntries.some(e => e.date === date) ||

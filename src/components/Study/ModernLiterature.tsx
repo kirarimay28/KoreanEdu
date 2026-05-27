@@ -4,10 +4,11 @@ import {
   getModernEntriesForDate,
   upsertModernEntry,
   addFeedbackToModern,
+  deleteModernEntry,
   markAttendance,
 } from '../../store';
 import FeedbackSection from '../common/FeedbackSection';
-import { Plus, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, Save, Trash2 } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -29,10 +30,11 @@ function emptyEntry(date: string, userId: string): ModernLiteratureEntry {
   };
 }
 
-function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
+function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
   entry: ModernLiteratureEntry;
   currentUser: User;
   onSave: (e: ModernLiteratureEntry) => void;
+  onDelete: (id: string) => void;
   onAddFeedback: (entryId: string, content: string) => void;
 }) {
   const [draft, setDraft] = useState(entry);
@@ -115,7 +117,17 @@ function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
             </span>
           )}
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        <div className="flex items-center gap-1">
+          {isOwner && (
+            <button
+              onClick={e => { e.stopPropagation(); if (window.confirm('이 기록을 삭제할까요?')) onDelete(entry.id); }}
+              className="p-1 text-gray-300 hover:text-red-400 transition rounded"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </div>
       </button>
 
       {expanded && (
@@ -192,6 +204,11 @@ export default function ModernLiterature({ date, currentUser }: Props) {
     reload();
   }
 
+  function handleDelete(id: string) {
+    deleteModernEntry(id);
+    reload();
+  }
+
   function handleAddFeedback(entryId: string, content: string) {
     const fb: Feedback = {
       id: crypto.randomUUID(),
@@ -213,6 +230,7 @@ export default function ModernLiterature({ date, currentUser }: Props) {
             entry={myEntry}
             currentUser={currentUser}
             onSave={handleSave}
+            onDelete={handleDelete}
             onAddFeedback={handleAddFeedback}
           />
         ) : (
@@ -236,6 +254,7 @@ export default function ModernLiterature({ date, currentUser }: Props) {
                 entry={entry}
                 currentUser={currentUser}
                 onSave={handleSave}
+                onDelete={handleDelete}
                 onAddFeedback={handleAddFeedback}
               />
             ))}
