@@ -5,11 +5,12 @@ import StudyTab from './components/Study/StudyTab';
 import PersonalStudyTab from './components/Personal/PersonalStudyTab';
 import ReflectionTab from './components/Reflection/ReflectionTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
+import ResourceTab from './components/Resource/ResourceTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
-import { initializeData, refreshData } from './store';
+import { initializeData, refreshData, getPendingRequestsForUser } from './store';
 
 const SESSION_KEY = 'korean_edu_session';
 
@@ -18,6 +19,7 @@ const TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?
   { id: 'personal', label: '개인공부', icon: GraduationCap },
   { id: 'reflection', label: '반성', icon: ClipboardList },
   { id: 'attendance', label: '출석', icon: CalendarCheck },
+  { id: 'resource', label: '자료 요청', icon: Inbox },
 ];
 
 export default function App() {
@@ -129,16 +131,22 @@ export default function App() {
         <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
           {TABS.map(tab => {
             const Icon = tab.icon;
+            const pendingCount = tab.id === 'resource' ? getPendingRequestsForUser(currentUser.id).length : 0;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 text-xs rounded-lg transition-all font-medium ${
+                className={`flex-1 flex items-center justify-center gap-1 py-2 text-xs rounded-lg transition-all font-medium relative ${
                   activeTab === tab.id ? 'tab-active' : 'tab-inactive'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -149,6 +157,7 @@ export default function App() {
           {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
           {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
           {activeTab === 'attendance' && <AttendanceTab />}
+          {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
         </div>
       </main>
     </div>

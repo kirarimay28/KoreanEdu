@@ -106,7 +106,22 @@ export interface AppData {
   personalStudyEntries: PersonalStudyEntry[];
   reflectionEntries: ReflectionEntry[];
   attendanceEntries: AttendanceEntry[];
+  resourceRequests: ResourceRequest[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource';
 export type StudySubTab = 'classical' | 'modern';
+
+export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';
+
+export interface ResourceRequest {
+  id: string;
+  createdAt: string;
+  requesterId: string;
+  requesterName: string;
+  recipientId: string;
+  recipientName: string;
+  category: ResourceCategory;
+  detail: string;
+  status: '대기중' | '완료';
+}

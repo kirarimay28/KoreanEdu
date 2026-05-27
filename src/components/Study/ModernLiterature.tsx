@@ -123,10 +123,9 @@ function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
           {/* Basic info */}
           <div>
             <p className="section-title">① 기본 정보</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {readOnlyOrInput('작품명', 'workName', '작품명')}
               {readOnlyOrInput('작가', 'author', '작가')}
-              {readOnlyOrInput('기출 연도', 'examYear', '예: 2023')}
             </div>
           </div>
 
@@ -134,6 +133,7 @@ function EntryCard({ entry, currentUser, onSave, onAddFeedback }: {
           <div>
             <p className="section-title">② 학습 과정</p>
             <div className="space-y-3">
+              {readOnlyOrInput('기출 연도', 'examYear', '예: 2023')}
               {readOnlyOrTextarea('답안 작성', 'answerDraft', 6, '기출 문제에 대한 나의 답안을 작성하세요...')}
               {readOnlyOrTextarea('모범 답안 확인 (강사 답안 / 합격자 답안 / 개론서 등)', 'modelAnswerReview', 5, '모범 답안을 참고하여 비교 분석한 내용을 적으세요...')}
               {readOnlyOrTextarea('사고 과정 (답안의 근거, 의문점, 논의하고 싶은 부분)', 'thoughtProcess', 5, '답안의 근거, 의문점, 스터디원과 논의하고 싶은 부분 등을 자유롭게 적으세요...')}

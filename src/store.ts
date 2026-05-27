@@ -2,7 +2,7 @@ import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import type {
   AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry,
-  PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry,
+  PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
 } from './types';
 
 const defaultData: AppData = {
@@ -12,6 +12,7 @@ const defaultData: AppData = {
   personalStudyEntries: [],
   reflectionEntries: [],
   attendanceEntries: [],
+  resourceRequests: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -31,13 +32,14 @@ function saveCache(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
     getDocs(collection(db, 'personalStudyEntries')),
     getDocs(collection(db, 'reflectionEntries')),
     getDocs(collection(db, 'attendanceEntries')),
+    getDocs(collection(db, 'resourceRequests')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -46,6 +48,7 @@ async function fetchFromFirestore(): Promise<void> {
     personalStudyEntries: ps.docs.map(d => d.data() as PersonalStudyEntry),
     reflectionEntries:   re.docs.map(d => d.data() as ReflectionEntry),
     attendanceEntries:   at.docs.map(d => d.data() as AttendanceEntry),
+    resourceRequests:    rr.docs.map(d => d.data() as ResourceRequest),
   };
   saveCache();
 }
@@ -205,4 +208,22 @@ export function hasStudyRecordOnDate(date: string): boolean {
     mem.personalStudyEntries.some(e => e.date === date) ||
     mem.reflectionEntries.some(e => e.date === date)
   );
+}
+
+export function createResourceRequest(request: ResourceRequest): void {
+  mem.resourceRequests.push(request);
+  persist('resourceRequests', request.id, request);
+}
+
+export function getPendingRequestsForUser(userId: string): ResourceRequest[] {
+  return mem.resourceRequests.filter(r => r.recipientId === userId && r.status === '대기중');
+}
+
+export function getSentRequests(userId: string): ResourceRequest[] {
+  return mem.resourceRequests.filter(r => r.requesterId === userId);
+}
+
+export function completeResourceRequest(id: string): void {
+  const req = mem.resourceRequests.find(r => r.id === id);
+  if (req) { req.status = '완료'; persist('resourceRequests', id, req); }
 }
