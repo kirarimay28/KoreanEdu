@@ -100,6 +100,9 @@ export default function AuthPage({ onLogin }: Props) {
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </div>
               <div>
@@ -140,6 +143,9 @@ export default function AuthPage({ onLogin }: Props) {
                   value={username}
                   onChange={e => setUsername(e.target.value)}
                   autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </div>
               <div>
