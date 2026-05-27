@@ -14,9 +14,23 @@ const defaultData: AppData = {
   attendanceEntries: [],
 };
 
+const CACHE_KEY = 'korean_edu_cache';
+
 let mem: AppData = { ...defaultData };
 
-export async function initializeData(): Promise<void> {
+function loadCache(): boolean {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) { mem = JSON.parse(raw); return true; }
+  } catch {}
+  return false;
+}
+
+function saveCache(): void {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(mem)); } catch {}
+}
+
+async function fetchFromFirestore(): Promise<void> {
   const [u, cl, mo, ps, re, at] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
@@ -33,10 +47,26 @@ export async function initializeData(): Promise<void> {
     reflectionEntries:   re.docs.map(d => d.data() as ReflectionEntry),
     attendanceEntries:   at.docs.map(d => d.data() as AttendanceEntry),
   };
+  saveCache();
+}
+
+// 캐시 있으면 즉시 반환, 없으면 Firestore 대기
+export async function initializeData(): Promise<void> {
+  const hasCache = loadCache();
+  if (hasCache) {
+    // 캐시로 즉시 로드, Firestore 동기화는 백그라운드
+    fetchFromFirestore().catch(console.error);
+  } else {
+    // 첫 방문: Firestore 완료까지 대기 (최대 10초)
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 10000)
+    );
+    await Promise.race([fetchFromFirestore(), timeout]);
+  }
 }
 
 export async function refreshData(): Promise<void> {
-  return initializeData();
+  await fetchFromFirestore();
 }
 
 function persist(coll: string, id: string, data: object): void {
