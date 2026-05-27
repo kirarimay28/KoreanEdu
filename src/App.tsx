@@ -6,9 +6,10 @@ import PersonalStudyTab from './components/Personal/PersonalStudyTab';
 import ReflectionTab from './components/Reflection/ReflectionTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
+import { initializeData, refreshData } from './store';
 
 const SESSION_KEY = 'korean_edu_session';
 
@@ -20,6 +21,8 @@ const TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?
 ];
 
 export default function App() {
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
       const raw = sessionStorage.getItem(SESSION_KEY);
@@ -30,6 +33,14 @@ export default function App() {
   });
   const [activeTab, setActiveTab] = useState<MainTab>('study');
   const [date, setDate] = useState<string>(getKSTToday());
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    initializeData()
+      .then(() => setLoading(false))
+      .catch(() => { setLoading(false); setLoadError(true); });
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -45,6 +56,31 @@ export default function App() {
 
   function handleLogout() {
     setCurrentUser(null);
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await refreshData().catch(console.error);
+    setRefreshing(false);
+    setRefreshKey(k => k + 1);
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4">
+        <div className="w-10 h-10 border-4 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
+        <p className="text-gray-500 text-sm">데이터를 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4 p-8 text-center">
+        <p className="text-red-500 font-semibold">Firebase 연결에 실패했습니다.</p>
+        <p className="text-gray-500 text-sm">.env.local 파일의 Firebase 설정값을 확인해 주세요.</p>
+      </div>
+    );
   }
 
   if (!currentUser) {
@@ -66,6 +102,13 @@ export default function App() {
               <UserIcon className="w-4 h-4 text-primary-400" />
               <span className="font-medium">{currentUser.username}</span>
             </div>
+            <button
+              onClick={handleRefresh}
+              className="p-1.5 text-gray-400 hover:text-gray-600 transition rounded-lg hover:bg-gray-100"
+              title="새로고침"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
             <button
               onClick={handleLogout}
               className="p-1.5 text-gray-400 hover:text-gray-600 transition rounded-lg hover:bg-gray-100"
@@ -101,7 +144,7 @@ export default function App() {
           })}
         </div>
 
-        <div>
+        <div key={refreshKey}>
           {activeTab === 'study' && <StudyTab date={date} currentUser={currentUser} />}
           {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
           {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}

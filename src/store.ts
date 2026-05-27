@@ -1,6 +1,9 @@
-import type { AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry, PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry } from './types';
-
-const STORAGE_KEY = 'korean_edu_data';
+import { db } from './firebase';
+import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
+import type {
+  AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry,
+  PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry,
+} from './types';
 
 const defaultData: AppData = {
   users: [],
@@ -11,19 +14,39 @@ const defaultData: AppData = {
   attendanceEntries: [],
 };
 
-export function loadData(): AppData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...defaultData };
-    const parsed = JSON.parse(raw) as AppData;
-    return { ...defaultData, ...parsed };
-  } catch {
-    return { ...defaultData };
-  }
+let mem: AppData = { ...defaultData };
+
+// Called once on app startup — loads all Firestore data into memory
+export async function initializeData(): Promise<void> {
+  const [u, cl, mo, ps, re, at] = await Promise.all([
+    getDocs(collection(db, 'users')),
+    getDocs(collection(db, 'classicalEntries')),
+    getDocs(collection(db, 'modernEntries')),
+    getDocs(collection(db, 'personalStudyEntries')),
+    getDocs(collection(db, 'reflectionEntries')),
+    getDocs(collection(db, 'attendanceEntries')),
+  ]);
+  mem = {
+    users:                u.docs.map(d => d.data() as User),
+    classicalEntries:    cl.docs.map(d => d.data() as ClassicalLiteratureEntry),
+    modernEntries:       mo.docs.map(d => d.data() as ModernLiteratureEntry),
+    personalStudyEntries: ps.docs.map(d => d.data() as PersonalStudyEntry),
+    reflectionEntries:   re.docs.map(d => d.data() as ReflectionEntry),
+    attendanceEntries:   at.docs.map(d => d.data() as AttendanceEntry),
+  };
 }
 
-export function saveData(data: AppData): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+// Re-fetch all data (call to see other members' latest changes)
+export async function refreshData(): Promise<void> {
+  return initializeData();
+}
+
+function persist(coll: string, id: string, data: object): void {
+  setDoc(doc(db, coll, id), data).catch(err => console.error('Firestore write error:', err));
+}
+
+function remove(coll: string, id: string): void {
+  deleteDoc(doc(db, coll, id)).catch(err => console.error('Firestore delete error:', err));
 }
 
 function simpleHash(str: string): string {
@@ -37,8 +60,7 @@ function simpleHash(str: string): string {
 }
 
 export function registerUser(username: string, password: string, resolution: string): { ok: boolean; error?: string; user?: User } {
-  const data = loadData();
-  if (data.users.find(u => u.username === username)) {
+  if (mem.users.find(u => u.username === username)) {
     return { ok: false, error: '이미 사용 중인 아이디입니다.' };
   }
   const user: User = {
@@ -48,120 +70,111 @@ export function registerUser(username: string, password: string, resolution: str
     resolution,
     createdAt: new Date().toISOString(),
   };
-  data.users.push(user);
-  saveData(data);
+  mem.users.push(user);
+  persist('users', user.id, user);
   return { ok: true, user };
 }
 
 export function loginUser(username: string, password: string): { ok: boolean; error?: string; user?: User } {
-  const data = loadData();
-  const user = data.users.find(u => u.username === username);
+  const user = mem.users.find(u => u.username === username);
   if (!user) return { ok: false, error: '아이디 또는 비밀번호가 올바르지 않습니다.' };
   if (user.passwordHash !== simpleHash(password)) return { ok: false, error: '아이디 또는 비밀번호가 올바르지 않습니다.' };
   return { ok: true, user };
 }
 
 export function getUsers(): User[] {
-  return loadData().users;
+  return mem.users;
 }
 
 export function upsertClassicalEntry(entry: ClassicalLiteratureEntry): void {
-  const data = loadData();
-  const idx = data.classicalEntries.findIndex(e => e.id === entry.id);
-  if (idx >= 0) data.classicalEntries[idx] = entry;
-  else data.classicalEntries.push(entry);
-  saveData(data);
+  const idx = mem.classicalEntries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) mem.classicalEntries[idx] = entry;
+  else mem.classicalEntries.push(entry);
+  persist('classicalEntries', entry.id, entry);
 }
 
 export function getClassicalEntriesForDate(date: string): ClassicalLiteratureEntry[] {
-  return loadData().classicalEntries.filter(e => e.date === date);
+  return mem.classicalEntries.filter(e => e.date === date);
 }
 
 export function addFeedbackToClassical(entryId: string, feedback: Feedback): void {
-  const data = loadData();
-  const entry = data.classicalEntries.find(e => e.id === entryId);
+  const entry = mem.classicalEntries.find(e => e.id === entryId);
   if (entry) {
     entry.feedbacks.push(feedback);
-    saveData(data);
+    persist('classicalEntries', entryId, entry);
   }
 }
 
 export function upsertModernEntry(entry: ModernLiteratureEntry): void {
-  const data = loadData();
-  const idx = data.modernEntries.findIndex(e => e.id === entry.id);
-  if (idx >= 0) data.modernEntries[idx] = entry;
-  else data.modernEntries.push(entry);
-  saveData(data);
+  const idx = mem.modernEntries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) mem.modernEntries[idx] = entry;
+  else mem.modernEntries.push(entry);
+  persist('modernEntries', entry.id, entry);
 }
 
 export function getModernEntriesForDate(date: string): ModernLiteratureEntry[] {
-  return loadData().modernEntries.filter(e => e.date === date);
+  return mem.modernEntries.filter(e => e.date === date);
 }
 
 export function addFeedbackToModern(entryId: string, feedback: Feedback): void {
-  const data = loadData();
-  const entry = data.modernEntries.find(e => e.id === entryId);
+  const entry = mem.modernEntries.find(e => e.id === entryId);
   if (entry) {
     entry.feedbacks.push(feedback);
-    saveData(data);
+    persist('modernEntries', entryId, entry);
   }
 }
 
 export function upsertPersonalStudyEntry(entry: PersonalStudyEntry): void {
-  const data = loadData();
-  const idx = data.personalStudyEntries.findIndex(e => e.id === entry.id);
-  if (idx >= 0) data.personalStudyEntries[idx] = entry;
-  else data.personalStudyEntries.push(entry);
-  saveData(data);
+  const idx = mem.personalStudyEntries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) mem.personalStudyEntries[idx] = entry;
+  else mem.personalStudyEntries.push(entry);
+  persist('personalStudyEntries', entry.id, entry);
 }
 
 export function getPersonalStudyEntriesForDate(date: string): PersonalStudyEntry[] {
-  return loadData().personalStudyEntries.filter(e => e.date === date);
+  return mem.personalStudyEntries.filter(e => e.date === date);
 }
 
 export function deletePersonalStudyEntry(id: string): void {
-  const data = loadData();
-  data.personalStudyEntries = data.personalStudyEntries.filter(e => e.id !== id);
-  saveData(data);
+  mem.personalStudyEntries = mem.personalStudyEntries.filter(e => e.id !== id);
+  remove('personalStudyEntries', id);
 }
 
 export function upsertReflectionEntry(entry: ReflectionEntry): void {
-  const data = loadData();
-  const idx = data.reflectionEntries.findIndex(e => e.id === entry.id);
-  if (idx >= 0) data.reflectionEntries[idx] = entry;
-  else data.reflectionEntries.push(entry);
-  saveData(data);
+  const idx = mem.reflectionEntries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) mem.reflectionEntries[idx] = entry;
+  else mem.reflectionEntries.push(entry);
+  persist('reflectionEntries', entry.id, entry);
 }
 
 export function getReflectionEntryForDate(date: string, userId: string): ReflectionEntry | undefined {
-  return loadData().reflectionEntries.find(e => e.date === date && e.userId === userId);
+  return mem.reflectionEntries.find(e => e.date === date && e.userId === userId);
 }
 
 export function markAttendance(date: string, userId: string, username: string): void {
-  const data = loadData();
-  const exists = data.attendanceEntries.find(e => e.date === date && e.userId === userId);
+  const exists = mem.attendanceEntries.find(e => e.date === date && e.userId === userId);
   if (!exists) {
-    data.attendanceEntries.push({
+    const entry: AttendanceEntry = {
       id: crypto.randomUUID(),
       date,
       userId,
       username,
       markedAt: new Date().toISOString(),
-    });
-    saveData(data);
+    };
+    mem.attendanceEntries.push(entry);
+    persist('attendanceEntries', entry.id, entry);
   }
 }
 
 export function getAttendanceEntries(): AttendanceEntry[] {
-  return loadData().attendanceEntries;
+  return mem.attendanceEntries;
 }
 
 export function hasStudyRecordOnDate(date: string): boolean {
-  const data = loadData();
   return (
-    data.classicalEntries.some(e => e.date === date) ||
-    data.modernEntries.some(e => e.date === date) ||
-    data.personalStudyEntries.some(e => e.date === date) ||
-    data.reflectionEntries.some(e => e.date === date)
+    mem.classicalEntries.some(e => e.date === date) ||
+    mem.modernEntries.some(e => e.date === date) ||
+    mem.personalStudyEntries.some(e => e.date === date) ||
+    mem.reflectionEntries.some(e => e.date === date)
   );
 }
