@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { db } from './firebase';
+import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import type {
   AppData, User, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry,
@@ -17,20 +18,20 @@ let mem: AppData = { ...defaultData };
 
 export async function initializeData(): Promise<void> {
   const [u, cl, mo, ps, re, at] = await Promise.all([
-    supabase.from('users').select('data'),
-    supabase.from('classical_entries').select('data'),
-    supabase.from('modern_entries').select('data'),
-    supabase.from('personal_study_entries').select('data'),
-    supabase.from('reflection_entries').select('data'),
-    supabase.from('attendance_entries').select('data'),
+    getDocs(collection(db, 'users')),
+    getDocs(collection(db, 'classicalEntries')),
+    getDocs(collection(db, 'modernEntries')),
+    getDocs(collection(db, 'personalStudyEntries')),
+    getDocs(collection(db, 'reflectionEntries')),
+    getDocs(collection(db, 'attendanceEntries')),
   ]);
   mem = {
-    users:                (u.data  ?? []).map(r => r.data as User),
-    classicalEntries:    (cl.data  ?? []).map(r => r.data as ClassicalLiteratureEntry),
-    modernEntries:       (mo.data  ?? []).map(r => r.data as ModernLiteratureEntry),
-    personalStudyEntries:(ps.data  ?? []).map(r => r.data as PersonalStudyEntry),
-    reflectionEntries:   (re.data  ?? []).map(r => r.data as ReflectionEntry),
-    attendanceEntries:   (at.data  ?? []).map(r => r.data as AttendanceEntry),
+    users:                u.docs.map(d => d.data() as User),
+    classicalEntries:    cl.docs.map(d => d.data() as ClassicalLiteratureEntry),
+    modernEntries:       mo.docs.map(d => d.data() as ModernLiteratureEntry),
+    personalStudyEntries: ps.docs.map(d => d.data() as PersonalStudyEntry),
+    reflectionEntries:   re.docs.map(d => d.data() as ReflectionEntry),
+    attendanceEntries:   at.docs.map(d => d.data() as AttendanceEntry),
   };
 }
 
@@ -38,16 +39,12 @@ export async function refreshData(): Promise<void> {
   return initializeData();
 }
 
-function persist(table: string, id: string, data: object): void {
-  supabase.from(table).upsert({ id, data }).then(({ error }) => {
-    if (error) console.error('Supabase write error:', error);
-  });
+function persist(coll: string, id: string, data: object): void {
+  setDoc(doc(db, coll, id), data).catch(err => console.error('Firestore write error:', err));
 }
 
-function remove(table: string, id: string): void {
-  supabase.from(table).delete().eq('id', id).then(({ error }) => {
-    if (error) console.error('Supabase delete error:', error);
-  });
+function remove(coll: string, id: string): void {
+  deleteDoc(doc(db, coll, id)).catch(err => console.error('Firestore delete error:', err));
 }
 
 function simpleHash(str: string): string {
@@ -72,8 +69,7 @@ export function registerUser(username: string, password: string, resolution: str
     createdAt: new Date().toISOString(),
   };
   mem.users.push(user);
-  supabase.from('users').upsert({ id: user.id, username: user.username, data: user })
-    .then(({ error }) => { if (error) console.error('Supabase write error:', error); });
+  persist('users', user.id, user);
   return { ok: true, user };
 }
 
@@ -92,7 +88,7 @@ export function upsertClassicalEntry(entry: ClassicalLiteratureEntry): void {
   const idx = mem.classicalEntries.findIndex(e => e.id === entry.id);
   if (idx >= 0) mem.classicalEntries[idx] = entry;
   else mem.classicalEntries.push(entry);
-  persist('classical_entries', entry.id, entry);
+  persist('classicalEntries', entry.id, entry);
 }
 
 export function getClassicalEntriesForDate(date: string): ClassicalLiteratureEntry[] {
@@ -103,7 +99,7 @@ export function addFeedbackToClassical(entryId: string, feedback: Feedback): voi
   const entry = mem.classicalEntries.find(e => e.id === entryId);
   if (entry) {
     entry.feedbacks.push(feedback);
-    persist('classical_entries', entryId, entry);
+    persist('classicalEntries', entryId, entry);
   }
 }
 
@@ -111,7 +107,7 @@ export function upsertModernEntry(entry: ModernLiteratureEntry): void {
   const idx = mem.modernEntries.findIndex(e => e.id === entry.id);
   if (idx >= 0) mem.modernEntries[idx] = entry;
   else mem.modernEntries.push(entry);
-  persist('modern_entries', entry.id, entry);
+  persist('modernEntries', entry.id, entry);
 }
 
 export function getModernEntriesForDate(date: string): ModernLiteratureEntry[] {
@@ -122,7 +118,7 @@ export function addFeedbackToModern(entryId: string, feedback: Feedback): void {
   const entry = mem.modernEntries.find(e => e.id === entryId);
   if (entry) {
     entry.feedbacks.push(feedback);
-    persist('modern_entries', entryId, entry);
+    persist('modernEntries', entryId, entry);
   }
 }
 
@@ -130,7 +126,7 @@ export function upsertPersonalStudyEntry(entry: PersonalStudyEntry): void {
   const idx = mem.personalStudyEntries.findIndex(e => e.id === entry.id);
   if (idx >= 0) mem.personalStudyEntries[idx] = entry;
   else mem.personalStudyEntries.push(entry);
-  persist('personal_study_entries', entry.id, entry);
+  persist('personalStudyEntries', entry.id, entry);
 }
 
 export function getPersonalStudyEntriesForDate(date: string): PersonalStudyEntry[] {
@@ -139,14 +135,14 @@ export function getPersonalStudyEntriesForDate(date: string): PersonalStudyEntry
 
 export function deletePersonalStudyEntry(id: string): void {
   mem.personalStudyEntries = mem.personalStudyEntries.filter(e => e.id !== id);
-  remove('personal_study_entries', id);
+  remove('personalStudyEntries', id);
 }
 
 export function upsertReflectionEntry(entry: ReflectionEntry): void {
   const idx = mem.reflectionEntries.findIndex(e => e.id === entry.id);
   if (idx >= 0) mem.reflectionEntries[idx] = entry;
   else mem.reflectionEntries.push(entry);
-  persist('reflection_entries', entry.id, entry);
+  persist('reflectionEntries', entry.id, entry);
 }
 
 export function getReflectionEntryForDate(date: string, userId: string): ReflectionEntry | undefined {
@@ -164,7 +160,7 @@ export function markAttendance(date: string, userId: string, username: string): 
       markedAt: new Date().toISOString(),
     };
     mem.attendanceEntries.push(entry);
-    persist('attendance_entries', entry.id, entry);
+    persist('attendanceEntries', entry.id, entry);
   }
 }
 
