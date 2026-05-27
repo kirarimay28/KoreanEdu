@@ -59,7 +59,7 @@ export default function AuthPage({ onLogin }: Props) {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl shadow-lg mb-4">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <AppLogo className="h-8 text-gray-900 mx-auto" />
+          <AppLogo className="h-14 mx-auto" />
           <p className="text-gray-500 text-sm mt-1">함께 합격을 향해</p>
         </div>
 

@@ -59,7 +59,7 @@ export default function App() {
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-white" />
             </div>
-            <AppLogo className="h-5 text-gray-900" />
+            <AppLogo className="h-8" />
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
