@@ -15,10 +15,35 @@ export interface ClassicalLiteratureEntry {
   workName: string;
   author: string;
   examYear: string;
-  poeticNarrator: string;
-  poeticObject: string;
   genre: string;
+  literatureType: '서정' | '서사' | '';
+
+  // 서정 — 시적 화자
+  speaker: string;
+  speakerTarget: string;
+  speakerConcern: string;
+  speakerSituation: string;
+  poeticSituation: string;
+  bgTime: string;
+  bgSpace: string;
+  emotion: string;
+  tone1: string;
+  tone2: string;
+  character1: string;
+  character2: string;
   theme: string;
+  rhythm: string;
+  imagery: string;
+  significance: string;
+
+  // 서정 — 표현
+  poeticDevelopment: string;
+  expressiveFeatures: string;
+
+  // 서정 — 시의 언어
+  poeticDiction: string;
+  phrases: string;
+
   examAnswer: string;
   feedbacks: Feedback[];
 }
