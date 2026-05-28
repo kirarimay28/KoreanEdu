@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { ModernLiteratureEntry, User, Feedback } from '../../types';
+import { isPrivileged } from '../../types';
 import {
   getModernEntriesForDate,
   upsertModernEntry,
   addFeedbackToModern,
+  deleteFeedbackFromModern,
   deleteModernEntry,
   markAttendance,
 } from '../../store';
@@ -30,17 +32,19 @@ function emptyEntry(date: string, userId: string): ModernLiteratureEntry {
   };
 }
 
-function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
+function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback, onDeleteFeedback }: {
   entry: ModernLiteratureEntry;
   currentUser: User;
   onSave: (e: ModernLiteratureEntry) => void;
   onDelete: (id: string) => void;
   onAddFeedback: (entryId: string, content: string) => void;
+  onDeleteFeedback: (entryId: string, feedbackId: string) => void;
 }) {
   const [draft, setDraft] = useState(entry);
   const [expanded, setExpanded] = useState(entry.userId === currentUser.id);
   const [saved, setSaved] = useState(false);
   const isOwner = entry.userId === currentUser.id;
+  const canDelete = isOwner || isPrivileged(currentUser);
 
   useEffect(() => { setDraft(entry); }, [entry]);
 
@@ -118,7 +122,7 @@ function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
           )}
         </div>
         <div className="flex items-center gap-1">
-          {isOwner && (
+          {canDelete && (
             <button
               onClick={e => { e.stopPropagation(); if (window.confirm('이 기록을 삭제할까요?')) onDelete(entry.id); }}
               className="p-1 text-gray-300 hover:text-red-400 transition rounded"
@@ -172,6 +176,7 @@ function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
               currentUser={currentUser}
               entryOwnerId={entry.userId}
               onAddFeedback={(content) => onAddFeedback(entry.id, content)}
+              onDeleteFeedback={(feedbackId) => onDeleteFeedback(entry.id, feedbackId)}
             />
           </div>
         </div>
@@ -221,6 +226,11 @@ export default function ModernLiterature({ date, currentUser }: Props) {
     reload();
   }
 
+  function handleDeleteFeedback(entryId: string, feedbackId: string) {
+    deleteFeedbackFromModern(entryId, feedbackId);
+    reload();
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -232,6 +242,7 @@ export default function ModernLiterature({ date, currentUser }: Props) {
             onSave={handleSave}
             onDelete={handleDelete}
             onAddFeedback={handleAddFeedback}
+            onDeleteFeedback={handleDeleteFeedback}
           />
         ) : (
           <button
@@ -256,6 +267,7 @@ export default function ModernLiterature({ date, currentUser }: Props) {
                 onSave={handleSave}
                 onDelete={handleDelete}
                 onAddFeedback={handleAddFeedback}
+                onDeleteFeedback={handleDeleteFeedback}
               />
             ))}
           </div>

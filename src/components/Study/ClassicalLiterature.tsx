@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { ClassicalLiteratureEntry, User, Feedback } from '../../types';
+import { isPrivileged } from '../../types';
 import {
   getClassicalEntriesForDate,
   upsertClassicalEntry,
   addFeedbackToClassical,
+  deleteFeedbackFromClassical,
   deleteClassicalEntry,
   markAttendance,
 } from '../../store';
@@ -54,17 +56,19 @@ function normalize(entry: ClassicalLiteratureEntry): ClassicalLiteratureEntry {
   return { ...emptyEntry(entry.date, entry.userId), ...entry };
 }
 
-function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
+function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback, onDeleteFeedback }: {
   entry: ClassicalLiteratureEntry;
   currentUser: User;
   onSave: (e: ClassicalLiteratureEntry) => void;
   onDelete: (id: string) => void;
   onAddFeedback: (entryId: string, content: string) => void;
+  onDeleteFeedback: (entryId: string, feedbackId: string) => void;
 }) {
   const [draft, setDraft] = useState<ClassicalLiteratureEntry>(() => normalize(entry));
   const [expanded, setExpanded] = useState(entry.userId === currentUser.id);
   const [saved, setSaved] = useState(false);
   const isOwner = entry.userId === currentUser.id;
+  const canDelete = isOwner || isPrivileged(currentUser);
 
   useEffect(() => { setDraft(normalize(entry)); }, [entry]);
 
@@ -154,7 +158,7 @@ function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
           )}
         </div>
         <div className="flex items-center gap-1">
-          {isOwner && (
+          {canDelete && (
             <button
               onClick={e => { e.stopPropagation(); if (window.confirm('이 기록을 삭제할까요?')) onDelete(entry.id); }}
               className="p-1 text-gray-300 hover:text-red-400 transition rounded"
@@ -307,6 +311,7 @@ function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback }: {
               currentUser={currentUser}
               entryOwnerId={entry.userId}
               onAddFeedback={(content) => onAddFeedback(entry.id, content)}
+              onDeleteFeedback={(feedbackId) => onDeleteFeedback(entry.id, feedbackId)}
             />
           </div>
         </div>
@@ -356,6 +361,11 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
     reload();
   }
 
+  function handleDeleteFeedback(entryId: string, feedbackId: string) {
+    deleteFeedbackFromClassical(entryId, feedbackId);
+    reload();
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -367,6 +377,7 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
             onSave={handleSave}
             onDelete={handleDelete}
             onAddFeedback={handleAddFeedback}
+            onDeleteFeedback={handleDeleteFeedback}
           />
         ) : (
           <button
@@ -391,6 +402,7 @@ export default function ClassicalLiterature({ date, currentUser }: Props) {
                 onSave={handleSave}
                 onDelete={handleDelete}
                 onAddFeedback={handleAddFeedback}
+                onDeleteFeedback={handleDeleteFeedback}
               />
             ))}
           </div>

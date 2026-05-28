@@ -11,7 +11,8 @@ import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox, Users } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
-import { initializeData, refreshData, getPendingRequestsForUser } from './store';
+import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
+import AnnouncementBar from './components/Admin/AnnouncementBar';
 import { MOTIVATIONAL_QUOTES } from './data/motivationalQuotes';
 
 function getDailyQuote(): string {
@@ -52,7 +53,11 @@ export default function App() {
 
   useEffect(() => {
     initializeData()
-      .then(() => setLoading(false))
+      .then(() => {
+        setLoading(false);
+        // Refresh currentUser from store so role changes (e.g. admin bootstrap) are reflected
+        setCurrentUser(prev => prev ? (getUserById(prev.id) ?? prev) : null);
+      })
       .catch(() => { setLoading(false); setLoadError(true); });
   }, []);
 
@@ -75,6 +80,7 @@ export default function App() {
   async function handleRefresh() {
     setRefreshing(true);
     await refreshData().catch(console.error);
+    setCurrentUser(prev => prev ? (getUserById(prev.id) ?? prev) : null);
     setRefreshing(false);
     setRefreshKey(k => k + 1);
   }
@@ -138,6 +144,7 @@ export default function App() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4">
+        <AnnouncementBar currentUser={currentUser} />
         <DailyVocab date={date} />
         {activeTab !== 'attendance' && activeTab !== 'member' && (
           <DateNavigator date={date} onChange={setDate} />

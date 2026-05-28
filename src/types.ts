@@ -1,9 +1,12 @@
+export type UserRole = 'admin' | 'subadmin' | 'member';
+
 export interface User {
   id: string;
   username: string;
   passwordHash: string;
   resolution: string;
   createdAt: string;
+  role?: UserRole;
 }
 
 export type ExamStatus = 'O' | '△' | 'X' | '';
@@ -99,6 +102,24 @@ export interface AttendanceEntry {
   markedAt: string;
 }
 
+export interface Announcement {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorId: string;
+  authorName: string;
+}
+
+export interface Warning {
+  id: string;
+  targetUserId: string;
+  targetUsername: string;
+  reason: string;
+  issuedAt: string;
+  issuedById: string;
+  issuedByName: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -107,6 +128,8 @@ export interface AppData {
   reflectionEntries: ReflectionEntry[];
   attendanceEntries: AttendanceEntry[];
   resourceRequests: ResourceRequest[];
+  announcements: Announcement[];
+  warnings: Warning[];
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member';
@@ -124,4 +147,8 @@ export interface ResourceRequest {
   category: ResourceCategory;
   detail: string;
   status: '대기중' | '완료';
+}
+
+export function isPrivileged(user: User): boolean {
+  return user.role === 'admin' || user.role === 'subadmin';
 }
