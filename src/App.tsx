@@ -14,7 +14,7 @@ import CalendarTab from './components/Calendar/CalendarTab';
 import MessagesTab from './components/Messages/MessagesTab';
 import LibraryTab from './components/Library/LibraryTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
@@ -223,6 +223,25 @@ export default function App() {
             onBack={() => setEducationMode(null)}
             currentUser={currentUser}
           />
+        ) : isMenuTabActive ? (
+          <>
+            <button
+              onClick={() => { setActiveTab('study'); setMenuOpen(false); }}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition font-medium mb-4"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              로비로 돌아가기
+            </button>
+            <div key={refreshKey}>
+              {activeTab === 'attendance' && <AttendanceTab />}
+              {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
+              {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
+              {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
+              {activeTab === 'vaclist' && <VacationListTab />}
+              {activeTab === 'messages' && <MessagesTab currentUser={currentUser} />}
+              {activeTab === 'library' && <LibraryTab />}
+            </div>
+          </>
         ) : (
           <>
             <AnnouncementBar
@@ -259,13 +278,6 @@ export default function App() {
               {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
               {activeTab === 'qna' && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar' && <CalendarTab />}
-              {activeTab === 'attendance' && <AttendanceTab />}
-              {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
-              {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
-              {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
-              {activeTab === 'vaclist' && <VacationListTab />}
-              {activeTab === 'messages' && <MessagesTab currentUser={currentUser} />}
-              {activeTab === 'library' && <LibraryTab />}
             </div>
           </>
         )}
