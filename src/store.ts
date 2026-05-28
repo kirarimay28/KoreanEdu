@@ -385,6 +385,26 @@ export function upsertEducationAnswer(answer: EducationAnswer): void {
   persist('educationAnswers', answer.id, answer);
 }
 
+export function toggleReaction(answerId: string, userId: string, type: 'like' | 'dislike'): EducationAnswer | undefined {
+  const answer = mem.educationAnswers.find(a => a.id === answerId);
+  if (!answer) return;
+  if (!answer.likes) answer.likes = [];
+  if (!answer.dislikes) answer.dislikes = [];
+
+  const same = type === 'like' ? answer.likes : answer.dislikes;
+  const other = type === 'like' ? answer.dislikes : answer.likes;
+
+  const otherIdx = other.indexOf(userId);
+  if (otherIdx >= 0) other.splice(otherIdx, 1);
+
+  const sameIdx = same.indexOf(userId);
+  if (sameIdx >= 0) same.splice(sameIdx, 1);
+  else same.push(userId);
+
+  persist('educationAnswers', answerId, answer);
+  return answer;
+}
+
 export function getEducationAnswersForWeek(weekKey: string): EducationAnswer[] {
   return mem.educationAnswers.filter(a => a.weekKey === weekKey);
 }

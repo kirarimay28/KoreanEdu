@@ -164,6 +164,8 @@ export interface EducationAnswer {
   answer: string;
   createdAt: string;
   updatedAt?: string;
+  likes: string[];
+  dislikes: string[];
 }
 
 export interface AppData {
