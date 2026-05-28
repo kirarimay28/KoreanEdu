@@ -19,6 +19,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
   const [draft, setDraft] = useState('');
 
   const isAdmin = currentUser.role === 'admin';
+  const canWrite = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
   function reload() {
     setAnnouncements(getAnnouncements());
@@ -45,7 +46,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
     reload();
   }
 
-  if (announcements.length === 0 && !isAdmin) return null;
+  if (announcements.length === 0 && !canWrite) return null;
 
   return (
     <div className="mb-4 bg-indigo-50 border border-indigo-200 rounded-2xl overflow-hidden">
@@ -61,7 +62,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
           </span>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 text-indigo-400 ml-1" />}
         </button>
-        {isAdmin && (
+        {canWrite && (
           <button
             onClick={() => { setWriting(v => !v); setExpanded(true); }}
             className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-100 hover:bg-indigo-200 px-2 py-1 rounded-lg transition"
@@ -73,7 +74,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
       </div>
 
       {/* Write form */}
-      {writing && isAdmin && (
+      {writing && canWrite && (
         <div className="px-4 pb-3 border-t border-indigo-100">
           <textarea
             className="w-full mt-3 text-sm border border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-none"
