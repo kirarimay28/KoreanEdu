@@ -7,12 +7,14 @@ interface Props {
   today: string;
   onSelect: (date: string) => void;
   onClose: () => void;
+  allowFuture?: boolean;
+  minDate?: string;
 }
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
-export default function CalendarPopup({ selectedDate, today, onSelect, onClose }: Props) {
+export default function CalendarPopup({ selectedDate, today, onSelect, onClose, allowFuture, minDate }: Props) {
   const [viewYear, setViewYear] = useState(() => parseInt(selectedDate.split('-')[0]));
   const [viewMonth, setViewMonth] = useState(() => parseInt(selectedDate.split('-')[1]) - 1);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,11 +34,15 @@ export default function CalendarPopup({ selectedDate, today, onSelect, onClose }
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const isNextDisabled =
-    viewYear > todayYear ||
-    (viewYear === todayYear && viewMonth >= todayMonth);
+  const isPrevDisabled = allowFuture
+    ? (viewYear < todayYear || (viewYear === todayYear && viewMonth <= todayMonth))
+    : false;
+  const isNextDisabled = allowFuture
+    ? false
+    : (viewYear > todayYear || (viewYear === todayYear && viewMonth >= todayMonth));
 
   function prevMonth() {
+    if (isPrevDisabled) return;
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
     else setViewMonth(m => m - 1);
   }
@@ -62,7 +68,11 @@ export default function CalendarPopup({ selectedDate, today, onSelect, onClose }
     >
       {/* Month header */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition">
+        <button
+          onClick={prevMonth}
+          disabled={isPrevDisabled}
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition disabled:opacity-25 disabled:cursor-not-allowed"
+        >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
         <span className="font-semibold text-gray-800 text-sm">{viewYear}년 {MONTHS[viewMonth]}</span>
@@ -94,19 +104,21 @@ export default function CalendarPopup({ selectedDate, today, onSelect, onClose }
 
           const dateStr = toDateStr(day);
           const isFuture = dateStr > today;
+          const threshold = minDate ?? today;
+          const isDisabled = allowFuture ? dateStr < threshold : isFuture;
           const isSelected = dateStr === selectedDate;
           const isToday_ = viewYear === todayYear && viewMonth === todayMonth && day === todayDay;
-          const hasRecord = !isFuture && hasStudyRecordOnDate(dateStr);
+          const hasRecord = !isFuture && !allowFuture && hasStudyRecordOnDate(dateStr);
           const col = idx % 7;
 
           return (
             <button
               key={day}
-              disabled={isFuture}
+              disabled={isDisabled}
               onClick={() => onSelect(dateStr)}
               className={[
                 'relative flex flex-col items-center justify-center h-9 rounded-lg text-sm font-medium transition',
-                isFuture ? 'opacity-20 cursor-not-allowed' : 'hover:bg-gray-100',
+                isDisabled ? 'opacity-20 cursor-not-allowed' : 'hover:bg-gray-100',
                 isSelected ? 'bg-primary-600 text-white hover:bg-primary-700' : '',
                 isToday_ && !isSelected ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-300' : '',
                 !isSelected && !isToday_ ? (col === 0 ? 'text-red-500' : col === 6 ? 'text-blue-500' : 'text-gray-700') : '',

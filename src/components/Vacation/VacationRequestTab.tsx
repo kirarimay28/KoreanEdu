@@ -125,8 +125,9 @@ export default function VacationRequestTab({ currentUser }: Props) {
                 <CalendarPopup
                   selectedDate={vacationDate}
                   today={today}
+                  allowFuture
+                  minDate={tomorrow}
                   onSelect={d => {
-                    if (d <= today) return;
                     setVacationDate(d);
                     setShowVacationCal(false);
                   }}
@@ -181,8 +182,9 @@ export default function VacationRequestTab({ currentUser }: Props) {
                 <CalendarPopup
                   selectedDate={makeupDate}
                   today={today}
+                  allowFuture
+                  minDate={tomorrow}
                   onSelect={d => {
-                    if (d <= today) return;
                     setMakeupDate(d);
                     setShowMakeupCal(false);
                   }}
