@@ -183,7 +183,7 @@ export interface AppData {
   educationAnswers: EducationAnswer[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library';
 export type StudySubTab = 'classical' | 'modern';
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';
