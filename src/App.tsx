@@ -130,7 +130,7 @@ export default function App() {
               </div>
               <AppLogo className="h-7" />
             </div>
-            <p className="text-[10px] text-primary-400 italic mt-0.5 ml-10 truncate max-w-[180px]">{getDailyQuote()}</p>
+            <p className="text-[10px] text-primary-400 italic mt-0.5 ml-10 leading-relaxed">{getDailyQuote()}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
