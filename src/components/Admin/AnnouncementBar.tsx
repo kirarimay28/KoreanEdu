@@ -20,6 +20,16 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
   const [expanded, setExpanded] = useState(true);
   const [writing, setWriting] = useState(false);
   const [draft, setDraft] = useState('');
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+
+  function toggleAnn(id: string) {
+    setOpenIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const isAdmin = currentUser.role === 'admin';
   const canWrite = currentUser.role === 'admin' || currentUser.role === 'subadmin';
@@ -106,24 +116,51 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
       {/* Announcements list */}
       {expanded && announcements.length > 0 && (
         <div className="border-t border-indigo-100 divide-y divide-indigo-100">
-          {announcements.map(ann => (
-            <div key={ann.id} className="px-4 py-3 flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-indigo-900 whitespace-pre-wrap">{ann.content}</p>
-                <p className="text-[10px] text-indigo-400 mt-1">
-                  {ann.authorName} · {formatDate(ann.createdAt)}
-                </p>
+          {announcements.map(ann => {
+            const isOpen = openIds.has(ann.id);
+            const title = ann.content.split('\n')[0];
+            const hasMore = ann.content.includes('\n');
+            return (
+              <div key={ann.id} className="px-4 py-3">
+                {/* 제목 행 */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => hasMore && toggleAnn(ann.id)}
+                    className={`flex-1 flex items-center gap-1.5 text-left min-w-0 ${hasMore ? 'cursor-pointer' : 'cursor-default'}`}
+                  >
+                    <span className="text-sm font-semibold text-indigo-900 truncate">{title}</span>
+                    {hasMore && (
+                      isOpen
+                        ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                        : <ChevronDown className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                    )}
+                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleDelete(ann.id)}
+                      className="flex-shrink-0 p-1 text-indigo-300 hover:text-red-400 transition rounded"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                {/* 펼쳐진 본문 */}
+                {isOpen && (
+                  <div className="mt-2">
+                    <p className="text-sm text-indigo-900 whitespace-pre-wrap">{ann.content}</p>
+                    <p className="text-[10px] text-indigo-400 mt-1">
+                      {ann.authorName} · {formatDate(ann.createdAt)}
+                    </p>
+                  </div>
+                )}
+                {!isOpen && (
+                  <p className="text-[10px] text-indigo-400 mt-0.5">
+                    {ann.authorName} · {formatDate(ann.createdAt)}
+                  </p>
+                )}
               </div>
-              {isAdmin && (
-                <button
-                  onClick={() => handleDelete(ann.id)}
-                  className="flex-shrink-0 p-1 text-indigo-300 hover:text-red-400 transition rounded"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
