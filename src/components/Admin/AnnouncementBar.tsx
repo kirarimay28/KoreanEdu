@@ -19,36 +19,36 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
   const [announcements, setAnnouncements] = useState<Announcement[]>(getAnnouncements);
   const [expanded, setExpanded] = useState(true);
   const [writing, setWriting] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftContent, setDraftContent] = useState('');
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-
-  function toggleAnn(id: string) {
-    setOpenIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   const isAdmin = currentUser.role === 'admin';
   const canWrite = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
-  function reload() {
-    setAnnouncements(getAnnouncements());
+  function reload() { setAnnouncements(getAnnouncements()); }
+
+  function toggleAnn(id: string) {
+    setOpenIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
 
   function handleCreate() {
-    if (!draft.trim()) return;
+    if (!draftTitle.trim()) return;
     const ann: Announcement = {
       id: crypto.randomUUID(),
-      content: draft.trim(),
+      title: draftTitle.trim(),
+      content: draftContent.trim(),
       createdAt: new Date().toISOString(),
       authorId: currentUser.id,
       authorName: currentUser.username,
     };
     createAnnouncement(ann);
-    setDraft('');
+    setDraftTitle('');
+    setDraftContent('');
     setWriting(false);
     reload();
   }
@@ -86,25 +86,31 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
 
       {/* Write form */}
       {writing && canWrite && (
-        <div className="px-4 pb-3 border-t border-indigo-100">
-          <textarea
-            className="w-full mt-3 text-sm border border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-none"
-            rows={3}
-            placeholder="공지사항 내용을 입력하세요..."
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
+        <div className="px-4 pb-3 border-t border-indigo-100 space-y-2 pt-3">
+          <input
+            className="w-full text-sm border border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white font-semibold"
+            placeholder="제목"
+            value={draftTitle}
+            onChange={e => setDraftTitle(e.target.value)}
             autoFocus
           />
-          <div className="flex justify-end gap-2 mt-2">
+          <textarea
+            className="w-full text-sm border border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-none"
+            rows={4}
+            placeholder="내용 (선택)"
+            value={draftContent}
+            onChange={e => setDraftContent(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
             <button
-              onClick={() => { setWriting(false); setDraft(''); }}
+              onClick={() => { setWriting(false); setDraftTitle(''); setDraftContent(''); }}
               className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
             >
               취소
             </button>
             <button
               onClick={handleCreate}
-              disabled={!draft.trim()}
+              disabled={!draftTitle.trim()}
               className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 text-white px-3 py-1.5 rounded-lg transition"
             >
               등록
@@ -118,18 +124,18 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
         <div className="border-t border-indigo-100 divide-y divide-indigo-100">
           {announcements.map(ann => {
             const isOpen = openIds.has(ann.id);
-            const title = ann.content.split('\n')[0];
-            const hasMore = ann.content.includes('\n');
+            const title = ann.title || ann.content.split('\n')[0];
+            const hasBody = !!ann.content;
             return (
-              <div key={ann.id} className="px-4 py-3">
+              <div key={ann.id} className="px-4 py-2.5">
                 {/* 제목 행 */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => hasMore && toggleAnn(ann.id)}
-                    className={`flex-1 flex items-center gap-1.5 text-left min-w-0 ${hasMore ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => hasBody && toggleAnn(ann.id)}
+                    className={`flex-1 flex items-center gap-1.5 text-left min-w-0 ${hasBody ? 'cursor-pointer' : 'cursor-default'}`}
                   >
-                    <span className="text-sm font-semibold text-indigo-900 truncate">{title}</span>
-                    {hasMore && (
+                    <span className="text-sm font-semibold text-indigo-900 flex-1">{title}</span>
+                    {hasBody && (
                       isOpen
                         ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                         : <ChevronDown className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
@@ -144,19 +150,10 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
                     </button>
                   )}
                 </div>
+                <p className="text-[10px] text-indigo-400 mt-0.5">{ann.authorName} · {formatDate(ann.createdAt)}</p>
                 {/* 펼쳐진 본문 */}
-                {isOpen && (
-                  <div className="mt-2">
-                    <p className="text-sm text-indigo-900 whitespace-pre-wrap">{ann.content}</p>
-                    <p className="text-[10px] text-indigo-400 mt-1">
-                      {ann.authorName} · {formatDate(ann.createdAt)}
-                    </p>
-                  </div>
-                )}
-                {!isOpen && (
-                  <p className="text-[10px] text-indigo-400 mt-0.5">
-                    {ann.authorName} · {formatDate(ann.createdAt)}
-                  </p>
+                {isOpen && hasBody && (
+                  <p className="text-sm text-indigo-800 whitespace-pre-wrap mt-2 leading-relaxed">{ann.content}</p>
                 )}
               </div>
             );
