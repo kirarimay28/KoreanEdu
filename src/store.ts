@@ -411,6 +411,11 @@ export function markMessageRead(id: string): void {
   }
 }
 
+export function deleteMessage(id: string): void {
+  mem.messages = mem.messages.filter(m => m.id !== id);
+  remove('messages', id);
+}
+
 export function getUnreadCount(userId: string): number {
   return mem.messages.filter(m => m.receiverId === userId && !m.read).length;
 }

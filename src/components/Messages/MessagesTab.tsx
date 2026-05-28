@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { User, Message } from '../../types';
 import {
-  getReceivedMessages, getSentMessages, sendMessage, markMessageRead, getUsers,
+  getReceivedMessages, getSentMessages, sendMessage, markMessageRead, deleteMessage, getUsers,
 } from '../../store';
-import { Mail, Send, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { Mail, Send, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 
 interface Props {
   currentUser: User;
@@ -43,6 +43,12 @@ export default function MessagesTab({ currentUser }: Props) {
         reload();
       }
     }
+  }
+
+  function handleDelete(id: string) {
+    deleteMessage(id);
+    if (openId === id) setOpenId(null);
+    reload();
   }
 
   function handleSend() {
@@ -184,6 +190,9 @@ export default function MessagesTab({ currentUser }: Props) {
                     <p className={`text-sm truncate ${isUnread ? 'font-semibold text-gray-800' : 'text-gray-700'}`}>
                       {tab === 'received' ? `from ${counterpart}` : `to ${counterpart}`}
                     </p>
+                    {tab === 'sent' && msg.read && (
+                      <span className="text-[10px] text-primary-500 font-semibold flex-shrink-0">읽음</span>
+                    )}
                   </div>
                   <p className="text-[10px] text-gray-400 mt-0.5 truncate">
                     {formatDate(msg.createdAt)} · {msg.content.slice(0, 40)}{msg.content.length > 40 ? '…' : ''}
@@ -197,6 +206,17 @@ export default function MessagesTab({ currentUser }: Props) {
               {isOpen && (
                 <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
                   <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                  {tab === 'received' && (
+                    <div className="flex justify-end mt-3">
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        삭제
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
