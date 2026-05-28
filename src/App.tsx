@@ -131,7 +131,6 @@ export default function App() {
               <AppLogo className="h-7" />
             </div>
             <p className="text-[10px] text-primary-400 italic mt-0.5 ml-10 leading-relaxed">{getDailyQuote()}</p>
-            <p className="text-[9px] text-green-500 font-bold ml-10">✓ v5b25386</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
