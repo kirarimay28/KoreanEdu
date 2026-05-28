@@ -21,9 +21,17 @@ export const EDUCATION_QUESTIONS: string[] = [
   "학급 내 학생들 사이에 뚜렷한 경제적 격차가 보입니다. 이로 인해 소외감을 느끼는 학생이 생기지 않도록 교사로서 학급 문화를 어떻게 만들어 가겠습니까?",
 ];
 
-export function getWeekQuestion(): string {
+function getWeekNum(): number {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 1);
-  const weekNum = Math.floor((now.getTime() - start.getTime()) / (7 * 86400000));
-  return EDUCATION_QUESTIONS[weekNum % EDUCATION_QUESTIONS.length];
+  return Math.floor((now.getTime() - start.getTime()) / (7 * 86400000));
+}
+
+export function getWeekQuestion(): string {
+  return EDUCATION_QUESTIONS[getWeekNum() % EDUCATION_QUESTIONS.length];
+}
+
+export function getWeekKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-W${String(getWeekNum()).padStart(2, '0')}`;
 }

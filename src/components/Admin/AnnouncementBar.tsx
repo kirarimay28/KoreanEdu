@@ -6,6 +6,8 @@ import { getWeekQuestion } from '../../data/educationQuestions';
 
 interface Props {
   currentUser: User;
+  onShowWrite: () => void;
+  onShowRead: () => void;
 }
 
 function formatDate(iso: string): string {
@@ -13,7 +15,7 @@ function formatDate(iso: string): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
-export default function AnnouncementBar({ currentUser }: Props) {
+export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }: Props) {
   const [announcements, setAnnouncements] = useState<Announcement[]>(getAnnouncements);
   const [expanded, setExpanded] = useState(true);
   const [writing, setWriting] = useState(false);
@@ -136,7 +138,21 @@ export default function AnnouncementBar({ currentUser }: Props) {
         <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide mb-1.5">
           📚 이번 주 교육관 형성 질문
         </p>
-        <p className="text-sm text-indigo-800 leading-relaxed">{getWeekQuestion()}</p>
+        <p className="text-sm text-indigo-800 leading-relaxed mb-2.5">{getWeekQuestion()}</p>
+        <div className="flex gap-2">
+          <button
+            onClick={onShowWrite}
+            className="text-xs font-semibold text-indigo-600 bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-lg transition"
+          >
+            내 답변 작성
+          </button>
+          <button
+            onClick={onShowRead}
+            className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
+          >
+            다른 답변 보러 가기
+          </button>
+        </div>
       </div>
     </div>
   );

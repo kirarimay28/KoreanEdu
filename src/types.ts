@@ -156,6 +156,16 @@ export interface VacationRequest {
   reviewedByName?: string;
 }
 
+export interface EducationAnswer {
+  id: string;
+  weekKey: string;
+  userId: string;
+  username: string;
+  answer: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -167,6 +177,7 @@ export interface AppData {
   announcements: Announcement[];
   warnings: Warning[];
   vacations: VacationRequest[];
+  educationAnswers: EducationAnswer[];
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist';

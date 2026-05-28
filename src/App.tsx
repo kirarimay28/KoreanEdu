@@ -15,7 +15,8 @@ import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
-import { MOTIVATIONAL_QUOTES } from './data/motivationalQuotes';
+import { LITERARY_QUOTES } from './data/literaryQuotes';
+import EducationAnswerPage from './components/Education/EducationAnswerPage';
 
 function getDailyQuote(): string {
   const today = getKSTToday();
@@ -23,7 +24,7 @@ function getDailyQuote(): string {
   for (let i = 0; i < today.length; i++) {
     hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
   }
-  return MOTIVATIONAL_QUOTES[hash % MOTIVATIONAL_QUOTES.length];
+  return LITERARY_QUOTES[hash % LITERARY_QUOTES.length];
 }
 
 const SESSION_KEY = 'korean_edu_session';
@@ -54,6 +55,7 @@ export default function App() {
   const [date, setDate] = useState<string>(getKSTToday());
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [educationMode, setEducationMode] = useState<'write' | 'read' | null>(null);
 
   useEffect(() => {
     initializeData()
@@ -148,46 +150,60 @@ export default function App() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4">
-        <AnnouncementBar currentUser={currentUser} />
-        <DailyVocab date={date} />
-        {activeTab !== 'attendance' && activeTab !== 'member' && activeTab !== 'vacation' && activeTab !== 'vaclist' && (
-          <DateNavigator date={date} onChange={setDate} />
+        {educationMode ? (
+          <EducationAnswerPage
+            mode={educationMode}
+            onBack={() => setEducationMode(null)}
+            currentUser={currentUser}
+          />
+        ) : (
+          <>
+            <AnnouncementBar
+              currentUser={currentUser}
+              onShowWrite={() => setEducationMode('write')}
+              onShowRead={() => setEducationMode('read')}
+            />
+            <DailyVocab date={date} />
+            {activeTab !== 'attendance' && activeTab !== 'member' && activeTab !== 'vacation' && activeTab !== 'vaclist' && (
+              <DateNavigator date={date} onChange={setDate} />
+            )}
+
+            <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                const pendingCount = tab.id === 'resource' ? getPendingRequestsForUser(currentUser.id).length : 0;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-shrink-0 flex items-center justify-center gap-1 py-2 px-3 text-[11px] rounded-lg transition-all font-medium relative ${
+                      activeTab === tab.id ? 'tab-active' : 'tab-inactive'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div key={refreshKey}>
+              {activeTab === 'study' && <StudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
+              {activeTab === 'attendance' && <AttendanceTab />}
+              {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
+              {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
+              {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
+              {activeTab === 'vaclist' && <VacationListTab />}
+            </div>
+          </>
         )}
-
-        <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl overflow-x-auto">
-          {TABS.map(tab => {
-            const Icon = tab.icon;
-            const pendingCount = tab.id === 'resource' ? getPendingRequestsForUser(currentUser.id).length : 0;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 flex items-center justify-center gap-1 py-2 px-3 text-[11px] rounded-lg transition-all font-medium relative ${
-                  activeTab === tab.id ? 'tab-active' : 'tab-inactive'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-                {pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
-                    {pendingCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div key={refreshKey}>
-          {activeTab === 'study' && <StudyTab date={date} currentUser={currentUser} />}
-          {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
-          {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
-          {activeTab === 'attendance' && <AttendanceTab />}
-          {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
-          {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
-          {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
-          {activeTab === 'vaclist' && <VacationListTab />}
-        </div>
       </main>
     </div>
   );

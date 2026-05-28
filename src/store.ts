@@ -3,7 +3,7 @@ import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore'
 import type {
   AppData, User, UserRole, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
-  Announcement, Warning, VacationRequest,
+  Announcement, Warning, VacationRequest, EducationAnswer,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -19,6 +19,7 @@ const defaultData: AppData = {
   announcements: [],
   warnings: [],
   vacations: [],
+  educationAnswers: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -52,7 +53,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -63,6 +64,7 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'announcements')),
     getDocs(collection(db, 'warnings')),
     getDocs(collection(db, 'vacations')),
+    getDocs(collection(db, 'educationAnswers')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -75,6 +77,7 @@ async function fetchFromFirestore(): Promise<void> {
     announcements:       an.docs.map(d => d.data() as Announcement),
     warnings:            wa.docs.map(d => d.data() as Warning),
     vacations:           va.docs.map(d => d.data() as VacationRequest),
+    educationAnswers:    ea.docs.map(d => d.data() as EducationAnswer),
   };
   bootstrapAdmin();
   saveCache();
@@ -370,6 +373,24 @@ export function reviewVacation(id: string, status: '승인' | '거절', reviewer
     req.reviewedByName = reviewerName;
     persist('vacations', id, req);
   }
+}
+
+// ── Education Answers ──────────────────────────────────────
+export function upsertEducationAnswer(answer: EducationAnswer): void {
+  const idx = mem.educationAnswers.findIndex(
+    a => a.weekKey === answer.weekKey && a.userId === answer.userId
+  );
+  if (idx >= 0) mem.educationAnswers[idx] = answer;
+  else mem.educationAnswers.push(answer);
+  persist('educationAnswers', answer.id, answer);
+}
+
+export function getEducationAnswersForWeek(weekKey: string): EducationAnswer[] {
+  return mem.educationAnswers.filter(a => a.weekKey === weekKey);
+}
+
+export function getMyEducationAnswer(weekKey: string, userId: string): EducationAnswer | undefined {
+  return mem.educationAnswers.find(a => a.weekKey === weekKey && a.userId === userId);
 }
 
 export function hasVacationInWeek(userId: string, vacationDate: string): boolean {
