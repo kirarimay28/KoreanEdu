@@ -7,8 +7,10 @@ import ReflectionTab from './components/Reflection/ReflectionTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import ResourceTab from './components/Resource/ResourceTab';
 import MemberTab from './components/Member/MemberTab';
+import VacationRequestTab from './components/Vacation/VacationRequestTab';
+import VacationListTab from './components/Vacation/VacationListTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox, Users } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
@@ -33,6 +35,8 @@ const TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?
   { id: 'attendance', label: '출석', icon: CalendarCheck },
   { id: 'resource', label: '자료요청', icon: Inbox },
   { id: 'member', label: '멤버', icon: Users },
+  { id: 'vacation', label: '휴가신청', icon: Plane },
+  { id: 'vaclist', label: '휴가명단', icon: ListChecks },
 ];
 
 export default function App() {
@@ -146,7 +150,7 @@ export default function App() {
       <main className="max-w-2xl mx-auto px-4 py-4">
         <AnnouncementBar currentUser={currentUser} />
         <DailyVocab date={date} />
-        {activeTab !== 'attendance' && activeTab !== 'member' && (
+        {activeTab !== 'attendance' && activeTab !== 'member' && activeTab !== 'vacation' && activeTab !== 'vaclist' && (
           <DateNavigator date={date} onChange={setDate} />
         )}
 
@@ -181,6 +185,8 @@ export default function App() {
           {activeTab === 'attendance' && <AttendanceTab />}
           {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
           {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
+          {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
+          {activeTab === 'vaclist' && <VacationListTab />}
         </div>
       </main>
     </div>

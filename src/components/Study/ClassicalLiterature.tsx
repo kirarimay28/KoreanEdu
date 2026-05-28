@@ -47,6 +47,22 @@ function emptyEntry(date: string, userId: string): ClassicalLiteratureEntry {
     expressiveFeatures: '',
     poeticDiction: '',
     phrases: '',
+    authorDescription: '',
+    workCharacter: '',
+    titleMeaning: '',
+    characters: '',
+    viewpoint: '',
+    event1: '',
+    event2: '',
+    event3: '',
+    narrativeConflict: '',
+    narrativeFeature1: '',
+    narrativeFeature2: '',
+    narrativeFeature3: '',
+    keyMaterials: '',
+    literaryMeaning: '',
+    intertextuality: '',
+    examPoints: '',
     examAnswer: '',
     feedbacks: [],
   };
@@ -273,10 +289,62 @@ function EntryCard({ entry, currentUser, onSave, onDelete, onAddFeedback, onDele
               </div>
             )}
 
-            {/* 서사 placeholder */}
+            {/* 서사 분석 폼 */}
             {draft.literatureType === '서사' && (
-              <div className="flex items-center justify-center py-12 bg-gray-50 rounded-2xl">
-                <p className="text-gray-400 text-sm">서사 분석 양식은 준비 중입니다.</p>
+              <div className="space-y-5">
+                {/* 기본 정보 */}
+                <div>
+                  <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wider mb-2">기본 정보</p>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      {fieldInput('작품명', 'workName', '작품명')}
+                      {fieldInput('작가', 'author', '작가')}
+                    </div>
+                    {fieldInput('작가 설명', 'authorDescription', '작가에 대한 설명')}
+                    {fieldInput('갈래', 'genre', '예: 고전 소설, 판소리계 소설 등')}
+                    {fieldInput('성격', 'workCharacter', '작품의 성격')}
+                    {fieldInput('제목 의미', 'titleMeaning', '제목의 의미')}
+                    {fieldInput('주제', 'theme', '작품의 주제')}
+                  </div>
+                </div>
+
+                {/* 소설의 구성 요소 */}
+                <div>
+                  <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wider mb-2">소설의 구성 요소</p>
+                  <div className="space-y-3">
+                    {textareaField('인물 · 가계도', 'characters', 4)}
+                    <div className="grid grid-cols-2 gap-3">
+                      {fieldInput('배경 — 시간', 'bgTime', '시간적 배경')}
+                      {fieldInput('배경 — 공간', 'bgSpace', '공간적 배경')}
+                    </div>
+                    {fieldInput('시점', 'viewpoint', '예: 1인칭 주인공 시점')}
+                    <div>
+                      <p className="label">사건</p>
+                      <div className="space-y-2">
+                        {fieldInput('사건 1', 'event1', '사건 1')}
+                        {fieldInput('사건 2', 'event2', '사건 2')}
+                        {fieldInput('사건 3', 'event3', '사건 3')}
+                      </div>
+                    </div>
+                    {textareaField('갈등', 'narrativeConflict', 2)}
+                    <div>
+                      <p className="label">서술상 특징</p>
+                      <div className="space-y-2">
+                        {fieldInput('① 특징', 'narrativeFeature1', '서술상 특징 ①')}
+                        {fieldInput('② 특징', 'narrativeFeature2', '서술상 특징 ②')}
+                        {fieldInput('③ 특징', 'narrativeFeature3', '서술상 특징 ③')}
+                      </div>
+                    </div>
+                    {textareaField('주요 소재, 서사적 장치', 'keyMaterials', 2)}
+                    {textareaField('담긴 사상, 또는 문학사적 의의', 'literaryMeaning', 2)}
+                    {fieldInput('상호텍스트성', 'intertextuality', '상호텍스트성')}
+                  </div>
+                </div>
+
+                {/* 임용 기출 */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  {textareaField('★ 임용 기출 연도 & 출제 포인트', 'examPoints', 3)}
+                </div>
               </div>
             )}
 

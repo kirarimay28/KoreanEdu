@@ -3,7 +3,7 @@ import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore'
 import type {
   AppData, User, UserRole, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
-  Announcement, Warning,
+  Announcement, Warning, VacationRequest,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -18,6 +18,7 @@ const defaultData: AppData = {
   resourceRequests: [],
   announcements: [],
   warnings: [],
+  vacations: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -51,7 +52,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -61,6 +62,7 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'resourceRequests')),
     getDocs(collection(db, 'announcements')),
     getDocs(collection(db, 'warnings')),
+    getDocs(collection(db, 'vacations')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -72,6 +74,7 @@ async function fetchFromFirestore(): Promise<void> {
     resourceRequests:    rr.docs.map(d => d.data() as ResourceRequest),
     announcements:       an.docs.map(d => d.data() as Announcement),
     warnings:            wa.docs.map(d => d.data() as Warning),
+    vacations:           va.docs.map(d => d.data() as VacationRequest),
   };
   bootstrapAdmin();
   saveCache();
@@ -340,4 +343,47 @@ export function clearWarning(id: string): void {
   mem.warnings = mem.warnings.filter(w => w.id !== id);
   remove('warnings', id);
   saveCache();
+}
+
+// ── Vacations ─────────────────────────────────────────────
+export function createVacationRequest(req: VacationRequest): void {
+  mem.vacations.push(req);
+  persist('vacations', req.id, req);
+}
+
+export function getVacationRequests(): VacationRequest[] {
+  return mem.vacations;
+}
+
+export function getApprovedVacations(): VacationRequest[] {
+  return mem.vacations.filter(v => v.status === '승인').sort(
+    (a, b) => a.vacationDate.localeCompare(b.vacationDate)
+  );
+}
+
+export function reviewVacation(id: string, status: '승인' | '거절', reviewerId: string, reviewerName: string): void {
+  const req = mem.vacations.find(v => v.id === id);
+  if (req) {
+    req.status = status;
+    req.reviewedAt = new Date().toISOString();
+    req.reviewedById = reviewerId;
+    req.reviewedByName = reviewerName;
+    persist('vacations', id, req);
+  }
+}
+
+export function hasVacationInWeek(userId: string, vacationDate: string): boolean {
+  const d = new Date(vacationDate + 'T00:00:00');
+  const day = d.getDay() || 7;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - day + 1);
+  const weekStart = monday.toISOString().split('T')[0];
+  const weekEnd = new Date(monday.getTime() + 6 * 86400000).toISOString().split('T')[0];
+
+  return mem.vacations.some(v =>
+    v.requesterId === userId &&
+    (v.status === '승인' || v.status === '대기중') &&
+    v.vacationDate >= weekStart &&
+    v.vacationDate <= weekEnd
+  );
 }

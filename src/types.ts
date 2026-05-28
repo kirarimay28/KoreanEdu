@@ -47,6 +47,24 @@ export interface ClassicalLiteratureEntry {
   poeticDiction: string;
   phrases: string;
 
+  // 서사 fields
+  authorDescription: string;
+  workCharacter: string;
+  titleMeaning: string;
+  characters: string;
+  viewpoint: string;
+  event1: string;
+  event2: string;
+  event3: string;
+  narrativeConflict: string;
+  narrativeFeature1: string;
+  narrativeFeature2: string;
+  narrativeFeature3: string;
+  keyMaterials: string;
+  literaryMeaning: string;
+  intertextuality: string;
+  examPoints: string;
+
   examAnswer: string;
   feedbacks: Feedback[];
 }
@@ -120,6 +138,24 @@ export interface Warning {
   issuedByName: string;
 }
 
+export type VacationReason = '질병' | '여행' | '가족 모임' | '기타';
+export type VacationStatus = '대기중' | '승인' | '거절';
+
+export interface VacationRequest {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  createdAt: string;
+  vacationDate: string;
+  reason: VacationReason;
+  customReason: string;
+  makeupDate: string;
+  status: VacationStatus;
+  reviewedAt?: string;
+  reviewedById?: string;
+  reviewedByName?: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -130,9 +166,10 @@ export interface AppData {
   resourceRequests: ResourceRequest[];
   announcements: Announcement[];
   warnings: Warning[];
+  vacations: VacationRequest[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist';
 export type StudySubTab = 'classical' | 'modern';
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';

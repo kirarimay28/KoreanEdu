@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { User, Announcement } from '../../types';
 import { getAnnouncements, createAnnouncement, deleteAnnouncement } from '../../store';
 import { Megaphone, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { getWeekQuestion } from '../../data/educationQuestions';
 
 interface Props {
   currentUser: User;
@@ -45,8 +46,6 @@ export default function AnnouncementBar({ currentUser }: Props) {
     deleteAnnouncement(id);
     reload();
   }
-
-  if (announcements.length === 0 && !canWrite) return null;
 
   return (
     <div className="mb-4 bg-indigo-50 border border-indigo-200 rounded-2xl overflow-hidden">
@@ -131,6 +130,14 @@ export default function AnnouncementBar({ currentUser }: Props) {
           <p className="text-xs text-indigo-400 italic py-2">등록된 공지사항이 없습니다.</p>
         </div>
       )}
+
+      {/* 이번 주 교육관 형성 질문 */}
+      <div className="border-t border-indigo-100 px-4 py-3 bg-indigo-50/50">
+        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide mb-1.5">
+          📚 이번 주 교육관 형성 질문
+        </p>
+        <p className="text-sm text-indigo-800 leading-relaxed">{getWeekQuestion()}</p>
+      </div>
     </div>
   );
 }
