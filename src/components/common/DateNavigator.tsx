@@ -43,9 +43,13 @@ export default function DateNavigator({ date, onChange }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCalendar(v => !v)}
-            className="flex items-center gap-2 hover:bg-gray-50 px-2 py-1 rounded-lg transition"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition border ${
+              showCalendar
+                ? 'bg-primary-50 border-primary-200'
+                : 'hover:bg-gray-50 border-transparent hover:border-gray-200'
+            }`}
           >
-            <CalendarDays className="w-4 h-4 text-primary-500" />
+            <CalendarDays className={`w-4 h-4 ${showCalendar ? 'text-primary-600' : 'text-primary-500'}`} />
             <span className="font-semibold text-gray-800 text-sm">{formatDisplay(date)}</span>
           </button>
 

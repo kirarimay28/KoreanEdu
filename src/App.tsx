@@ -11,6 +11,16 @@ import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as 
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser } from './store';
+import { MOTIVATIONAL_QUOTES } from './data/motivationalQuotes';
+
+function getDailyQuote(): string {
+  const today = getKSTToday();
+  let hash = 0;
+  for (let i = 0; i < today.length; i++) {
+    hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+  }
+  return MOTIVATIONAL_QUOTES[hash % MOTIVATIONAL_QUOTES.length];
+}
 
 const SESSION_KEY = 'korean_edu_session';
 
@@ -93,11 +103,14 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-white" />
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-4 h-4 text-white" />
+              </div>
+              <AppLogo className="h-7" />
             </div>
-            <AppLogo className="h-8" />
+            <p className="text-[10px] text-primary-400 italic mt-0.5 ml-10 truncate max-w-[180px]">{getDailyQuote()}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
