@@ -6,8 +6,9 @@ import PersonalStudyTab from './components/Personal/PersonalStudyTab';
 import ReflectionTab from './components/Reflection/ReflectionTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import ResourceTab from './components/Resource/ResourceTab';
+import MemberTab from './components/Member/MemberTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, LogOut, User as UserIcon, RefreshCw, Inbox, Users } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser } from './store';
@@ -29,7 +30,8 @@ const TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?
   { id: 'personal', label: '개인공부', icon: GraduationCap },
   { id: 'reflection', label: '반성', icon: ClipboardList },
   { id: 'attendance', label: '출석', icon: CalendarCheck },
-  { id: 'resource', label: '자료 요청', icon: Inbox },
+  { id: 'resource', label: '자료요청', icon: Inbox },
+  { id: 'member', label: '멤버', icon: Users },
 ];
 
 export default function App() {
@@ -137,11 +139,11 @@ export default function App() {
 
       <main className="max-w-2xl mx-auto px-4 py-4">
         <DailyVocab date={date} />
-        {activeTab !== 'attendance' && (
+        {activeTab !== 'attendance' && activeTab !== 'member' && (
           <DateNavigator date={date} onChange={setDate} />
         )}
 
-        <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
+        <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl overflow-x-auto">
           {TABS.map(tab => {
             const Icon = tab.icon;
             const pendingCount = tab.id === 'resource' ? getPendingRequestsForUser(currentUser.id).length : 0;
@@ -149,7 +151,7 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 text-xs rounded-lg transition-all font-medium relative ${
+                className={`flex-shrink-0 flex items-center justify-center gap-1 py-2 px-3 text-[11px] rounded-lg transition-all font-medium relative ${
                   activeTab === tab.id ? 'tab-active' : 'tab-inactive'
                 }`}
               >
@@ -171,6 +173,7 @@ export default function App() {
           {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
           {activeTab === 'attendance' && <AttendanceTab />}
           {activeTab === 'resource' && <ResourceTab currentUser={currentUser} />}
+          {activeTab === 'member' && <MemberTab currentUser={currentUser} />}
         </div>
       </main>
     </div>

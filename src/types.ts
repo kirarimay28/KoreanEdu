@@ -109,7 +109,7 @@ export interface AppData {
   resourceRequests: ResourceRequest[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member';
 export type StudySubTab = 'classical' | 'modern';
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';
