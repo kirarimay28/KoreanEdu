@@ -103,8 +103,14 @@ export default function App() {
   if (loadError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4 p-8 text-center">
-        <p className="text-red-500 font-semibold">Firebase 연결에 실패했습니다.</p>
-        <p className="text-gray-500 text-sm">.env.local 파일의 Firebase 설정값을 확인해 주세요.</p>
+        <p className="text-red-500 font-semibold">서버 연결에 실패했습니다.</p>
+        <p className="text-gray-500 text-sm">네트워크를 확인하고 다시 시도해 주세요.</p>
+        <button
+          onClick={() => { setLoadError(false); setLoading(true); initializeData().then(() => setLoading(false)).catch(() => { setLoading(false); setLoadError(true); }); }}
+          className="mt-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition"
+        >
+          다시 시도
+        </button>
       </div>
     );
   }

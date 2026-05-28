@@ -89,7 +89,7 @@ export async function initializeData(): Promise<void> {
     fetchFromFirestore().catch(console.error);
   } else {
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 10000)
+      setTimeout(() => reject(new Error('timeout')), 25000)
     );
     await Promise.race([fetchFromFirestore(), timeout]);
   }
