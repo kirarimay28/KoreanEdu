@@ -127,6 +127,36 @@ export interface Announcement {
   createdAt: string;
   authorId: string;
   authorName: string;
+  pinned?: boolean;
+}
+
+export interface QnAPost {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface QnAComment {
+  id: string;
+  postId: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverName: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
 }
 
 export interface Warning {
@@ -181,6 +211,9 @@ export interface AppData {
   warnings: Warning[];
   vacations: VacationRequest[];
   educationAnswers: EducationAnswer[];
+  qnaPosts: QnAPost[];
+  qnaComments: QnAComment[];
+  messages: Message[];
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library';

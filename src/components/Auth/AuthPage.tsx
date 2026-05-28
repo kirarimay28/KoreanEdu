@@ -158,6 +158,7 @@ export default function AuthPage({ onLogin }: Props) {
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="new-password"
                 />
+                <p className="text-[11px] text-amber-600 mt-1">비밀번호는 네 자리 숫자로 설정해 주십시오.</p>
               </div>
               <div>
                 <label className="label">나의 다짐</label>
@@ -168,6 +169,7 @@ export default function AuthPage({ onLogin }: Props) {
                   value={resolution}
                   onChange={e => setResolution(e.target.value)}
                 />
+                <p className="text-[11px] text-amber-600 mt-1">나의 다짐은 한 번 설정하면 변경할 수 없습니다.</p>
               </div>
               {error && (
                 <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</p>

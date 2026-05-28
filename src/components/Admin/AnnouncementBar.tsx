@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { User, Announcement } from '../../types';
-import { getAnnouncements, createAnnouncement, deleteAnnouncement } from '../../store';
-import { Megaphone, X, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store';
+import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check } from 'lucide-react';
 import { getWeekQuestion } from '../../data/educationQuestions';
 
 interface Props {
@@ -22,6 +22,9 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
   const [draftTitle, setDraftTitle] = useState('');
   const [draftContent, setDraftContent] = useState('');
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
 
   const isAdmin = currentUser.role === 'admin';
   const canWrite = currentUser.role === 'admin' || currentUser.role === 'subadmin';
@@ -56,6 +59,25 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
   function handleDelete(id: string) {
     if (!window.confirm('공지사항을 삭제할까요?')) return;
     deleteAnnouncement(id);
+    reload();
+  }
+
+  function startEdit(ann: Announcement) {
+    setEditingId(ann.id);
+    setEditTitle(ann.title || '');
+    setEditContent(ann.content || '');
+    setOpenIds(prev => new Set([...prev, ann.id]));
+  }
+
+  function handleSaveEdit(ann: Announcement) {
+    if (!editTitle.trim()) return;
+    updateAnnouncement({ ...ann, title: editTitle.trim(), content: editContent.trim() });
+    setEditingId(null);
+    reload();
+  }
+
+  function handleTogglePin(ann: Announcement) {
+    updateAnnouncement({ ...ann, pinned: !ann.pinned });
     reload();
   }
 
@@ -126,22 +148,40 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
             const isOpen = openIds.has(ann.id);
             const title = ann.title || ann.content.split('\n')[0];
             const hasBody = !!ann.content;
+            const isEditing = editingId === ann.id;
             return (
               <div key={ann.id} className="px-4 py-2.5">
-                {/* 제목 행 */}
                 <div className="flex items-center gap-2">
+                  {ann.pinned && <Pin className="w-3 h-3 text-indigo-400 flex-shrink-0" />}
                   <button
-                    onClick={() => hasBody && toggleAnn(ann.id)}
-                    className={`flex-1 flex items-center gap-1.5 text-left min-w-0 ${hasBody ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => !isEditing && hasBody && toggleAnn(ann.id)}
+                    className={`flex-1 flex items-center gap-1.5 text-left min-w-0 ${hasBody && !isEditing ? 'cursor-pointer' : 'cursor-default'}`}
                   >
-                    <span className="text-sm font-semibold text-indigo-900 flex-1">{title}</span>
-                    {hasBody && (
+                    <span className={`text-sm font-semibold flex-1 ${ann.pinned ? 'text-indigo-700' : 'text-indigo-900'}`}>{title}</span>
+                    {hasBody && !isEditing && (
                       isOpen
                         ? <ChevronUp className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                         : <ChevronDown className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                     )}
                   </button>
-                  {isAdmin && (
+                  {canWrite && !isEditing && (
+                    <button
+                      onClick={() => startEdit(ann)}
+                      className="flex-shrink-0 p-1 text-indigo-300 hover:text-indigo-500 transition rounded"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                  {isAdmin && !isEditing && (
+                    <button
+                      onClick={() => handleTogglePin(ann)}
+                      className={`flex-shrink-0 p-1 transition rounded ${ann.pinned ? 'text-indigo-500' : 'text-indigo-300 hover:text-indigo-500'}`}
+                      title={ann.pinned ? '고정 해제' : '상단 고정'}
+                    >
+                      <Pin className="w-3 h-3" />
+                    </button>
+                  )}
+                  {isAdmin && !isEditing && (
                     <button
                       onClick={() => handleDelete(ann.id)}
                       className="flex-shrink-0 p-1 text-indigo-300 hover:text-red-400 transition rounded"
@@ -149,11 +189,47 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
+                  {isEditing && (
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="flex-shrink-0 text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded transition"
+                    >
+                      취소
+                    </button>
+                  )}
+                  {isEditing && (
+                    <button
+                      onClick={() => handleSaveEdit(ann)}
+                      disabled={!editTitle.trim()}
+                      className="flex-shrink-0 p-1 text-indigo-500 hover:text-indigo-700 disabled:text-gray-300 transition rounded"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                <p className="text-[10px] text-indigo-400 mt-0.5">{ann.authorName} · {formatDate(ann.createdAt)}</p>
-                {/* 펼쳐진 본문 */}
-                {isOpen && hasBody && (
-                  <p className="text-sm text-indigo-800 whitespace-pre-wrap mt-2 leading-relaxed">{ann.content}</p>
+
+                {isEditing ? (
+                  <div className="mt-2 space-y-1.5">
+                    <input
+                      className="w-full text-sm border border-indigo-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white font-semibold"
+                      value={editTitle}
+                      onChange={e => setEditTitle(e.target.value)}
+                      autoFocus
+                    />
+                    <textarea
+                      className="w-full text-sm border border-indigo-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-none"
+                      rows={3}
+                      value={editContent}
+                      onChange={e => setEditContent(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[10px] text-indigo-400 mt-0.5">{ann.authorName} · {formatDate(ann.createdAt)}</p>
+                    {isOpen && hasBody && (
+                      <p className="text-sm text-indigo-800 whitespace-pre-wrap mt-2 leading-relaxed">{ann.content}</p>
+                    )}
+                  </>
                 )}
               </div>
             );

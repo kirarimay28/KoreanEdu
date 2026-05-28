@@ -3,7 +3,7 @@ import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore'
 import type {
   AppData, User, UserRole, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
-  Announcement, Warning, VacationRequest, EducationAnswer,
+  Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -20,6 +20,9 @@ const defaultData: AppData = {
   warnings: [],
   vacations: [],
   educationAnswers: [],
+  qnaPosts: [],
+  qnaComments: [],
+  messages: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -53,7 +56,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -65,6 +68,9 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'warnings')),
     getDocs(collection(db, 'vacations')),
     getDocs(collection(db, 'educationAnswers')),
+    getDocs(collection(db, 'qnaPosts')),
+    getDocs(collection(db, 'qnaComments')),
+    getDocs(collection(db, 'messages')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -78,6 +84,9 @@ async function fetchFromFirestore(): Promise<void> {
     warnings:            wa.docs.map(d => d.data() as Warning),
     vacations:           va.docs.map(d => d.data() as VacationRequest),
     educationAnswers:    ea.docs.map(d => d.data() as EducationAnswer),
+    qnaPosts:            qp.docs.map(d => d.data() as QnAPost),
+    qnaComments:         qc.docs.map(d => d.data() as QnAComment),
+    messages:            ms.docs.map(d => d.data() as Message),
   };
   bootstrapAdmin();
   saveCache();
@@ -314,9 +323,11 @@ export function completeResourceRequest(id: string): void {
 
 // ── Announcements ────────────────────────────────────────
 export function getAnnouncements(): Announcement[] {
-  return mem.announcements.slice().sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return mem.announcements.slice().sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function createAnnouncement(ann: Announcement): void {
@@ -325,10 +336,83 @@ export function createAnnouncement(ann: Announcement): void {
   saveCache();
 }
 
+export function updateAnnouncement(ann: Announcement): void {
+  const idx = mem.announcements.findIndex(a => a.id === ann.id);
+  if (idx >= 0) {
+    mem.announcements[idx] = ann;
+    persist('announcements', ann.id, ann);
+    saveCache();
+  }
+}
+
 export function deleteAnnouncement(id: string): void {
   mem.announcements = mem.announcements.filter(a => a.id !== id);
   remove('announcements', id);
   saveCache();
+}
+
+// ── Q&A ──────────────────────────────────────────────────
+export function getQnAPosts(): QnAPost[] {
+  return mem.qnaPosts.slice().sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function createQnAPost(post: QnAPost): void {
+  mem.qnaPosts.push(post);
+  persist('qnaPosts', post.id, post);
+}
+
+export function deleteQnAPost(id: string): void {
+  mem.qnaPosts = mem.qnaPosts.filter(p => p.id !== id);
+  remove('qnaPosts', id);
+  mem.qnaComments = mem.qnaComments.filter(c => c.postId !== id);
+}
+
+export function getQnAComments(postId: string): QnAComment[] {
+  return mem.qnaComments
+    .filter(c => c.postId === postId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+export function createQnAComment(comment: QnAComment): void {
+  mem.qnaComments.push(comment);
+  persist('qnaComments', comment.id, comment);
+}
+
+export function deleteQnAComment(id: string): void {
+  mem.qnaComments = mem.qnaComments.filter(c => c.id !== id);
+  remove('qnaComments', id);
+}
+
+// ── Messages ──────────────────────────────────────────────
+export function sendMessage(msg: Message): void {
+  mem.messages.push(msg);
+  persist('messages', msg.id, msg);
+}
+
+export function getReceivedMessages(userId: string): Message[] {
+  return mem.messages
+    .filter(m => m.receiverId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function getSentMessages(userId: string): Message[] {
+  return mem.messages
+    .filter(m => m.senderId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function markMessageRead(id: string): void {
+  const msg = mem.messages.find(m => m.id === id);
+  if (msg && !msg.read) {
+    msg.read = true;
+    persist('messages', id, msg);
+  }
+}
+
+export function getUnreadCount(userId: string): number {
+  return mem.messages.filter(m => m.receiverId === userId && !m.read).length;
 }
 
 // ── Warnings ─────────────────────────────────────────────
