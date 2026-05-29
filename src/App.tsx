@@ -13,8 +13,9 @@ import QnATab from './components/QnA/QnATab';
 import CalendarTab from './components/Calendar/CalendarTab';
 import MessagesTab from './components/Messages/MessagesTab';
 import LibraryTab from './components/Library/LibraryTab';
+import TutorialTab from './components/Tutorial/TutorialTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft, Map } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
@@ -49,6 +50,7 @@ const MENU_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ class
   { id: 'vaclist', label: '휴가명단', icon: ListChecks },
   { id: 'messages', label: '쪽지', icon: Mail },
   { id: 'library', label: '도서관', icon: BookMarked },
+  { id: 'tutorial', label: '튜토리얼', icon: Map },
 ];
 
 export default function App() {
@@ -240,6 +242,7 @@ export default function App() {
               {activeTab === 'vaclist' && <VacationListTab />}
               {activeTab === 'messages' && <MessagesTab currentUser={currentUser} />}
               {activeTab === 'library' && <LibraryTab />}
+              {activeTab === 'tutorial' && <TutorialTab />}
             </div>
           </>
         ) : (
