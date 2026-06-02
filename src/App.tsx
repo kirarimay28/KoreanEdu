@@ -259,14 +259,14 @@ export default function App() {
               <DateNavigator date={date} onChange={setDate} />
             )}
 
-            <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+            <div className="flex gap-0.5 mb-4 bg-gray-100 p-1 rounded-xl">
               {MAIN_TABS.map(tab => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-shrink-0 flex items-center justify-center gap-1 py-2 px-3 text-[11px] rounded-lg transition-all font-medium ${
+                    className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] rounded-lg transition-all font-medium ${
                       activeTab === tab.id ? 'tab-active' : 'tab-inactive'
                     }`}
                   >
