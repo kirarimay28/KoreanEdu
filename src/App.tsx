@@ -241,7 +241,7 @@ export default function App() {
               {activeTab === 'vacation' && <VacationRequestTab currentUser={currentUser} />}
               {activeTab === 'vaclist' && <VacationListTab />}
               {activeTab === 'messages' && <MessagesTab currentUser={currentUser} />}
-              {activeTab === 'library' && <LibraryTab />}
+              {activeTab === 'library' && <LibraryTab currentUser={currentUser} />}
               {activeTab === 'tutorial' && <TutorialTab />}
             </div>
           </>

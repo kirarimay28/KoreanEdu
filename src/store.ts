@@ -1,7 +1,7 @@
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import type {
-  AppData, User, UserRole, ClassicalLiteratureEntry, ModernLiteratureEntry,
+  AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
 } from './types';
@@ -170,6 +170,14 @@ export function setUserRole(userId: string, role: UserRole): void {
 export function deleteUser(userId: string): void {
   mem.users = mem.users.filter(u => u.id !== userId);
   remove('users', userId);
+  saveCache();
+}
+
+export function setUserRestrictions(userId: string, restrictions: UserRestrictions): void {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return;
+  user.restrictions = restrictions;
+  persist('users', userId, { ...user });
   saveCache();
 }
 

@@ -1,4 +1,9 @@
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Lock } from 'lucide-react';
+import type { User } from '../../types';
+
+interface Props {
+  currentUser: User;
+}
 
 interface LibraryItem {
   title: string;
@@ -36,32 +41,55 @@ const LIBRARY_ITEMS: LibraryItem[] = [
   },
 ];
 
-export default function LibraryTab() {
+export default function LibraryTab({ currentUser }: Props) {
+  const restricted = !!currentUser.restrictions?.noLibraryDownload;
+
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-400 mb-4">클릭하면 새 탭에서 열립니다.</p>
-      {LIBRARY_ITEMS.map(item => (
-        <a
-          key={item.filename}
-          href={`/${item.filename}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-start gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-primary-200 transition-all group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 transition">
-            <FileText className="w-5 h-5 text-primary-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-semibold text-sm text-gray-800">{item.title}</span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${item.tagColor}`}>{item.tag}</span>
+      {restricted ? (
+        <p className="text-xs text-red-400 mb-4 flex items-center gap-1">
+          <Lock className="w-3 h-3" />다운로드 권한이 제한되어 있습니다.
+        </p>
+      ) : (
+        <p className="text-xs text-gray-400 mb-4">클릭하면 새 탭에서 열립니다.</p>
+      )}
+      {LIBRARY_ITEMS.map(item => {
+        const content = (
+          <>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition ${restricted ? 'bg-gray-100' : 'bg-primary-50 group-hover:bg-primary-100'}`}>
+              {restricted ? <Lock className="w-5 h-5 text-gray-300" /> : <FileText className="w-5 h-5 text-primary-500" />}
             </div>
-            <p className="text-xs text-gray-500 leading-relaxed">{item.description}</p>
-            <p className="text-[10px] text-gray-400 mt-1.5">{item.size}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className={`font-semibold text-sm ${restricted ? 'text-gray-400' : 'text-gray-800'}`}>{item.title}</span>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${restricted ? 'bg-gray-100 text-gray-400' : item.tagColor}`}>{item.tag}</span>
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">{item.description}</p>
+              <p className="text-[10px] text-gray-400 mt-1.5">{item.size}</p>
+            </div>
+            {!restricted && <Download className="w-4 h-4 text-gray-300 group-hover:text-primary-400 transition flex-shrink-0 mt-1" />}
+          </>
+        );
+
+        return restricted ? (
+          <div
+            key={item.filename}
+            className="flex items-start gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm opacity-60 cursor-not-allowed"
+          >
+            {content}
           </div>
-          <Download className="w-4 h-4 text-gray-300 group-hover:text-primary-400 transition flex-shrink-0 mt-1" />
-        </a>
-      ))}
+        ) : (
+          <a
+            key={item.filename}
+            href={`/${item.filename}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-primary-200 transition-all group"
+          >
+            {content}
+          </a>
+        );
+      })}
     </div>
   );
 }

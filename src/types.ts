@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'subadmin' | 'member';
 
+export interface UserRestrictions {
+  noStudyView?: boolean;
+  noLibraryDownload?: boolean;
+  noVacationRequest?: boolean;
+  noResourceRequest?: boolean;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -7,6 +14,7 @@ export interface User {
   resolution: string;
   createdAt: string;
   role?: UserRole;
+  restrictions?: UserRestrictions;
 }
 
 export type ExamStatus = 'O' | '△' | 'X' | '';

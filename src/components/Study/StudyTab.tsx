@@ -3,7 +3,7 @@ import type { User, StudySubTab } from '../../types';
 import ClassicalLiterature from './ClassicalLiterature';
 import ModernLiterature from './ModernLiterature';
 import { usePdfExport } from '../../hooks/usePdfExport';
-import { FileDown } from 'lucide-react';
+import { FileDown, Lock } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -15,6 +15,16 @@ export default function StudyTab({ date, currentUser }: Props) {
   const { contentRef, exportToPDF, isExporting } = usePdfExport(
     `스터디_${subTab === 'classical' ? '고전문학' : '현대문학'}_${date}.pdf`
   );
+
+  if (currentUser.restrictions?.noStudyView) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+        <Lock className="w-10 h-10 text-gray-200" />
+        <p className="text-sm font-semibold text-gray-400">접근이 제한되었습니다</p>
+        <p className="text-xs text-gray-300">스터디 탭 열람 권한이 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
