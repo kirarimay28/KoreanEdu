@@ -222,6 +222,18 @@ export interface AppData {
   qnaPosts: QnAPost[];
   qnaComments: QnAComment[];
   messages: Message[];
+  assignmentChecks: AssignmentCheck[];
+}
+
+export type CheckStatus = 'O' | '△' | 'X' | 'none' | '';
+
+export interface AssignmentCheck {
+  id: string;       // `${userId}_${weekKey}`
+  userId: string;
+  username: string;
+  weekKey: string;  // YYYY-MM-DD (해당 주 월요일)
+  checks: Record<string, CheckStatus>;
+  updatedAt: string;
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment';

@@ -4,6 +4,7 @@ import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
+  AssignmentCheck, CheckStatus,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -23,6 +24,7 @@ const defaultData: AppData = {
   qnaPosts: [],
   qnaComments: [],
   messages: [],
+  assignmentChecks: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -56,7 +58,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -71,6 +73,7 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'qnaPosts')),
     getDocs(collection(db, 'qnaComments')),
     getDocs(collection(db, 'messages')),
+    getDocs(collection(db, 'assignmentChecks')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -87,6 +90,7 @@ async function fetchFromFirestore(): Promise<void> {
     qnaPosts:            qp.docs.map(d => d.data() as QnAPost),
     qnaComments:         qc.docs.map(d => d.data() as QnAComment),
     messages:            ms.docs.map(d => d.data() as Message),
+    assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
   };
   bootstrapAdmin();
   saveCache();
@@ -524,4 +528,25 @@ export function hasVacationInWeek(userId: string, vacationDate: string): boolean
     v.vacationDate >= weekStart &&
     v.vacationDate <= weekEnd
   );
+}
+
+// ── Assignment Checks ────────────────────────────────────────────
+export function getAssignmentCheck(userId: string, weekKey: string): AssignmentCheck | undefined {
+  return mem.assignmentChecks.find(c => c.userId === userId && c.weekKey === weekKey);
+}
+
+export function getAssignmentChecksForWeek(weekKey: string): AssignmentCheck[] {
+  return mem.assignmentChecks.filter(c => c.weekKey === weekKey);
+}
+
+export function upsertAssignmentCheck(
+  userId: string, username: string, weekKey: string, checks: Record<string, CheckStatus>
+): void {
+  const id = `${userId}_${weekKey}`;
+  const entry: AssignmentCheck = { id, userId, username, weekKey, checks, updatedAt: new Date().toISOString() };
+  const idx = mem.assignmentChecks.findIndex(c => c.id === id);
+  if (idx >= 0) mem.assignmentChecks[idx] = entry;
+  else mem.assignmentChecks.push(entry);
+  persist('assignmentChecks', id, entry);
+  saveCache();
 }
