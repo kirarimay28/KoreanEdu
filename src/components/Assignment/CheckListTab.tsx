@@ -22,9 +22,10 @@ const ITEMS: Item[] = [
   { id: 'mod_solve',    category: '현대문학', label: '기출 문제 풀이',       description: '사고 과정 흔적 남겼는지' },
   { id: 'grm_read',     category: '현대문법', label: '한문총 회독',          description: '한문총 회독했는지' },
   { id: 'grm_create',   category: '현대문법', label: '문제 창작/기출 분석', description: '문제 창작 또는 기출 분석 완료했는지' },
+  { id: 'rev_study',    category: '복습',     label: '스터디 내용 복습',    description: '지난 시간 스터디 내용 복습했는지' },
 ];
 
-const CATEGORIES = ['고전문학', '현대문학', '현대문법'];
+const CATEGORIES = ['고전문학', '현대문학', '현대문법', '복습'];
 
 const STATUS_OPTIONS: { value: CheckStatus; label: string }[] = [
   { value: 'O',    label: 'O' },
