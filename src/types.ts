@@ -224,7 +224,7 @@ export interface AppData {
   messages: Message[];
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment';
 export type StudySubTab = 'classical' | 'modern';
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';

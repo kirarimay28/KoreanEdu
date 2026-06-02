@@ -14,8 +14,9 @@ import CalendarTab from './components/Calendar/CalendarTab';
 import MessagesTab from './components/Messages/MessagesTab';
 import LibraryTab from './components/Library/LibraryTab';
 import TutorialTab from './components/Tutorial/TutorialTab';
+import AssignmentTab from './components/Assignment/AssignmentTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
-import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft, Map } from 'lucide-react';
+import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft, Map, TableProperties } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
@@ -40,6 +41,7 @@ const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ class
   { id: 'reflection', label: '반성', icon: ClipboardList },
   { id: 'qna', label: '질의응답', icon: HelpCircle },
   { id: 'calendar', label: '캘린더', icon: CalendarDays },
+  { id: 'assignment', label: '과제', icon: TableProperties },
 ];
 
 const MENU_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -281,6 +283,7 @@ export default function App() {
               {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
               {activeTab === 'qna' && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar' && <CalendarTab />}
+              {activeTab === 'assignment' && <AssignmentTab />}
             </div>
           </>
         )}
