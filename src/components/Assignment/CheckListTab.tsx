@@ -10,19 +10,28 @@ interface Props {
 interface Item {
   id: string;
   category: string;
+  group?: string;
   label: string;
   description: string;
 }
 
 const ITEMS: Item[] = [
-  { id: 'cls_analysis', category: '고전문학', label: '필독 작품 목록 분석', description: '과제 양식에 맞게 성실하게 분석했는지' },
-  { id: 'cls_exam',     category: '고전문학', label: '기출 문제 분석',       description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
-  { id: 'cls_vocab',    category: '고전문학', label: '고어 정리',            description: '작품에 나온 고어 정리했는지' },
-  { id: 'mod_exam',     category: '현대문학', label: '기출 문제 분석',       description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
-  { id: 'mod_solve',    category: '현대문학', label: '기출 문제 풀이',       description: '사고 과정 흔적 남겼는지' },
-  { id: 'grm_read',     category: '현대문법', label: '한문총 회독',          description: '한문총 회독했는지' },
-  { id: 'grm_create',   category: '현대문법', label: '문제 창작/기출 분석', description: '문제 창작 또는 기출 분석 완료했는지' },
-  { id: 'rev_study',    category: '복습',     label: '스터디 내용 복습',    description: '지난 시간 스터디 내용 복습했는지' },
+  // 고전문학
+  { id: 'cls_sun_solve',   category: '고전문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
+  { id: 'cls_sun_review',  category: '고전문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
+  { id: 'cls_sun_summary', category: '고전문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
+  { id: 'cls_exam',        category: '고전문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
+  { id: 'cls_vocab',       category: '고전문학', label: '고어 정리',      description: '작품에 나온 고어 정리했는지' },
+  // 현대문학
+  { id: 'mod_exam',        category: '현대문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
+  { id: 'mod_sun_solve',   category: '현대문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
+  { id: 'mod_sun_review',  category: '현대문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
+  { id: 'mod_sun_summary', category: '현대문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
+  // 현대문법
+  { id: 'grm_read',        category: '현대문법', label: '한문총 회독',          description: '한문총 회독했는지' },
+  { id: 'grm_create',      category: '현대문법', label: '문제 창작/기출 분석', description: '문제 창작 또는 기출 분석 완료했는지' },
+  // 복습
+  { id: 'rev_study',       category: '복습',     label: '스터디 내용 복습',    description: '지난 시간 스터디 내용 복습했는지' },
 ];
 
 const CATEGORIES = ['고전문학', '현대문학', '현대문법', '복습'];
@@ -68,6 +77,19 @@ function calcCompletion(checks: Record<string, CheckStatus>): { pct: number; tot
     else if (s === '△') score += 0.5;
   }
   return { pct: total === 0 ? 100 : Math.round((score / total) * 100), total };
+}
+
+function groupItems(items: Item[]) {
+  const result: Array<{ group?: string; items: Item[] }> = [];
+  for (const item of items) {
+    const last = result[result.length - 1];
+    if (item.group && last?.group === item.group) {
+      last.items.push(item);
+    } else {
+      result.push({ group: item.group, items: [item] });
+    }
+  }
+  return result;
 }
 
 function PctBar({ pct }: { pct: number }) {
@@ -144,21 +166,30 @@ export default function CheckListTab({ currentUser }: Props) {
             <div key={cat}>
               <p className="text-[11px] font-bold text-primary-500 uppercase tracking-wide mb-2">{cat}</p>
               <div className="space-y-2">
-                {ITEMS.filter(i => i.category === cat).map(item => (
-                  <div key={item.id} className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-700">{item.label}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{item.description}</p>
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      {STATUS_OPTIONS.map(opt => (
-                        <StatusButton
-                          key={opt.value}
-                          status={opt.value}
-                          label={opt.label}
-                          selected={(myChecks[item.id] ?? '') === opt.value}
-                          onClick={() => handleCheck(item.id, opt.value)}
-                        />
+                {groupItems(ITEMS.filter(i => i.category === cat)).map((g, gi) => (
+                  <div key={gi}>
+                    {g.group && (
+                      <p className="text-[10px] font-bold text-gray-400 mb-1.5 mt-1">{g.group}</p>
+                    )}
+                    <div className={`space-y-2 ${g.group ? 'pl-2 border-l-2 border-gray-100' : ''}`}>
+                      {g.items.map(item => (
+                        <div key={item.id} className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-gray-700">{item.label}</p>
+                            {item.description && <p className="text-[10px] text-gray-400 mt-0.5">{item.description}</p>}
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {STATUS_OPTIONS.map(opt => (
+                              <StatusButton
+                                key={opt.value}
+                                status={opt.value}
+                                label={opt.label}
+                                selected={(myChecks[item.id] ?? '') === opt.value}
+                                onClick={() => handleCheck(item.id, opt.value)}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -207,17 +238,26 @@ export default function CheckListTab({ currentUser }: Props) {
                       <div key={cat}>
                         <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wide mb-1.5">{cat}</p>
                         <div className="space-y-1.5">
-                          {ITEMS.filter(i => i.category === cat).map(item => {
-                            const s = checks[item.id] ?? '';
-                            return (
-                              <div key={item.id} className="flex items-center gap-2">
-                                <span className="flex-1 text-xs text-gray-600">{item.label}</span>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${STATUS_STYLE[s]}`}>
-                                  {s === 'none' ? '없음' : s === '' ? '―' : s}
-                                </span>
+                          {groupItems(ITEMS.filter(i => i.category === cat)).map((g, gi) => (
+                            <div key={gi}>
+                              {g.group && (
+                                <p className="text-[10px] font-bold text-gray-400 mb-1 mt-0.5">{g.group}</p>
+                              )}
+                              <div className={`space-y-1.5 ${g.group ? 'pl-2 border-l-2 border-gray-100' : ''}`}>
+                                {g.items.map(item => {
+                                  const s = checks[item.id] ?? '';
+                                  return (
+                                    <div key={item.id} className="flex items-center gap-2">
+                                      <span className="flex-1 text-xs text-gray-600">{item.label}</span>
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${STATUS_STYLE[s]}`}>
+                                        {s === 'none' ? '없음' : s === '' ? '―' : s}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
