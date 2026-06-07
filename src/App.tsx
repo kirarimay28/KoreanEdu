@@ -282,7 +282,7 @@ export default function App() {
               {activeTab === 'personal' && <PersonalStudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
               {activeTab === 'qna' && <QnATab currentUser={currentUser} />}
-              {activeTab === 'calendar' && <CalendarTab />}
+              {activeTab === 'calendar' && <CalendarTab currentUser={currentUser} />}
               {activeTab === 'assignment' && <AssignmentTab currentUser={currentUser} />}
             </div>
           </>

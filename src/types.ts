@@ -223,6 +223,20 @@ export interface AppData {
   qnaComments: QnAComment[];
   messages: Message[];
   assignmentChecks: AssignmentCheck[];
+  calendarEvents: CalendarEvent[];
+}
+
+export type EventColor = 'blue' | 'green' | 'red' | 'orange' | 'purple';
+
+export interface CalendarEvent {
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  color: EventColor;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
 }
 
 export type CheckStatus = 'O' | '△' | 'X' | 'none' | '';

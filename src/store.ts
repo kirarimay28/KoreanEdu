@@ -4,7 +4,7 @@ import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
-  AssignmentCheck, CheckStatus,
+  AssignmentCheck, CheckStatus, CalendarEvent,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -25,6 +25,7 @@ const defaultData: AppData = {
   qnaComments: [],
   messages: [],
   assignmentChecks: [],
+  calendarEvents: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -58,7 +59,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -74,6 +75,7 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'qnaComments')),
     getDocs(collection(db, 'messages')),
     getDocs(collection(db, 'assignmentChecks')),
+    getDocs(collection(db, 'calendarEvents')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -91,6 +93,7 @@ async function fetchFromFirestore(): Promise<void> {
     qnaComments:         qc.docs.map(d => d.data() as QnAComment),
     messages:            ms.docs.map(d => d.data() as Message),
     assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
+    calendarEvents:      ce.docs.map(d => d.data() as CalendarEvent),
   };
   bootstrapAdmin();
   saveCache();
@@ -548,5 +551,27 @@ export function upsertAssignmentCheck(
   if (idx >= 0) mem.assignmentChecks[idx] = entry;
   else mem.assignmentChecks.push(entry);
   persist('assignmentChecks', id, entry);
+  saveCache();
+}
+
+// ── Calendar Events ──────────────────────────────────────────────
+export function getCalendarEventsForMonth(year: number, month: number): CalendarEvent[] {
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  return mem.calendarEvents.filter(e => e.date.startsWith(prefix));
+}
+
+export function getCalendarEventsForDate(date: string): CalendarEvent[] {
+  return mem.calendarEvents.filter(e => e.date === date);
+}
+
+export function createCalendarEvent(event: CalendarEvent): void {
+  mem.calendarEvents.push(event);
+  persist('calendarEvents', event.id, event);
+  saveCache();
+}
+
+export function deleteCalendarEvent(id: string): void {
+  mem.calendarEvents = mem.calendarEvents.filter(e => e.id !== id);
+  remove('calendarEvents', id);
   saveCache();
 }
