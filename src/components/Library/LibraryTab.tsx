@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileText, Download, Lock, Plus, X, Trash2, Link } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { FileText, Download, Lock, Plus, X, Trash2, Upload, Loader2 } from 'lucide-react';
 import type { User, LibraryItem } from '../../types';
 import { getLibraryItems, addLibraryItem, removeLibraryItem } from '../../store';
 
@@ -18,11 +18,20 @@ const TAG_COLOR: Record<string, string> = {
   '기타':      'bg-gray-100 text-gray-500',
 };
 
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
+
 const STATIC_ITEMS = [
   { title: '고전문학 필독 작품 목록', description: '조선대 국어교육과 고전문학 필독 작품 목록 — 갈래별 정리', href: '/고전문학-필독작품목록.pdf', size: '319KB', tag: '작품 목록' },
   { title: '고전어 어휘 100개', description: '달콤한 국어 — 필수 고전어 어휘 100개, 현대어 풀이 및 예문', href: '/고전어-어휘100.pdf', size: '353KB', tag: '어휘' },
   { title: '고전문학 작품 학습지', description: '개별 작품 분석 학습지 — 갈래, 시적 화자, 배경, 정서·태도, 표현 등', href: '/고전문학-작품학습지.pdf', size: '620KB', tag: '학습지' },
 ];
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
 
 export default function LibraryTab({ currentUser }: Props) {
   const restricted = !!currentUser.restrictions?.noLibraryDownload;
@@ -33,35 +42,76 @@ export default function LibraryTab({ currentUser }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState('기타');
-  const [url, setUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
-    setTitle(''); setDescription(''); setTag('기타'); setUrl(''); setError('');
+    setTitle(''); setDescription(''); setTag('기타');
+    setFile(null); setError(''); setProgress(0);
     setShowForm(false);
+    if (fileRef.current) fileRef.current.value = '';
   }
 
-  function handleAdd() {
-    if (!title.trim() || !url.trim()) {
-      setError('제목과 링크를 모두 입력해 주세요.');
+  async function handleUpload() {
+    if (!title.trim()) { setError('제목을 입력해 주세요.'); return; }
+    if (!file) { setError('PDF 파일을 선택해 주세요.'); return; }
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+      setError('Cloudinary 환경 변수가 설정되지 않았습니다.');
       return;
     }
-    const item: LibraryItem = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      description: description.trim(),
-      tag,
-      downloadUrl: url.trim(),
-      storagePath: '',
-      fileName: '',
-      fileSize: 0,
-      uploadedAt: new Date().toISOString(),
-      uploadedById: currentUser.id,
-      uploadedByName: currentUser.username,
-    };
-    addLibraryItem(item);
-    setItems(getLibraryItems());
-    resetForm();
+
+    setUploading(true);
+    setError('');
+    setProgress(10);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      formData.append('folder', 'korean-edu-library');
+
+      setProgress(30);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      setProgress(80);
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error((json as { error?: { message?: string } }).error?.message ?? '업로드 실패');
+      }
+
+      const data = await res.json() as { secure_url: string; public_id: string; bytes: number };
+      setProgress(100);
+
+      const item: LibraryItem = {
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        description: description.trim(),
+        tag,
+        downloadUrl: data.secure_url,
+        storagePath: data.public_id,
+        fileName: file.name,
+        fileSize: data.bytes,
+        uploadedAt: new Date().toISOString(),
+        uploadedById: currentUser.id,
+        uploadedByName: currentUser.username,
+      };
+      addLibraryItem(item);
+      setItems(getLibraryItems());
+      resetForm();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '업로드 중 오류가 발생했습니다.');
+      setProgress(0);
+    } finally {
+      setUploading(false);
+    }
   }
 
   function handleDelete(item: LibraryItem) {
@@ -96,7 +146,7 @@ export default function LibraryTab({ currentUser }: Props) {
         <div className="card border border-primary-100 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-              <Link className="w-4 h-4 text-primary-500" />자료 링크 추가
+              <Upload className="w-4 h-4 text-primary-500" />PDF 업로드
             </p>
             <button onClick={resetForm} className="text-gray-300 hover:text-gray-500 transition">
               <X className="w-4 h-4" />
@@ -115,12 +165,29 @@ export default function LibraryTab({ currentUser }: Props) {
             value={description}
             onChange={e => setDescription(e.target.value)}
           />
-          <input
-            className="input-field w-full text-sm"
-            placeholder="링크 (Google Drive, Dropbox 등 공유 URL)"
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-          />
+
+          {/* File picker */}
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={e => setFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-gray-200 text-sm text-gray-400 hover:border-primary-300 hover:text-primary-500 transition"
+            >
+              <FileText className="w-4 h-4" />
+              {file ? (
+                <span className="text-gray-700 font-medium">{file.name} <span className="text-gray-400 font-normal">({formatBytes(file.size)})</span></span>
+              ) : (
+                'PDF 파일 선택'
+              )}
+            </button>
+          </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-gray-500">태그</span>
@@ -139,18 +206,25 @@ export default function LibraryTab({ currentUser }: Props) {
             ))}
           </div>
 
+          {/* Progress bar */}
+          {uploading && (
+            <div className="space-y-1">
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-primary-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="text-[11px] text-gray-400 text-center">업로드 중... {progress}%</p>
+            </div>
+          )}
+
           {error && <p className="text-xs text-red-500">{error}</p>}
 
-          <p className="text-[11px] text-gray-400">
-            Google Drive: 공유 → &quot;링크가 있는 모든 사용자&quot; 설정 후 링크 복사
-          </p>
-
           <button
-            onClick={handleAdd}
-            disabled={!title.trim() || !url.trim()}
-            className="w-full py-2.5 text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl transition"
+            onClick={handleUpload}
+            disabled={uploading || !title.trim() || !file}
+            className="w-full py-2.5 text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl transition flex items-center justify-center gap-2"
           >
-            추가
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {uploading ? '업로드 중...' : '업로드'}
           </button>
         </div>
       )}
@@ -174,7 +248,9 @@ export default function LibraryTab({ currentUser }: Props) {
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${TAG_COLOR[item.tag] ?? 'bg-gray-100 text-gray-500'}`}>{item.tag}</span>
             </div>
             {item.description && <p className="text-xs text-gray-500 leading-relaxed">{item.description}</p>}
-            <p className="text-[10px] text-gray-400 mt-1">{item.uploadedByName}</p>
+            <p className="text-[10px] text-gray-400 mt-1">
+              {item.uploadedByName}{item.fileSize ? ` · ${formatBytes(item.fileSize)}` : ''}
+            </p>
           </div>
           {isAdmin ? (
             <button onClick={() => handleDelete(item)} className="flex-shrink-0 text-gray-200 hover:text-red-400 transition mt-1">
