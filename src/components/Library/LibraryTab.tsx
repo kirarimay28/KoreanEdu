@@ -74,36 +74,53 @@ export default function LibraryTab({ currentUser }: Props) {
   async function handleUpload() {
     if (!file || !title.trim()) return;
     setError('');
+    setProgress(0);
     const id = crypto.randomUUID();
-    const ext = file.name.split('.').pop();
+    const ext = file.name.split('.').pop() ?? 'bin';
     const storagePath = `library/${id}.${ext}`;
-    const storageRef = ref(storage, storagePath);
-    const task = uploadBytesResumable(storageRef, file);
 
-    task.on(
-      'state_changed',
-      snap => setProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100)),
-      err => { setError(`업로드 실패: ${err.message}`); setProgress(null); },
-      async () => {
-        const downloadUrl = await getDownloadURL(task.snapshot.ref);
-        const item: LibraryItem = {
-          id,
-          title: title.trim(),
-          description: description.trim(),
-          tag,
-          downloadUrl,
-          storagePath,
-          fileName: file.name,
-          fileSize: file.size,
-          uploadedAt: new Date().toISOString(),
-          uploadedById: currentUser.id,
-          uploadedByName: currentUser.username,
-        };
-        addLibraryItem(item);
-        setDynamicItems(getLibraryItems());
-        resetForm();
+    try {
+      const storageRef = ref(storage, storagePath);
+      const task = uploadBytesResumable(storageRef, file);
+
+      await new Promise<void>((resolve, reject) => {
+        task.on(
+          'state_changed',
+          snap => setProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100)),
+          err => reject(err),
+          () => resolve()
+        );
+      });
+
+      const downloadUrl = await getDownloadURL(task.snapshot.ref);
+      const item: LibraryItem = {
+        id,
+        title: title.trim(),
+        description: description.trim(),
+        tag,
+        downloadUrl,
+        storagePath,
+        fileName: file.name,
+        fileSize: file.size,
+        uploadedAt: new Date().toISOString(),
+        uploadedById: currentUser.id,
+        uploadedByName: currentUser.username,
+      };
+      addLibraryItem(item);
+      setDynamicItems(getLibraryItems());
+      resetForm();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? '';
+      const msg = (err as { message?: string })?.message ?? '알 수 없는 오류';
+      if (code === 'storage/unauthorized') {
+        setError('권한 오류: Firebase Storage 규칙을 확인해 주세요. (storage/unauthorized)');
+      } else if (code === 'storage/unknown' || msg.includes('CORS')) {
+        setError('CORS 오류: Firebase Storage CORS 설정이 필요합니다.');
+      } else {
+        setError(`업로드 실패 [${code}]: ${msg}`);
       }
-    );
+      setProgress(null);
+    }
   }
 
   async function handleDelete(item: LibraryItem) {
