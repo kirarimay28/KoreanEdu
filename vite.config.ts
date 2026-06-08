@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
 
 const gitHash = (() => {
+  // Vercel 환경: VERCEL_GIT_COMMIT_SHA 우선 사용
+  if (process.env.VERCEL_GIT_COMMIT_SHA) {
+    return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
+  }
   try { return execSync('git rev-parse --short HEAD').toString().trim(); }
   catch { return String(Date.now()); }
 })();
