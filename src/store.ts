@@ -63,28 +63,35 @@ function bootstrapAdmin(): void {
   }
 }
 
+const EMPTY_SNAP = { docs: [] as { data: () => unknown }[] };
+
+async function safeGet(name: string) {
+  try { return await getDocs(collection(db, name)); }
+  catch (e) { console.warn(`Firestore [${name}] fetch failed:`, e); return EMPTY_SNAP; }
+}
+
 async function fetchFromFirestore(): Promise<void> {
   const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl] = await Promise.all([
-    getDocs(collection(db, 'users')),
-    getDocs(collection(db, 'classicalEntries')),
-    getDocs(collection(db, 'modernEntries')),
-    getDocs(collection(db, 'personalStudyEntries')),
-    getDocs(collection(db, 'reflectionEntries')),
-    getDocs(collection(db, 'attendanceEntries')),
-    getDocs(collection(db, 'resourceRequests')),
-    getDocs(collection(db, 'announcements')),
-    getDocs(collection(db, 'warnings')),
-    getDocs(collection(db, 'vacations')),
-    getDocs(collection(db, 'educationAnswers')),
-    getDocs(collection(db, 'qnaPosts')),
-    getDocs(collection(db, 'qnaComments')),
-    getDocs(collection(db, 'messages')),
-    getDocs(collection(db, 'assignmentChecks')),
-    getDocs(collection(db, 'calendarEvents')),
-    getDocs(collection(db, 'libraryItems')),
-    getDocs(collection(db, 'vocabTestScores')),
-    getDocs(collection(db, 'peerFeedbacks')),
-    getDocs(collection(db, 'studyLogs')),
+    safeGet('users'),
+    safeGet('classicalEntries'),
+    safeGet('modernEntries'),
+    safeGet('personalStudyEntries'),
+    safeGet('reflectionEntries'),
+    safeGet('attendanceEntries'),
+    safeGet('resourceRequests'),
+    safeGet('announcements'),
+    safeGet('warnings'),
+    safeGet('vacations'),
+    safeGet('educationAnswers'),
+    safeGet('qnaPosts'),
+    safeGet('qnaComments'),
+    safeGet('messages'),
+    safeGet('assignmentChecks'),
+    safeGet('calendarEvents'),
+    safeGet('libraryItems'),
+    safeGet('vocabTestScores'),
+    safeGet('peerFeedbacks'),
+    safeGet('studyLogs'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
