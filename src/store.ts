@@ -78,26 +78,24 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  // 기존 컬렉션: 실패 시 에러 전파 (safeGet 사용 안 함)
-  // 신규 컬렉션 3개: Firestore 규칙 미설정 가능성 → safeGet
   const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl] = await Promise.all([
-    getDocs(collection(db, 'users')),
-    getDocs(collection(db, 'classicalEntries')),
-    getDocs(collection(db, 'modernEntries')),
-    getDocs(collection(db, 'personalStudyEntries')),
-    getDocs(collection(db, 'reflectionEntries')),
-    getDocs(collection(db, 'attendanceEntries')),
-    getDocs(collection(db, 'resourceRequests')),
-    getDocs(collection(db, 'announcements')),
-    getDocs(collection(db, 'warnings')),
-    getDocs(collection(db, 'vacations')),
-    getDocs(collection(db, 'educationAnswers')),
-    getDocs(collection(db, 'qnaPosts')),
-    getDocs(collection(db, 'qnaComments')),
-    getDocs(collection(db, 'messages')),
-    getDocs(collection(db, 'assignmentChecks')),
-    getDocs(collection(db, 'calendarEvents')),
-    getDocs(collection(db, 'libraryItems')),
+    safeGet('users'),
+    safeGet('classicalEntries'),
+    safeGet('modernEntries'),
+    safeGet('personalStudyEntries'),
+    safeGet('reflectionEntries'),
+    safeGet('attendanceEntries'),
+    safeGet('resourceRequests'),
+    safeGet('announcements'),
+    safeGet('warnings'),
+    safeGet('vacations'),
+    safeGet('educationAnswers'),
+    safeGet('qnaPosts'),
+    safeGet('qnaComments'),
+    safeGet('messages'),
+    safeGet('assignmentChecks'),
+    safeGet('calendarEvents'),
+    safeGet('libraryItems'),
     safeGet('vocabTestScores'),
     safeGet('peerFeedbacks'),
     safeGet('studyLogs'),
@@ -135,8 +133,8 @@ export async function initializeData(onSynced?: () => void): Promise<void> {
       .then(() => onSynced?.())
       .catch(console.error);
   } else {
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 25000)
+    const timeout = new Promise<void>(resolve =>
+      setTimeout(() => resolve(), 20000)
     );
     await Promise.race([fetchFromFirestore(), timeout]);
   }
