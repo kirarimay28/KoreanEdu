@@ -160,6 +160,7 @@ export function registerUser(username: string, password: string, resolution: str
   };
   mem.users.push(user);
   persist('users', user.id, user);
+  saveCache();
   return { ok: true, user };
 }
 
