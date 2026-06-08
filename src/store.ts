@@ -42,8 +42,13 @@ function loadCache(): boolean {
     const raw = localStorage.getItem(CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Migrate old cache that may not have new fields
       mem = { ...defaultData, ...parsed };
+      // 캐시가 오염된 경우(users가 비어있음) → 무효화하고 Firestore에서 재로드
+      if (mem.users.length === 0) {
+        localStorage.removeItem(CACHE_KEY);
+        mem = { ...defaultData };
+        return false;
+      }
       return true;
     }
   } catch {}
@@ -51,6 +56,8 @@ function loadCache(): boolean {
 }
 
 function saveCache(): void {
+  // users가 비어있으면 저장하지 않음 — 오염된 캐시 방지
+  if (mem.users.length === 0) return;
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(mem)); } catch {}
 }
 
