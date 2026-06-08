@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, Trash2, MessageSquare, Inbox } from 'lucide-react';
+import { Send, Trash2, MessageSquare, Inbox, ArrowRight, Users } from 'lucide-react';
 import type { User, PeerFeedbackCategory } from '../../types';
 import {
   getUsers, getVocabTestScoresForDate,
@@ -172,6 +172,42 @@ export default function PeerFeedbackTab({ date, currentUser }: Props) {
                 <p className="text-xs text-gray-600 leading-relaxed">{f.content}</p>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* All feedbacks overview */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <Users className="w-3.5 h-3.5" />전체 현황 ({allFeedbacks.length})
+        </p>
+        {allFeedbacks.length === 0 ? (
+          <p className="text-xs text-gray-300 text-center py-4">아직 피드백이 없습니다.</p>
+        ) : (
+          <div className="space-y-2">
+            {allFeedbacks
+              .slice()
+              .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+              .map(f => {
+                const isMe = f.authorId === currentUser.id || f.targetId === currentUser.id;
+                return (
+                  <div key={f.id} className={`card p-3 space-y-1.5 ${isMe ? 'border-primary-100' : ''}`}>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-xs font-bold ${f.authorId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`}>
+                        {f.authorName}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                      <span className={`text-xs font-bold ${f.targetId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`}>
+                        {f.targetName}
+                      </span>
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${CAT_COLOR[f.category as PeerFeedbackCategory]}`}>
+                        {f.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed">{f.content}</p>
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
