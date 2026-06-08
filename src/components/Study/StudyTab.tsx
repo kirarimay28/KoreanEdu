@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import type { User, StudySubTab } from '../../types';
-import ClassicalLiterature from './ClassicalLiterature';
-import ModernLiterature from './ModernLiterature';
-import { usePdfExport } from '../../hooks/usePdfExport';
-import { FileDown, Lock } from 'lucide-react';
+import VocabTestTab from './VocabTestTab';
+import PeerFeedbackTab from './PeerFeedbackTab';
+import StudyLogTab from './StudyLogTab';
+import { Lock } from 'lucide-react';
 
 interface Props {
   date: string;
   currentUser: User;
 }
 
+const TABS: { id: StudySubTab; label: string }[] = [
+  { id: 'vocab',    label: '고어 시험' },
+  { id: 'feedback', label: '상호 피드백' },
+  { id: 'journal',  label: '스터디 일지' },
+];
+
 export default function StudyTab({ date, currentUser }: Props) {
-  const [subTab, setSubTab] = useState<StudySubTab>('classical');
-  const { contentRef, exportToPDF, isExporting } = usePdfExport(
-    `스터디_${subTab === 'classical' ? '고전문학' : '현대문학'}_${date}.pdf`
-  );
+  const [subTab, setSubTab] = useState<StudySubTab>('vocab');
 
   if (currentUser.restrictions?.noStudyView) {
     return (
@@ -28,35 +31,21 @@ export default function StudyTab({ date, currentUser }: Props) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="flex flex-1 bg-gray-100 p-1 rounded-xl">
+      <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
+        {TABS.map(t => (
           <button
-            className={`flex-1 py-2 text-sm rounded-lg transition-all font-medium ${subTab === 'classical' ? 'tab-active' : 'tab-inactive'}`}
-            onClick={() => setSubTab('classical')}
+            key={t.id}
+            onClick={() => setSubTab(t.id)}
+            className={`flex-1 py-2 text-sm rounded-lg transition-all font-medium ${subTab === t.id ? 'tab-active' : 'tab-inactive'}`}
           >
-            고전 문학
+            {t.label}
           </button>
-          <button
-            className={`flex-1 py-2 text-sm rounded-lg transition-all font-medium ${subTab === 'modern' ? 'tab-active' : 'tab-inactive'}`}
-            onClick={() => setSubTab('modern')}
-          >
-            현대 문학
-          </button>
-        </div>
-        <button
-          onClick={exportToPDF}
-          disabled={isExporting}
-          className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs px-3 py-2 rounded-xl transition disabled:opacity-50 flex-shrink-0"
-        >
-          <FileDown className="w-3.5 h-3.5" />
-          {isExporting ? '생성 중...' : 'PDF'}
-        </button>
+        ))}
       </div>
 
-      <div ref={contentRef}>
-        {subTab === 'classical' && <ClassicalLiterature date={date} currentUser={currentUser} />}
-        {subTab === 'modern' && <ModernLiterature date={date} currentUser={currentUser} />}
-      </div>
+      {subTab === 'vocab'    && <VocabTestTab    date={date} currentUser={currentUser} />}
+      {subTab === 'feedback' && <PeerFeedbackTab date={date} currentUser={currentUser} />}
+      {subTab === 'journal'  && <StudyLogTab     date={date} currentUser={currentUser} />}
     </div>
   );
 }

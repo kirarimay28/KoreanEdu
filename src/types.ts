@@ -225,6 +225,9 @@ export interface AppData {
   assignmentChecks: AssignmentCheck[];
   calendarEvents: CalendarEvent[];
   libraryItems: LibraryItem[];
+  vocabTestScores: VocabTestScore[];
+  peerFeedbacks: PeerFeedback[];
+  studyLogs: StudyLog[];
 }
 
 export interface LibraryItem {
@@ -266,7 +269,42 @@ export interface AssignmentCheck {
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment';
-export type StudySubTab = 'classical' | 'modern';
+export type StudySubTab = 'vocab' | 'feedback' | 'journal';
+
+export interface VocabTestScore {
+  id: string;        // `${userId}_${date}`
+  userId: string;
+  username: string;
+  date: string;
+  score: number;     // 1–20
+  submittedAt: string;
+}
+
+export type PeerFeedbackCategory = '분석 방향성' | '근거 부족/오류' | '어휘 부족' | '공부법';
+
+export interface PeerFeedback {
+  id: string;
+  date: string;
+  authorId: string;
+  authorName: string;
+  targetId: string;
+  targetName: string;
+  category: PeerFeedbackCategory;
+  content: string;
+  createdAt: string;
+}
+
+export interface StudyLog {
+  id: string;        // `${userId}_${date}`
+  userId: string;
+  username: string;
+  date: string;
+  workName: string;
+  assignedQuestions: string;
+  difficulties: string;
+  selfFeedback: string;
+  updatedAt: string;
+}
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';
 

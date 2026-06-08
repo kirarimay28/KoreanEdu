@@ -5,6 +5,7 @@ import type {
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
+  VocabTestScore, PeerFeedback, StudyLog,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -27,6 +28,9 @@ const defaultData: AppData = {
   assignmentChecks: [],
   calendarEvents: [],
   libraryItems: [],
+  vocabTestScores: [],
+  peerFeedbacks: [],
+  studyLogs: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -60,7 +64,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -78,6 +82,9 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'assignmentChecks')),
     getDocs(collection(db, 'calendarEvents')),
     getDocs(collection(db, 'libraryItems')),
+    getDocs(collection(db, 'vocabTestScores')),
+    getDocs(collection(db, 'peerFeedbacks')),
+    getDocs(collection(db, 'studyLogs')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -97,6 +104,9 @@ async function fetchFromFirestore(): Promise<void> {
     assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
     calendarEvents:      ce.docs.map(d => d.data() as CalendarEvent),
     libraryItems:        li.docs.map(d => d.data() as LibraryItem),
+    vocabTestScores:     vt.docs.map(d => d.data() as VocabTestScore),
+    peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
+    studyLogs:           sl.docs.map(d => d.data() as StudyLog),
   };
   bootstrapAdmin();
   saveCache();
@@ -593,5 +603,81 @@ export function addLibraryItem(item: LibraryItem): void {
 export function removeLibraryItem(id: string): void {
   mem.libraryItems = mem.libraryItems.filter(i => i.id !== id);
   remove('libraryItems', id);
+  saveCache();
+}
+
+// ── Vocab Test Scores ─────────────────────────────────────────────
+export function getVocabTestScore(userId: string, date: string): VocabTestScore | undefined {
+  return mem.vocabTestScores.find(s => s.userId === userId && s.date === date);
+}
+
+export function getVocabTestScoresForDate(date: string): VocabTestScore[] {
+  return mem.vocabTestScores.filter(s => s.date === date);
+}
+
+export function upsertVocabTestScore(userId: string, username: string, date: string, score: number): void {
+  const id = `${userId}_${date}`;
+  const entry: VocabTestScore = { id, userId, username, date, score, submittedAt: new Date().toISOString() };
+  const idx = mem.vocabTestScores.findIndex(s => s.id === id);
+  if (idx >= 0) mem.vocabTestScores[idx] = entry;
+  else mem.vocabTestScores.push(entry);
+  persist('vocabTestScores', id, entry);
+
+  // Attendance = score submission
+  markAttendance(date, userId, username);
+
+  // Auto-issue warning for score 1–9
+  if (score >= 1 && score <= 9) {
+    const alreadyWarned = mem.warnings.some(
+      w => w.targetUserId === userId && w.reason.includes(`[고어 시험] ${date}`)
+    );
+    if (!alreadyWarned) {
+      const warning: Warning = {
+        id: crypto.randomUUID(),
+        targetUserId: userId,
+        targetUsername: username,
+        reason: `[고어 시험] ${date} — ${score}/20점 (전체 재시험 대상)`,
+        issuedAt: new Date().toISOString(),
+        issuedById: 'system',
+        issuedByName: '시스템',
+      };
+      mem.warnings.push(warning);
+      persist('warnings', warning.id, warning);
+    }
+  }
+  saveCache();
+}
+
+// ── Peer Feedbacks ────────────────────────────────────────────────
+export function getPeerFeedbacksForDate(date: string): PeerFeedback[] {
+  return mem.peerFeedbacks.filter(f => f.date === date);
+}
+
+export function addPeerFeedback(feedback: PeerFeedback): void {
+  mem.peerFeedbacks.push(feedback);
+  persist('peerFeedbacks', feedback.id, feedback);
+  saveCache();
+}
+
+export function deletePeerFeedback(id: string): void {
+  mem.peerFeedbacks = mem.peerFeedbacks.filter(f => f.id !== id);
+  remove('peerFeedbacks', id);
+  saveCache();
+}
+
+// ── Study Logs ────────────────────────────────────────────────────
+export function getStudyLog(userId: string, date: string): StudyLog | undefined {
+  return mem.studyLogs.find(l => l.userId === userId && l.date === date);
+}
+
+export function getStudyLogsForDate(date: string): StudyLog[] {
+  return mem.studyLogs.filter(l => l.date === date);
+}
+
+export function upsertStudyLog(log: StudyLog): void {
+  const idx = mem.studyLogs.findIndex(l => l.id === log.id);
+  if (idx >= 0) mem.studyLogs[idx] = log;
+  else mem.studyLogs.push(log);
+  persist('studyLogs', log.id, log);
   saveCache();
 }
