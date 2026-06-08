@@ -119,10 +119,12 @@ async function fetchFromFirestore(): Promise<void> {
   saveCache();
 }
 
-export async function initializeData(): Promise<void> {
+export async function initializeData(onSynced?: () => void): Promise<void> {
   const hasCache = loadCache();
   if (hasCache) {
-    fetchFromFirestore().catch(console.error);
+    fetchFromFirestore()
+      .then(() => onSynced?.())
+      .catch(console.error);
   } else {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('timeout')), 25000)

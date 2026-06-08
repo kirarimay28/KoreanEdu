@@ -75,7 +75,11 @@ export default function App() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    initializeData()
+    initializeData(() => {
+      // 캐시 로드 후 Firestore 백그라운드 동기화 완료 시 재렌더링
+      setCurrentUser(prev => prev ? (getUserById(prev.id) ?? prev) : null);
+      setRefreshKey(k => k + 1);
+    })
       .then(() => {
         setLoading(false);
         setCurrentUser(prev => prev ? (getUserById(prev.id) ?? prev) : null);
