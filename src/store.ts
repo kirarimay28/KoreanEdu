@@ -4,7 +4,7 @@ import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
-  AssignmentCheck, CheckStatus, CalendarEvent,
+  AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -26,6 +26,7 @@ const defaultData: AppData = {
   messages: [],
   assignmentChecks: [],
   calendarEvents: [],
+  libraryItems: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -59,7 +60,7 @@ function bootstrapAdmin(): void {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li] = await Promise.all([
     getDocs(collection(db, 'users')),
     getDocs(collection(db, 'classicalEntries')),
     getDocs(collection(db, 'modernEntries')),
@@ -76,6 +77,7 @@ async function fetchFromFirestore(): Promise<void> {
     getDocs(collection(db, 'messages')),
     getDocs(collection(db, 'assignmentChecks')),
     getDocs(collection(db, 'calendarEvents')),
+    getDocs(collection(db, 'libraryItems')),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -94,6 +96,7 @@ async function fetchFromFirestore(): Promise<void> {
     messages:            ms.docs.map(d => d.data() as Message),
     assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
     calendarEvents:      ce.docs.map(d => d.data() as CalendarEvent),
+    libraryItems:        li.docs.map(d => d.data() as LibraryItem),
   };
   bootstrapAdmin();
   saveCache();
@@ -573,5 +576,22 @@ export function createCalendarEvent(event: CalendarEvent): void {
 export function deleteCalendarEvent(id: string): void {
   mem.calendarEvents = mem.calendarEvents.filter(e => e.id !== id);
   remove('calendarEvents', id);
+  saveCache();
+}
+
+// ── Library Items ────────────────────────────────────────────────
+export function getLibraryItems(): LibraryItem[] {
+  return mem.libraryItems.slice().sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+}
+
+export function addLibraryItem(item: LibraryItem): void {
+  mem.libraryItems.push(item);
+  persist('libraryItems', item.id, item);
+  saveCache();
+}
+
+export function removeLibraryItem(id: string): void {
+  mem.libraryItems = mem.libraryItems.filter(i => i.id !== id);
+  remove('libraryItems', id);
   saveCache();
 }

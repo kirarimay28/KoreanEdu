@@ -224,6 +224,21 @@ export interface AppData {
   messages: Message[];
   assignmentChecks: AssignmentCheck[];
   calendarEvents: CalendarEvent[];
+  libraryItems: LibraryItem[];
+}
+
+export interface LibraryItem {
+  id: string;
+  title: string;
+  description: string;
+  tag: string;
+  downloadUrl: string;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  uploadedById: string;
+  uploadedByName: string;
 }
 
 export type EventColor = 'blue' | 'green' | 'red' | 'orange' | 'purple';
