@@ -51,7 +51,7 @@ export default function AuthPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 via-white to-indigo-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-100 via-indigo-100 to-primary-200 p-4">
       <div className="w-full max-w-sm">
 
         {/* Hero */}
