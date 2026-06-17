@@ -219,6 +219,19 @@ export interface LocationNotice {
   createdByName: string;
 }
 
+export interface AssignmentNotice {
+  id: 'current';
+  date: string;            // YYYY-MM-DD
+  classicWork: string;     // 고전 작품명
+  modernPoetWork: string;  // 현대시 작품명
+  modernProseWork: string; // 현대산문 작품명
+  goeoStart: number;       // 고어 시작 번호 1-100
+  goeoEnd: number;         // 고어 끝 번호 1-100
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -241,6 +254,7 @@ export interface AppData {
   peerFeedbacks: PeerFeedback[];
   studyLogs: StudyLog[];
   locationNotice: LocationNotice | null;
+  assignmentNotice: AssignmentNotice | null;
 }
 
 export interface LibraryItem {

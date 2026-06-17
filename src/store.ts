@@ -5,7 +5,7 @@ import type {
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
-  VocabTestScore, PeerFeedback, StudyLog, LocationNotice,
+  VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -32,6 +32,7 @@ const defaultData: AppData = {
   peerFeedbacks: [],
   studyLogs: [],
   locationNotice: null,
+  assignmentNotice: null,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -79,7 +80,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -101,6 +102,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('peerFeedbacks'),
     safeGet('studyLogs'),
     safeGet('locationNotice'),
+    safeGet('assignmentNotice'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -124,6 +126,7 @@ async function fetchFromFirestore(): Promise<void> {
     peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
     studyLogs:           sl.docs.map(d => d.data() as StudyLog),
     locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
+    assignmentNotice:    (an2.docs[0]?.data() as AssignmentNotice) ?? null,
   };
   bootstrapAdmin();
   saveCache();
@@ -717,5 +720,23 @@ export function setLocationNotice(notice: Omit<LocationNotice, 'id'>): void {
 export function clearLocationNotice(): void {
   mem.locationNotice = null;
   remove('locationNotice', 'current');
+  saveCache();
+}
+
+// ── Assignment Notice ──────────────────────────────────────
+export function getAssignmentNotice(): AssignmentNotice | null {
+  return mem.assignmentNotice;
+}
+
+export function setAssignmentNotice(notice: Omit<AssignmentNotice, 'id'>): void {
+  const full: AssignmentNotice = { ...notice, id: 'current' };
+  mem.assignmentNotice = full;
+  persist('assignmentNotice', 'current', full);
+  saveCache();
+}
+
+export function clearAssignmentNotice(): void {
+  mem.assignmentNotice = null;
+  remove('assignmentNotice', 'current');
   saveCache();
 }
