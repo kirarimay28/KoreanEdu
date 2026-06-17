@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { MapPin, ChevronDown, ChevronUp, Pencil, X, Check } from 'lucide-react';
+import { MapPin, ChevronDown, ChevronUp, Pencil, X, Check, Share2 } from 'lucide-react';
 import type { User } from '../../types';
 import { getLocationNotice, setLocationNotice, clearLocationNotice } from '../../store';
+import { kakaoEnabled, shareLocationNotice } from '../../kakao';
 
 interface Props {
   currentUser: User;
@@ -50,6 +51,7 @@ export default function LocationNoticeBar({ currentUser }: Props) {
   }
 
   function handleSave() {
+    const display = spaceName === '기타' ? (customSpace || '기타') : spaceName;
     setLocationNotice({
       spaceName,
       customSpace: spaceName === '기타' ? customSpace : '',
@@ -62,6 +64,10 @@ export default function LocationNoticeBar({ currentUser }: Props) {
     });
     setEditing(false);
     setTick(t => t + 1);
+    // 등록 즉시 카카오 공유 다이얼로그 열기
+    if (kakaoEnabled()) {
+      shareLocationNotice({ spaceName: display, startTime, endTime, notes, authorName: currentUser.username });
+    }
   }
 
   function handleClear() {
@@ -194,6 +200,14 @@ export default function LocationNoticeBar({ currentUser }: Props) {
                 <p className="text-xs text-teal-700 whitespace-pre-wrap leading-relaxed">{notice.notes}</p>
               )}
               <p className="text-[10px] text-teal-400">{notice.createdByName} · {new Date(notice.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              {kakaoEnabled() && (
+                <button
+                  onClick={() => shareLocationNotice({ spaceName: displaySpace!, startTime: notice.startTime, endTime: notice.endTime, notes: notice.notes, authorName: notice.createdByName })}
+                  className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-yellow-600 bg-yellow-50 hover:bg-yellow-100 px-2.5 py-1 rounded-lg transition w-fit"
+                >
+                  <Share2 className="w-3 h-3" />카카오톡 공유
+                </button>
+              )}
             </div>
           ) : (
             <p className="px-4 py-3 text-xs text-teal-400 italic">등록된 장소 공지가 없습니다.</p>
