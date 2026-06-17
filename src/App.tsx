@@ -21,6 +21,7 @@ import AppLogo from './components/common/AppLogo';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
+import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
 import EducationAnswerPage from './components/Education/EducationAnswerPage';
 
@@ -258,6 +259,7 @@ export default function App() {
               onShowWrite={() => setEducationMode('write')}
               onShowRead={() => setEducationMode('read')}
             />
+            <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
             {['study', 'personal', 'reflection'].includes(activeTab) && (
               <DateNavigator date={date} onChange={setDate} />

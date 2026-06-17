@@ -207,6 +207,18 @@ export interface EducationAnswer {
   dislikes: string[];
 }
 
+export interface LocationNotice {
+  id: 'current';
+  spaceName: string;
+  customSpace: string;
+  startTime: string;
+  endTime: string;
+  notes: string;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -228,6 +240,7 @@ export interface AppData {
   vocabTestScores: VocabTestScore[];
   peerFeedbacks: PeerFeedback[];
   studyLogs: StudyLog[];
+  locationNotice: LocationNotice | null;
 }
 
 export interface LibraryItem {

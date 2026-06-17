@@ -5,7 +5,7 @@ import type {
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
-  VocabTestScore, PeerFeedback, StudyLog,
+  VocabTestScore, PeerFeedback, StudyLog, LocationNotice,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -31,6 +31,7 @@ const defaultData: AppData = {
   vocabTestScores: [],
   peerFeedbacks: [],
   studyLogs: [],
+  locationNotice: null,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -78,7 +79,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -99,6 +100,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('vocabTestScores'),
     safeGet('peerFeedbacks'),
     safeGet('studyLogs'),
+    safeGet('locationNotice'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -121,6 +123,7 @@ async function fetchFromFirestore(): Promise<void> {
     vocabTestScores:     vt.docs.map(d => d.data() as VocabTestScore),
     peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
     studyLogs:           sl.docs.map(d => d.data() as StudyLog),
+    locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
   };
   bootstrapAdmin();
   saveCache();
@@ -696,5 +699,23 @@ export function upsertStudyLog(log: StudyLog): void {
   if (idx >= 0) mem.studyLogs[idx] = log;
   else mem.studyLogs.push(log);
   persist('studyLogs', log.id, log);
+  saveCache();
+}
+
+// ── Location Notice ───────────────────────────────────────────────
+export function getLocationNotice(): LocationNotice | null {
+  return mem.locationNotice;
+}
+
+export function setLocationNotice(notice: Omit<LocationNotice, 'id'>): void {
+  const full: LocationNotice = { ...notice, id: 'current' };
+  mem.locationNotice = full;
+  persist('locationNotice', 'current', full);
+  saveCache();
+}
+
+export function clearLocationNotice(): void {
+  mem.locationNotice = null;
+  remove('locationNotice', 'current');
   saveCache();
 }
