@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { loginUser, registerUser } from '../../store';
 import type { User } from '../../types';
 import { LogIn, UserPlus } from 'lucide-react';
-import AppLogo from '../common/AppLogo';
 
 interface Props {
   onLogin: (user: User) => void;
@@ -57,7 +56,9 @@ export default function AuthPage({ onLogin }: Props) {
 
         {/* Hero */}
         <div className="text-center mb-10">
-          <AppLogo className="h-20 mx-auto mb-4" />
+          <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
+            나랏말ᄊᆞ미
+          </h1>
           <div className="flex items-center justify-center gap-2 mb-3">
             <div className="h-px w-10 bg-primary-200 rounded-full" />
             <div className="w-1.5 h-1.5 bg-primary-300 rounded-full" />
