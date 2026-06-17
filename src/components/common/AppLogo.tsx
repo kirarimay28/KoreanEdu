@@ -8,7 +8,7 @@ export default function AppLogo({ className = '' }: Props) {
       src="/logo.png"
       alt="나랏말ᄊᆞ미"
       className={className}
-      style={{ imageRendering: 'auto' }}
+      style={{ imageRendering: 'auto', height: '1.75rem', width: 'auto', maxHeight: '1.75rem' }}
     />
   );
 }
