@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { loginUser, registerUser } from '../../store';
 import type { User } from '../../types';
-import { BookOpen, LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 import AppLogo from '../common/AppLogo';
 
 interface Props {
@@ -52,44 +52,49 @@ export default function AuthPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl shadow-lg mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 via-white to-indigo-50 p-4">
+      <div className="w-full max-w-sm">
+
+        {/* Hero */}
+        <div className="text-center mb-10">
+          <AppLogo className="h-20 mx-auto mb-4" />
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="h-px w-10 bg-primary-200 rounded-full" />
+            <div className="w-1.5 h-1.5 bg-primary-300 rounded-full" />
+            <div className="h-px w-10 bg-primary-200 rounded-full" />
           </div>
-          <AppLogo className="h-14 mx-auto" />
-          <p className="text-gray-500 text-sm mt-1">함께 합격을 향해</p>
+          <p className="text-sm text-primary-400 font-medium tracking-widest">함께 합격을 향해</p>
         </div>
 
         {mode === 'select' && (
-          <div className="card space-y-4">
-            <h2 className="text-center text-lg font-semibold text-gray-800 mb-6">시작하기</h2>
-            <button
-              onClick={() => setMode('login')}
-              className="w-full flex items-center justify-center gap-3 btn-primary"
-            >
-              <LogIn className="w-5 h-5" />
-              로그인
-            </button>
-            <button
-              onClick={() => setMode('signup')}
-              className="w-full flex items-center justify-center gap-3 btn-secondary"
-            >
-              <UserPlus className="w-5 h-5" />
-              회원가입
-            </button>
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
+            <p className="text-center text-[13px] text-gray-400 mb-6 leading-relaxed">
+              스터디 구성원만 이용할 수 있습니다.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => setMode('login')}
+                className="w-full flex items-center justify-center gap-2 btn-primary"
+              >
+                <LogIn className="w-4 h-4" />로그인
+              </button>
+              <button
+                onClick={() => setMode('signup')}
+                className="w-full flex items-center justify-center gap-2 btn-secondary"
+              >
+                <UserPlus className="w-4 h-4" />회원가입
+              </button>
+            </div>
           </div>
         )}
 
         {mode === 'login' && (
-          <div className="card">
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
             <div className="flex items-center gap-2 mb-6">
-              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
               </button>
-              <h2 className="text-lg font-semibold text-gray-800">로그인</h2>
+              <h2 className="text-base font-semibold text-gray-800">로그인</h2>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -117,7 +122,7 @@ export default function AuthPage({ onLogin }: Props) {
                 />
               </div>
               {error && (
-                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</p>
+                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">{error}</p>
               )}
               <button type="submit" className="w-full btn-primary mt-2">
                 로그인
@@ -127,12 +132,12 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'signup' && (
-          <div className="card">
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
             <div className="flex items-center gap-2 mb-6">
-              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
               </button>
-              <h2 className="text-lg font-semibold text-gray-800">회원가입</h2>
+              <h2 className="text-base font-semibold text-gray-800">회원가입</h2>
             </div>
             <form onSubmit={handleSignup} className="space-y-4">
               <div>
@@ -172,7 +177,7 @@ export default function AuthPage({ onLogin }: Props) {
                 <p className="text-[11px] text-amber-600 mt-1">나의 다짐은 한 번 설정하면 변경할 수 없습니다.</p>
               </div>
               {error && (
-                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</p>
+                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">{error}</p>
               )}
               <button type="submit" className="w-full btn-primary mt-2">
                 가입하기
@@ -180,6 +185,7 @@ export default function AuthPage({ onLogin }: Props) {
             </form>
           </div>
         )}
+
       </div>
     </div>
   );
