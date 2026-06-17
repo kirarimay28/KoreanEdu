@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { User, Announcement } from '../../types';
 import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store';
-import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check } from 'lucide-react';
+import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check, Share2 } from 'lucide-react';
+import { shareAnnouncement } from '../../kakao';
 import { getWeekQuestion } from '../../data/educationQuestions';
 
 interface Props {
@@ -164,6 +165,15 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
                         : <ChevronDown className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                     )}
                   </button>
+                  {!isEditing && (
+                    <button
+                      onClick={() => shareAnnouncement({ title, content: ann.content, authorName: ann.authorName })}
+                      className="flex-shrink-0 p-1 text-indigo-300 hover:text-indigo-500 transition rounded"
+                      title="공유하기"
+                    >
+                      <Share2 className="w-3 h-3" />
+                    </button>
+                  )}
                   {canWrite && !isEditing && (
                     <button
                       onClick={() => startEdit(ann)}
