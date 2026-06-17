@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { loginUser, registerUser } from '../../store';
 import type { User } from '../../types';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, BookOpen } from 'lucide-react';
 
 interface Props {
   onLogin: (user: User) => void;
@@ -51,11 +51,25 @@ export default function AuthPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-100 via-indigo-100 to-primary-200 p-4">
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4"
+      style={{
+        background: `
+          radial-gradient(ellipse at 38% 32%, rgba(255,255,255,0.62) 0%, rgba(197,210,255,0.28) 42%, transparent 65%),
+          linear-gradient(145deg, #c7d7fe 0%, #a5bbfc 50%, #b0a8f0 100%)
+        `
+      }}
+    >
       <div className="w-full max-w-sm">
 
         {/* Hero */}
         <div className="text-center mb-10">
+          <div
+            className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl mb-5 mx-auto"
+            style={{ background: 'linear-gradient(145deg, #6370f3, #3535a7)' }}
+          >
+            <BookOpen className="w-10 h-10 text-white" />
+          </div>
           <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
             나랏말ᄊᆞ미
           </h1>

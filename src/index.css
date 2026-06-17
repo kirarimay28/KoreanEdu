@@ -52,20 +52,19 @@ body {
 
 .auth-logo-shimmer {
   background: linear-gradient(
-    90deg,
-    #4040cf 0%,
-    #4040cf 30%,
-    #a5bbfc 42%,
-    #e0e9ff 50%,
-    #a5bbfc 58%,
-    #4040cf 70%,
-    #4040cf 100%
+    120deg,
+    #303284 0%,
+    #4f52e8 25%,
+    #8196f8 50%,
+    #4f52e8 75%,
+    #303284 100%
   );
-  background-size: 250% auto;
+  background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: auth-shimmer 2.2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 3px 14px rgba(79, 82, 232, 0.4));
+  animation: auth-shimmer 3s ease-in-out infinite alternate;
 }
 
 @keyframes auth-shimmer {
