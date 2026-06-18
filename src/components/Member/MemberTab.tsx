@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import type { User, Warning } from '../../types';
+import type { User, Warning, UserRestrictions } from '../../types';
 import {
   getUsers, getAttendanceEntries, setUserRole, deleteUser,
-  issueWarning, getWarningsForUser, clearWarning,
+  issueWarning, getWarningsForUser, clearWarning, setUserRestrictions,
 } from '../../store';
-import { UserCircle2, CalendarCheck, Trophy, Star, Shield, ShieldCheck, Trash2, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { UserCircle2, CalendarCheck, Trophy, Star, Shield, ShieldCheck, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 
 interface Props {
   currentUser: User;
@@ -97,6 +97,12 @@ function MemberCard({ user, rank, currentUser, onAction }: {
     onAction();
   }
 
+  function handleToggleRestriction(key: keyof UserRestrictions) {
+    const current = user.restrictions ?? {};
+    setUserRestrictions(user.id, { ...current, [key]: !current[key] });
+    onAction();
+  }
+
   const rankIcon = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : rank + 1;
   const rankBg = rank === 0 ? 'bg-amber-100 text-amber-600' : rank === 1 ? 'bg-gray-100 text-gray-500' : rank === 2 ? 'bg-orange-100 text-orange-500' : 'bg-gray-50 text-gray-400';
 
@@ -117,6 +123,11 @@ function MemberCard({ user, rank, currentUser, onAction }: {
             {warnings.length > 0 && (
               <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                 <AlertTriangle className="w-2.5 h-2.5" />경고 {warnings.length}
+              </span>
+            )}
+            {Object.values(user.restrictions ?? {}).some(Boolean) && (
+              <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                <Lock className="w-2.5 h-2.5" />제한됨
               </span>
             )}
             {attendanceCount > 0 && rank === 0 && (
@@ -211,6 +222,41 @@ function MemberCard({ user, rank, currentUser, onAction }: {
               >
                 부여
               </button>
+            </div>
+          )}
+
+          {/* Restriction controls — admin only */}
+          {isAdmin && (
+            <div className="pt-3 border-t border-gray-100">
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                <Lock className="w-3 h-3" />권한 제한
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  ['noStudyView',       '스터디 탭 열람'],
+                  ['noLibraryDownload', '도서관 다운로드'],
+                  ['noVacationRequest', '휴가 신청'],
+                  ['noResourceRequest', '자료 요청'],
+                ] as [keyof UserRestrictions, string][]).map(([key, label]) => {
+                  const active = !!(user.restrictions?.[key]);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleToggleRestriction(key)}
+                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                        active
+                          ? 'bg-red-50 text-red-600 border border-red-200'
+                          : 'bg-gray-50 text-gray-500 border border-gray-100 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>{label}</span>
+                      <span className={`w-8 h-4 rounded-full flex-shrink-0 transition-colors relative ${active ? 'bg-red-400' : 'bg-gray-200'}`}>
+                        <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${active ? 'left-4' : 'left-0.5'}`} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

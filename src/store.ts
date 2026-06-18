@@ -1,9 +1,11 @@
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import type {
-  AppData, User, UserRole, ClassicalLiteratureEntry, ModernLiteratureEntry,
+  AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
-  Announcement, Warning, VacationRequest, EducationAnswer,
+  Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
+  AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
+  VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -20,6 +22,17 @@ const defaultData: AppData = {
   warnings: [],
   vacations: [],
   educationAnswers: [],
+  qnaPosts: [],
+  qnaComments: [],
+  messages: [],
+  assignmentChecks: [],
+  calendarEvents: [],
+  libraryItems: [],
+  vocabTestScores: [],
+  peerFeedbacks: [],
+  studyLogs: [],
+  locationNotice: null,
+  assignmentNotice: null,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -31,8 +44,13 @@ function loadCache(): boolean {
     const raw = localStorage.getItem(CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Migrate old cache that may not have new fields
       mem = { ...defaultData, ...parsed };
+      // 캐시가 오염된 경우(users가 비어있음) → 무효화하고 Firestore에서 재로드
+      if (mem.users.length === 0) {
+        localStorage.removeItem(CACHE_KEY);
+        mem = { ...defaultData };
+        return false;
+      }
       return true;
     }
   } catch {}
@@ -40,6 +58,8 @@ function loadCache(): boolean {
 }
 
 function saveCache(): void {
+  // users가 비어있으면 저장하지 않음 — 오염된 캐시 방지
+  if (mem.users.length === 0) return;
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(mem)); } catch {}
 }
 
@@ -52,19 +72,37 @@ function bootstrapAdmin(): void {
   }
 }
 
+const EMPTY_SNAP = { docs: [] as { data: () => unknown }[] };
+
+async function safeGet(name: string) {
+  try { return await getDocs(collection(db, name)); }
+  catch (e) { console.warn(`Firestore [${name}] fetch failed:`, e); return EMPTY_SNAP; }
+}
+
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea] = await Promise.all([
-    getDocs(collection(db, 'users')),
-    getDocs(collection(db, 'classicalEntries')),
-    getDocs(collection(db, 'modernEntries')),
-    getDocs(collection(db, 'personalStudyEntries')),
-    getDocs(collection(db, 'reflectionEntries')),
-    getDocs(collection(db, 'attendanceEntries')),
-    getDocs(collection(db, 'resourceRequests')),
-    getDocs(collection(db, 'announcements')),
-    getDocs(collection(db, 'warnings')),
-    getDocs(collection(db, 'vacations')),
-    getDocs(collection(db, 'educationAnswers')),
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2] = await Promise.all([
+    safeGet('users'),
+    safeGet('classicalEntries'),
+    safeGet('modernEntries'),
+    safeGet('personalStudyEntries'),
+    safeGet('reflectionEntries'),
+    safeGet('attendanceEntries'),
+    safeGet('resourceRequests'),
+    safeGet('announcements'),
+    safeGet('warnings'),
+    safeGet('vacations'),
+    safeGet('educationAnswers'),
+    safeGet('qnaPosts'),
+    safeGet('qnaComments'),
+    safeGet('messages'),
+    safeGet('assignmentChecks'),
+    safeGet('calendarEvents'),
+    safeGet('libraryItems'),
+    safeGet('vocabTestScores'),
+    safeGet('peerFeedbacks'),
+    safeGet('studyLogs'),
+    safeGet('locationNotice'),
+    safeGet('assignmentNotice'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -78,18 +116,31 @@ async function fetchFromFirestore(): Promise<void> {
     warnings:            wa.docs.map(d => d.data() as Warning),
     vacations:           va.docs.map(d => d.data() as VacationRequest),
     educationAnswers:    ea.docs.map(d => d.data() as EducationAnswer),
+    qnaPosts:            qp.docs.map(d => d.data() as QnAPost),
+    qnaComments:         qc.docs.map(d => d.data() as QnAComment),
+    messages:            ms.docs.map(d => d.data() as Message),
+    assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
+    calendarEvents:      ce.docs.map(d => d.data() as CalendarEvent),
+    libraryItems:        li.docs.map(d => d.data() as LibraryItem),
+    vocabTestScores:     vt.docs.map(d => d.data() as VocabTestScore),
+    peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
+    studyLogs:           sl.docs.map(d => d.data() as StudyLog),
+    locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
+    assignmentNotice:    (an2.docs[0]?.data() as AssignmentNotice) ?? null,
   };
   bootstrapAdmin();
   saveCache();
 }
 
-export async function initializeData(): Promise<void> {
+export async function initializeData(onSynced?: () => void): Promise<void> {
   const hasCache = loadCache();
   if (hasCache) {
-    fetchFromFirestore().catch(console.error);
+    fetchFromFirestore()
+      .then(() => onSynced?.())
+      .catch(console.error);
   } else {
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 25000)
+    const timeout = new Promise<void>(resolve =>
+      setTimeout(() => resolve(), 20000)
     );
     await Promise.race([fetchFromFirestore(), timeout]);
   }
@@ -131,6 +182,7 @@ export function registerUser(username: string, password: string, resolution: str
   };
   mem.users.push(user);
   persist('users', user.id, user);
+  saveCache();
   return { ok: true, user };
 }
 
@@ -161,6 +213,14 @@ export function setUserRole(userId: string, role: UserRole): void {
 export function deleteUser(userId: string): void {
   mem.users = mem.users.filter(u => u.id !== userId);
   remove('users', userId);
+  saveCache();
+}
+
+export function setUserRestrictions(userId: string, restrictions: UserRestrictions): void {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return;
+  user.restrictions = restrictions;
+  persist('users', userId, { ...user });
   saveCache();
 }
 
@@ -314,9 +374,11 @@ export function completeResourceRequest(id: string): void {
 
 // ── Announcements ────────────────────────────────────────
 export function getAnnouncements(): Announcement[] {
-  return mem.announcements.slice().sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return mem.announcements.slice().sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export function createAnnouncement(ann: Announcement): void {
@@ -325,10 +387,88 @@ export function createAnnouncement(ann: Announcement): void {
   saveCache();
 }
 
+export function updateAnnouncement(ann: Announcement): void {
+  const idx = mem.announcements.findIndex(a => a.id === ann.id);
+  if (idx >= 0) {
+    mem.announcements[idx] = ann;
+    persist('announcements', ann.id, ann);
+    saveCache();
+  }
+}
+
 export function deleteAnnouncement(id: string): void {
   mem.announcements = mem.announcements.filter(a => a.id !== id);
   remove('announcements', id);
   saveCache();
+}
+
+// ── Q&A ──────────────────────────────────────────────────
+export function getQnAPosts(): QnAPost[] {
+  return mem.qnaPosts.slice().sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function createQnAPost(post: QnAPost): void {
+  mem.qnaPosts.push(post);
+  persist('qnaPosts', post.id, post);
+}
+
+export function deleteQnAPost(id: string): void {
+  mem.qnaPosts = mem.qnaPosts.filter(p => p.id !== id);
+  remove('qnaPosts', id);
+  mem.qnaComments = mem.qnaComments.filter(c => c.postId !== id);
+}
+
+export function getQnAComments(postId: string): QnAComment[] {
+  return mem.qnaComments
+    .filter(c => c.postId === postId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+export function createQnAComment(comment: QnAComment): void {
+  mem.qnaComments.push(comment);
+  persist('qnaComments', comment.id, comment);
+}
+
+export function deleteQnAComment(id: string): void {
+  mem.qnaComments = mem.qnaComments.filter(c => c.id !== id);
+  remove('qnaComments', id);
+}
+
+// ── Messages ──────────────────────────────────────────────
+export function sendMessage(msg: Message): void {
+  mem.messages.push(msg);
+  persist('messages', msg.id, msg);
+}
+
+export function getReceivedMessages(userId: string): Message[] {
+  return mem.messages
+    .filter(m => m.receiverId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function getSentMessages(userId: string): Message[] {
+  return mem.messages
+    .filter(m => m.senderId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function markMessageRead(id: string): void {
+  const msg = mem.messages.find(m => m.id === id);
+  if (msg && !msg.read) {
+    msg.read = true;
+    persist('messages', id, msg);
+  }
+}
+
+export function deleteMessage(id: string): void {
+  mem.messages = mem.messages.filter(m => m.id !== id);
+  remove('messages', id);
+}
+
+export function getUnreadCount(userId: string): number {
+  return mem.messages.filter(m => m.receiverId === userId && !m.read).length;
 }
 
 // ── Warnings ─────────────────────────────────────────────
@@ -427,4 +567,176 @@ export function hasVacationInWeek(userId: string, vacationDate: string): boolean
     v.vacationDate >= weekStart &&
     v.vacationDate <= weekEnd
   );
+}
+
+// ── Assignment Checks ────────────────────────────────────────────
+export function getAssignmentCheck(userId: string, weekKey: string): AssignmentCheck | undefined {
+  return mem.assignmentChecks.find(c => c.userId === userId && c.weekKey === weekKey);
+}
+
+export function getAssignmentChecksForWeek(weekKey: string): AssignmentCheck[] {
+  return mem.assignmentChecks.filter(c => c.weekKey === weekKey);
+}
+
+export function upsertAssignmentCheck(
+  userId: string, username: string, weekKey: string, checks: Record<string, CheckStatus>
+): void {
+  const id = `${userId}_${weekKey}`;
+  const entry: AssignmentCheck = { id, userId, username, weekKey, checks, updatedAt: new Date().toISOString() };
+  const idx = mem.assignmentChecks.findIndex(c => c.id === id);
+  if (idx >= 0) mem.assignmentChecks[idx] = entry;
+  else mem.assignmentChecks.push(entry);
+  persist('assignmentChecks', id, entry);
+  saveCache();
+}
+
+// ── Calendar Events ──────────────────────────────────────────────
+export function getCalendarEventsForMonth(year: number, month: number): CalendarEvent[] {
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  return mem.calendarEvents.filter(e => e.date.startsWith(prefix));
+}
+
+export function getCalendarEventsForDate(date: string): CalendarEvent[] {
+  return mem.calendarEvents.filter(e => e.date === date);
+}
+
+export function createCalendarEvent(event: CalendarEvent): void {
+  mem.calendarEvents.push(event);
+  persist('calendarEvents', event.id, event);
+  saveCache();
+}
+
+export function deleteCalendarEvent(id: string): void {
+  mem.calendarEvents = mem.calendarEvents.filter(e => e.id !== id);
+  remove('calendarEvents', id);
+  saveCache();
+}
+
+// ── Library Items ────────────────────────────────────────────────
+export function getLibraryItems(): LibraryItem[] {
+  return mem.libraryItems.slice().sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+}
+
+export function addLibraryItem(item: LibraryItem): void {
+  mem.libraryItems.push(item);
+  persist('libraryItems', item.id, item);
+  saveCache();
+}
+
+export function removeLibraryItem(id: string): void {
+  mem.libraryItems = mem.libraryItems.filter(i => i.id !== id);
+  remove('libraryItems', id);
+  saveCache();
+}
+
+// ── Vocab Test Scores ─────────────────────────────────────────────
+export function getVocabTestScore(userId: string, date: string): VocabTestScore | undefined {
+  return mem.vocabTestScores.find(s => s.userId === userId && s.date === date);
+}
+
+export function getVocabTestScoresForDate(date: string): VocabTestScore[] {
+  return mem.vocabTestScores.filter(s => s.date === date);
+}
+
+export function upsertVocabTestScore(userId: string, username: string, date: string, score: number): void {
+  const id = `${userId}_${date}`;
+  const entry: VocabTestScore = { id, userId, username, date, score, submittedAt: new Date().toISOString() };
+  const idx = mem.vocabTestScores.findIndex(s => s.id === id);
+  if (idx >= 0) mem.vocabTestScores[idx] = entry;
+  else mem.vocabTestScores.push(entry);
+  persist('vocabTestScores', id, entry);
+
+  // Attendance = score submission
+  markAttendance(date, userId, username);
+
+  // Auto-issue warning for score 1–9
+  if (score >= 1 && score <= 9) {
+    const alreadyWarned = mem.warnings.some(
+      w => w.targetUserId === userId && w.reason.includes(`[고어 시험] ${date}`)
+    );
+    if (!alreadyWarned) {
+      const warning: Warning = {
+        id: crypto.randomUUID(),
+        targetUserId: userId,
+        targetUsername: username,
+        reason: `[고어 시험] ${date} — ${score}/20점 (전체 재시험 대상)`,
+        issuedAt: new Date().toISOString(),
+        issuedById: 'system',
+        issuedByName: '시스템',
+      };
+      mem.warnings.push(warning);
+      persist('warnings', warning.id, warning);
+    }
+  }
+  saveCache();
+}
+
+// ── Peer Feedbacks ────────────────────────────────────────────────
+export function getPeerFeedbacksForDate(date: string): PeerFeedback[] {
+  return mem.peerFeedbacks.filter(f => f.date === date);
+}
+
+export function addPeerFeedback(feedback: PeerFeedback): void {
+  mem.peerFeedbacks.push(feedback);
+  persist('peerFeedbacks', feedback.id, feedback);
+  saveCache();
+}
+
+export function deletePeerFeedback(id: string): void {
+  mem.peerFeedbacks = mem.peerFeedbacks.filter(f => f.id !== id);
+  remove('peerFeedbacks', id);
+  saveCache();
+}
+
+// ── Study Logs ────────────────────────────────────────────────────
+export function getStudyLog(userId: string, date: string): StudyLog | undefined {
+  return mem.studyLogs.find(l => l.userId === userId && l.date === date);
+}
+
+export function getStudyLogsForDate(date: string): StudyLog[] {
+  return mem.studyLogs.filter(l => l.date === date);
+}
+
+export function upsertStudyLog(log: StudyLog): void {
+  const idx = mem.studyLogs.findIndex(l => l.id === log.id);
+  if (idx >= 0) mem.studyLogs[idx] = log;
+  else mem.studyLogs.push(log);
+  persist('studyLogs', log.id, log);
+  saveCache();
+}
+
+// ── Location Notice ───────────────────────────────────────────────
+export function getLocationNotice(): LocationNotice | null {
+  return mem.locationNotice;
+}
+
+export function setLocationNotice(notice: Omit<LocationNotice, 'id'>): void {
+  const full: LocationNotice = { ...notice, id: 'current' };
+  mem.locationNotice = full;
+  persist('locationNotice', 'current', full);
+  saveCache();
+}
+
+export function clearLocationNotice(): void {
+  mem.locationNotice = null;
+  remove('locationNotice', 'current');
+  saveCache();
+}
+
+// ── Assignment Notice ──────────────────────────────────────
+export function getAssignmentNotice(): AssignmentNotice | null {
+  return mem.assignmentNotice;
+}
+
+export function setAssignmentNotice(notice: Omit<AssignmentNotice, 'id'>): void {
+  const full: AssignmentNotice = { ...notice, id: 'current' };
+  mem.assignmentNotice = full;
+  persist('assignmentNotice', 'current', full);
+  saveCache();
+}
+
+export function clearAssignmentNotice(): void {
+  mem.assignmentNotice = null;
+  remove('assignmentNotice', 'current');
+  saveCache();
 }

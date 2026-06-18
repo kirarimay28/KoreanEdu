@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { User, ResourceCategory, ResourceRequest } from '../../types';
+import { Lock } from 'lucide-react';
 import {
   getUsers,
   createResourceRequest,
@@ -54,6 +55,16 @@ export default function ResourceTab({ currentUser }: Props) {
     completeResourceRequest(id);
     // Force re-render by toggling mode
     setMode('received');
+  }
+
+  if (currentUser.restrictions?.noResourceRequest) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+        <Lock className="w-10 h-10 text-gray-200" />
+        <p className="text-sm font-semibold text-gray-400">접근이 제한되었습니다</p>
+        <p className="text-xs text-gray-300">자료 요청 권한이 없습니다.</p>
+      </div>
+    );
   }
 
   return (

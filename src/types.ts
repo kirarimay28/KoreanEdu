@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'subadmin' | 'member';
 
+export interface UserRestrictions {
+  noStudyView?: boolean;
+  noLibraryDownload?: boolean;
+  noVacationRequest?: boolean;
+  noResourceRequest?: boolean;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -7,6 +14,7 @@ export interface User {
   resolution: string;
   createdAt: string;
   role?: UserRole;
+  restrictions?: UserRestrictions;
 }
 
 export type ExamStatus = 'O' | '△' | 'X' | '';
@@ -90,18 +98,21 @@ export interface Feedback {
   createdAt: string;
 }
 
-export type PersonalSubject = '국교론' | '현대 문법' | '중세 문법' | '개론서' | '기타';
+export type PersonalSubject = '국교론' | '교육학' | '중세문법' | '현대문법' | '기타';
 
 export interface PersonalStudyEntry {
   id: string;
   date: string;
   userId: string;
-  subject: PersonalSubject;
+  subject: string;        // kept as string for backward compat with old data
   customSubject: string;
-  curriculum: string;
+  plannerActivity: string;   // replaces curriculum; '회독'|'기출풀이'|'기출분석'|'강의수강'|'단권화'|'오답정리'|'기타'
+  customActivity: string;    // for 기타 planner
   examStatus: ExamStatus;
+  feedbackCategories: string[];  // multi-select: '집중 부족'|'오답 다수 발생'|'개념 이해 부족'|'키워드 오류'
   feedback: string;
-  studyHours: number | '';
+  studySeconds: number;      // timer-based net study time in seconds
+  studyHours: number | '';   // kept for backward compat
 }
 
 export interface ReflectionEntry {
@@ -127,6 +138,36 @@ export interface Announcement {
   createdAt: string;
   authorId: string;
   authorName: string;
+  pinned?: boolean;
+}
+
+export interface QnAPost {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface QnAComment {
+  id: string;
+  postId: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverName: string;
+  content: string;
+  createdAt: string;
+  read: boolean;
 }
 
 export interface Warning {
@@ -169,6 +210,31 @@ export interface EducationAnswer {
   dislikes: string[];
 }
 
+export interface LocationNotice {
+  id: 'current';
+  spaceName: string;
+  customSpace: string;
+  startTime: string;
+  endTime: string;
+  notes: string;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
+export interface AssignmentNotice {
+  id: 'current';
+  date: string;            // YYYY-MM-DD
+  classicWork: string;     // 고전 작품명
+  modernPoetWork: string;  // 현대시 작품명
+  modernProseWork: string; // 현대산문 작품명
+  goeoStart: number;       // 고어 시작 번호 1-100
+  goeoEnd: number;         // 고어 끝 번호 1-100
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -181,10 +247,94 @@ export interface AppData {
   warnings: Warning[];
   vacations: VacationRequest[];
   educationAnswers: EducationAnswer[];
+  qnaPosts: QnAPost[];
+  qnaComments: QnAComment[];
+  messages: Message[];
+  assignmentChecks: AssignmentCheck[];
+  calendarEvents: CalendarEvent[];
+  libraryItems: LibraryItem[];
+  vocabTestScores: VocabTestScore[];
+  peerFeedbacks: PeerFeedback[];
+  studyLogs: StudyLog[];
+  locationNotice: LocationNotice | null;
+  assignmentNotice: AssignmentNotice | null;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist';
-export type StudySubTab = 'classical' | 'modern';
+export interface LibraryItem {
+  id: string;
+  title: string;
+  description: string;
+  tag: string;
+  downloadUrl: string;
+  storagePath: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  uploadedById: string;
+  uploadedByName: string;
+}
+
+export type EventColor = 'blue' | 'green' | 'red' | 'orange' | 'purple';
+
+export interface CalendarEvent {
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  color: EventColor;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
+export type CheckStatus = 'O' | '△' | 'X' | 'none' | '';
+
+export interface AssignmentCheck {
+  id: string;       // `${userId}_${weekKey}`
+  userId: string;
+  username: string;
+  weekKey: string;  // YYYY-MM-DD (해당 주 월요일)
+  checks: Record<string, CheckStatus>;
+  updatedAt: string;
+}
+
+export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment';
+export type StudySubTab = 'vocab' | 'feedback' | 'journal';
+
+export interface VocabTestScore {
+  id: string;        // `${userId}_${date}`
+  userId: string;
+  username: string;
+  date: string;
+  score: number;     // 1–20
+  submittedAt: string;
+}
+
+export type PeerFeedbackCategory = '분석 방향성' | '근거 부족/오류' | '어휘 부족' | '공부법';
+
+export interface PeerFeedback {
+  id: string;
+  date: string;
+  authorId: string;
+  authorName: string;
+  targetId: string;
+  targetName: string;
+  category: PeerFeedbackCategory;
+  content: string;
+  createdAt: string;
+}
+
+export interface StudyLog {
+  id: string;        // `${userId}_${date}`
+  userId: string;
+  username: string;
+  date: string;
+  workName: string;
+  assignedQuestions: string;
+  difficulties: string;
+  selfFeedback: string;
+  updatedAt: string;
+}
 
 export type ResourceCategory = '기출 문제' | '작품 자료' | '기타 자료';
 

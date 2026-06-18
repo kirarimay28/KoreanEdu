@@ -50,6 +50,28 @@ body {
   }
 }
 
+.auth-logo-shimmer {
+  background: linear-gradient(
+    120deg,
+    #303284 0%,
+    #4f52e8 25%,
+    #8196f8 50%,
+    #4f52e8 75%,
+    #303284 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 14px rgba(79, 82, 232, 0.4));
+  animation: auth-shimmer 3s ease-in-out infinite alternate;
+}
+
+@keyframes auth-shimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+
 textarea {
   line-height: 1.7;
 }

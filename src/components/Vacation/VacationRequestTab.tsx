@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { User, VacationRequest, VacationReason } from '../../types';
 import { isPrivileged } from '../../types';
+import { Lock } from 'lucide-react';
 import {
   createVacationRequest,
   getVacationRequests,
@@ -95,6 +96,16 @@ export default function VacationRequestTab({ currentUser }: Props) {
   );
 
   const alreadyHasThisWeek = hasVacationInWeek(currentUser.id, vacationDate);
+
+  if (currentUser.restrictions?.noVacationRequest && !isPrivileged(currentUser)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+        <Lock className="w-10 h-10 text-gray-200" />
+        <p className="text-sm font-semibold text-gray-400">접근이 제한되었습니다</p>
+        <p className="text-xs text-gray-300">휴가 신청 권한이 없습니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { loginUser, registerUser } from '../../store';
 import type { User } from '../../types';
-import { BookOpen, LogIn, UserPlus } from 'lucide-react';
-import AppLogo from '../common/AppLogo';
+import { LogIn, UserPlus, BookOpen } from 'lucide-react';
 
 interface Props {
   onLogin: (user: User) => void;
@@ -52,44 +51,65 @@ export default function AuthPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl shadow-lg mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4"
+      style={{
+        background: `
+          radial-gradient(ellipse at 38% 32%, rgba(255,255,255,0.62) 0%, rgba(197,210,255,0.28) 42%, transparent 65%),
+          linear-gradient(145deg, #c7d7fe 0%, #a5bbfc 50%, #b0a8f0 100%)
+        `
+      }}
+    >
+      <div className="w-full max-w-sm">
+
+        {/* Hero */}
+        <div className="text-center mb-10">
+          <div
+            className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl mb-5 mx-auto"
+            style={{ background: 'linear-gradient(145deg, #6370f3, #3535a7)' }}
+          >
+            <BookOpen className="w-10 h-10 text-white" />
           </div>
-          <AppLogo className="h-14 mx-auto" />
-          <p className="text-gray-500 text-sm mt-1">함께 합격을 향해</p>
+          <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
+            나랏말ᄊᆞ미
+          </h1>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="h-px w-10 bg-primary-200 rounded-full" />
+            <div className="w-1.5 h-1.5 bg-primary-300 rounded-full" />
+            <div className="h-px w-10 bg-primary-200 rounded-full" />
+          </div>
+          <p className="text-sm text-primary-400 font-medium tracking-widest">함께 합격을 향해</p>
         </div>
 
         {mode === 'select' && (
-          <div className="card space-y-4">
-            <h2 className="text-center text-lg font-semibold text-gray-800 mb-6">시작하기</h2>
-            <button
-              onClick={() => setMode('login')}
-              className="w-full flex items-center justify-center gap-3 btn-primary"
-            >
-              <LogIn className="w-5 h-5" />
-              로그인
-            </button>
-            <button
-              onClick={() => setMode('signup')}
-              className="w-full flex items-center justify-center gap-3 btn-secondary"
-            >
-              <UserPlus className="w-5 h-5" />
-              회원가입
-            </button>
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
+            <p className="text-center text-[13px] text-gray-400 mb-6 leading-relaxed">
+              스터디 구성원만 이용할 수 있습니다.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => setMode('login')}
+                className="w-full flex items-center justify-center gap-2 btn-primary"
+              >
+                <LogIn className="w-4 h-4" />로그인
+              </button>
+              <button
+                onClick={() => setMode('signup')}
+                className="w-full flex items-center justify-center gap-2 btn-secondary"
+              >
+                <UserPlus className="w-4 h-4" />회원가입
+              </button>
+            </div>
           </div>
         )}
 
         {mode === 'login' && (
-          <div className="card">
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
             <div className="flex items-center gap-2 mb-6">
-              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
               </button>
-              <h2 className="text-lg font-semibold text-gray-800">로그인</h2>
+              <h2 className="text-base font-semibold text-gray-800">로그인</h2>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -117,7 +137,7 @@ export default function AuthPage({ onLogin }: Props) {
                 />
               </div>
               {error && (
-                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</p>
+                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">{error}</p>
               )}
               <button type="submit" className="w-full btn-primary mt-2">
                 로그인
@@ -127,12 +147,12 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'signup' && (
-          <div className="card">
+          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
             <div className="flex items-center gap-2 mb-6">
-              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition">
+              <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
               </button>
-              <h2 className="text-lg font-semibold text-gray-800">회원가입</h2>
+              <h2 className="text-base font-semibold text-gray-800">회원가입</h2>
             </div>
             <form onSubmit={handleSignup} className="space-y-4">
               <div>
@@ -158,6 +178,7 @@ export default function AuthPage({ onLogin }: Props) {
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="new-password"
                 />
+                <p className="text-[11px] text-amber-600 mt-1">비밀번호는 네 자리 숫자로 설정해 주십시오.</p>
               </div>
               <div>
                 <label className="label">나의 다짐</label>
@@ -168,9 +189,10 @@ export default function AuthPage({ onLogin }: Props) {
                   value={resolution}
                   onChange={e => setResolution(e.target.value)}
                 />
+                <p className="text-[11px] text-amber-600 mt-1">나의 다짐은 한 번 설정하면 변경할 수 없습니다.</p>
               </div>
               {error && (
-                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</p>
+                <p className="text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">{error}</p>
               )}
               <button type="submit" className="w-full btn-primary mt-2">
                 가입하기
@@ -178,6 +200,7 @@ export default function AuthPage({ onLogin }: Props) {
             </form>
           </div>
         )}
+
       </div>
     </div>
   );
