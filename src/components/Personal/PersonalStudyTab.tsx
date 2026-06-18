@@ -58,7 +58,7 @@ function SubjectCard({ entry, onSave, onDelete }: {
   const [saved, setSaved] = useState(false);
   const [timerState, setTimerState] = useState<'idle' | 'running' | 'paused'>('idle');
   const [elapsed, setElapsed] = useState(entry.studySeconds || 0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
     setDraft(entry);
