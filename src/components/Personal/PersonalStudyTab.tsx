@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { PersonalStudyEntry, ExamStatus, User } from '../../types';
+import type { PersonalStudyEntry, User } from '../../types';
 import {
   getPersonalStudyEntriesForDate,
   upsertPersonalStudyEntry,
@@ -18,11 +18,6 @@ const SUBJECTS = ['국교론', '교육학', '중세문법', '현대문법', '기
 const ACTIVITIES = ['회독', '기출풀이', '기출분석', '강의수강', '단권화', '오답정리', '기타'] as const;
 const FEEDBACK_CATS = ['집중 부족', '오답 다수 발생', '개념 이해 부족', '키워드 오류'] as const;
 
-const EXAM_STATUS_OPTIONS: { value: ExamStatus; label: string; desc: string; color: string }[] = [
-  { value: 'O', label: 'O', desc: '분석+문풀+모범답안 비교 완료', color: 'bg-green-500 text-white' },
-  { value: '△', label: '△', desc: '분석+문풀만 완료', color: 'bg-yellow-400 text-white' },
-  { value: 'X', label: 'X', desc: '미완료', color: 'bg-red-400 text-white' },
-];
 
 function formatTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -212,31 +207,6 @@ function SubjectCard({ entry, onSave, onDelete }: {
             )}
           </div>
 
-          {/* Exam status */}
-          <div>
-            <label className="label">기출 파악 여부</label>
-            <div className="flex gap-2">
-              {EXAM_STATUS_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setDraft(prev => ({ ...prev, examStatus: opt.value }))}
-                  title={opt.desc}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition ${
-                    draft.examStatus === opt.value
-                      ? `${opt.color} border-transparent shadow-sm`
-                      : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2 mt-1">
-              {EXAM_STATUS_OPTIONS.map(opt => (
-                <p key={opt.value} className="flex-1 text-center text-[10px] text-gray-400">{opt.desc}</p>
-              ))}
-            </div>
-          </div>
 
           {/* Feedback categories */}
           <div>
