@@ -752,8 +752,20 @@ export function getVocabExamRecords(userId: string): VocabExamRecord[] {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+export function getAllVocabExamRecords(): VocabExamRecord[] {
+  return mem.vocabExamRecords
+    .slice()
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
 export function saveVocabExamRecord(record: VocabExamRecord): void {
   mem.vocabExamRecords.push(record);
   persist('vocabExamRecords', record.id, record);
+  saveCache();
+}
+
+export function deleteVocabExamRecord(id: string): void {
+  mem.vocabExamRecords = mem.vocabExamRecords.filter(r => r.id !== id);
+  remove('vocabExamRecords', id);
   saveCache();
 }

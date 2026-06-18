@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { CheckCircle, XCircle, RotateCcw, Save, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, RotateCcw, Save, ChevronDown, Trash2 } from 'lucide-react';
 import type { User } from '../../types';
 import { VOCAB_ITEMS, isAnswerCorrect } from '../../data/vocabData';
-import { saveVocabExamRecord, getVocabExamRecords } from '../../store';
+import { saveVocabExamRecord, getVocabExamRecords, getAllVocabExamRecords, deleteVocabExamRecord } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
+import { isPrivileged } from '../../types';
 
 interface Props {
   currentUser: User;
@@ -93,9 +94,15 @@ export default function VocabExamTab({ currentUser }: Props) {
   }
 
   const history = getVocabExamRecords(currentUser.id);
+  const allRecords = isPrivileged(currentUser) ? getAllVocabExamRecords() : [];
   const score = results.filter(r => r.correct).length;
   const total = results.length;
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+
+  function handleDeleteRecord(id: string) {
+    deleteVocabExamRecord(id);
+    setTick(t => t + 1);
+  }
 
   if (phase === 'setup') {
     return (
@@ -224,6 +231,42 @@ export default function VocabExamTab({ currentUser }: Props) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* 어드민: 전체 응시 기록 관리 */}
+        {isPrivileged(currentUser) && allRecords.length > 0 && (
+          <div className="card space-y-2 border-amber-100">
+            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">전체 응시 기록 (관리자)</p>
+            <div className="divide-y divide-gray-50">
+              {allRecords.map(r => (
+                <div key={r.id} className="flex items-center gap-2 py-2.5 text-xs">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-gray-700">{r.username}</span>
+                    <span className="text-gray-400 ml-1.5">
+                      {r.date} · {r.startNum}~{r.endNum}번
+                      {r.carryoverNums.length > 0 && ` + 이월 ${r.carryoverNums.join(', ')}`}
+                    </span>
+                  </div>
+                  <span className={`font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    r.score / r.total >= 0.8
+                      ? 'text-green-700 bg-green-50'
+                      : r.score / r.total >= 0.5
+                      ? 'text-amber-700 bg-amber-50'
+                      : 'text-red-700 bg-red-50'
+                  }`}>
+                    {r.score}/{r.total}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteRecord(r.id)}
+                    className="p-1 text-gray-300 hover:text-red-400 transition flex-shrink-0"
+                    title="삭제"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
