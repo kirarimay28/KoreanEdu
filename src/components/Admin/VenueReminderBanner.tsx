@@ -5,27 +5,33 @@ import { ExternalLink } from 'lucide-react';
 
 const VENUE_URL = 'https://thechoa.chosun.ac.kr/clientMain/a/t/main.do';
 
-function getThisSunday(): string | null {
-  const today = getKSTToday();
+// "네!" 클릭 시 다음 월요일 날짜 반환 → 그 날부터 다시 표시
+function getNextMonday(today: string): string {
   const d = new Date(today + 'T00:00:00');
-  return d.getDay() === 0 ? today : null;
+  const day = d.getDay(); // 0=일, 1=월, ...
+  const daysUntil = day === 0 ? 1 : 8 - day;
+  d.setDate(d.getDate() + daysUntil);
+  return d.toISOString().slice(0, 10);
 }
 
 interface Props { currentUser: User; }
 
 export default function VenueReminderBanner({ currentUser }: Props) {
-  const sunday = getThisSunday();
+  const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
   const [dismissed, setDismissed] = useState(() => {
-    if (!sunday || currentUser.role !== 'subadmin') return true;
+    if (!isPrivileged) return true;
     const stored = localStorage.getItem(`venue_reminder_${currentUser.id}`);
-    return stored === sunday;
+    if (!stored) return false;
+    // stored = "다음 월요일" 날짜 → 그 날이 지나기 전까지 숨김
+    return getKSTToday() < stored;
   });
 
-  if (!sunday || currentUser.role !== 'subadmin' || dismissed) return null;
+  if (!isPrivileged || dismissed) return null;
 
   function handleYes() {
-    localStorage.setItem(`venue_reminder_${currentUser.id}`, sunday!);
+    const nextMon = getNextMonday(getKSTToday());
+    localStorage.setItem(`venue_reminder_${currentUser.id}`, nextMon);
     setDismissed(true);
   }
 
