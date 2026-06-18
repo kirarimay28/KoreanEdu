@@ -9,6 +9,7 @@ export function shareAnnouncement(params: {
     title,
     ...(content ? [`\n${content}`] : []),
     `\n(by ${authorName})`,
+    '\n⬇️자세한 내용⬇️\nhttps://korean-edu-pink.vercel.app/',
   ];
   const text = lines.join('\n');
 
