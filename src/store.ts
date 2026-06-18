@@ -224,6 +224,39 @@ export function deleteUser(userId: string): void {
   saveCache();
 }
 
+export function changeUsername(userId: string, currentPassword: string, newUsername: string): { ok: boolean; error?: string; user?: User } {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return { ok: false, error: '사용자를 찾을 수 없습니다.' };
+  if (user.passwordHash !== simpleHash(currentPassword)) return { ok: false, error: '비밀번호가 올바르지 않습니다.' };
+  if (mem.users.find(u => u.username === newUsername && u.id !== userId)) {
+    return { ok: false, error: '이미 사용 중인 아이디입니다.' };
+  }
+  user.username = newUsername;
+  persist('users', userId, user);
+  saveCache();
+  return { ok: true, user: { ...user } };
+}
+
+export function changePassword(userId: string, currentPassword: string, newPassword: string): { ok: boolean; error?: string } {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return { ok: false, error: '사용자를 찾을 수 없습니다.' };
+  if (user.passwordHash !== simpleHash(currentPassword)) return { ok: false, error: '현재 비밀번호가 올바르지 않습니다.' };
+  user.passwordHash = simpleHash(newPassword);
+  persist('users', userId, user);
+  saveCache();
+  return { ok: true };
+}
+
+export function deleteAccount(userId: string, password: string): { ok: boolean; error?: string } {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return { ok: false, error: '사용자를 찾을 수 없습니다.' };
+  if (user.passwordHash !== simpleHash(password)) return { ok: false, error: '비밀번호가 올바르지 않습니다.' };
+  mem.users = mem.users.filter(u => u.id !== userId);
+  remove('users', userId);
+  saveCache();
+  return { ok: true };
+}
+
 export function setUserRestrictions(userId: string, restrictions: UserRestrictions): void {
   const user = mem.users.find(u => u.id === userId);
   if (!user) return;
