@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>나랏말ᄊᆞ미</title>
+    <script>
+(function(){
+  var m = document.querySelector('meta[name="app-build"]');
+  if (!m) return;
+  var cur = m.getAttribute('content');
+  if (!cur) return;
+  fetch('/version.txt?t=' + Date.now(), { cache: 'no-store' })
+    .then(function(r) { return r.text(); })
+    .then(function(v) {
+      if (v.trim() && v.trim() !== cur) {
+        location.replace('/?_v=' + Date.now());
+      }
+    })
+    .catch(function() {});
+})();
+    </script>
   </head>
   <body>
     <div id="root"></div>
