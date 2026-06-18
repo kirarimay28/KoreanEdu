@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CheckCircle, XCircle, RotateCcw, Save, ChevronDown, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { CheckCircle, XCircle, RotateCcw, Save, ChevronDown, Trash2, Clock } from 'lucide-react';
 import type { User } from '../../types';
 import { VOCAB_ITEMS, isAnswerCorrect } from '../../data/vocabData';
 import { saveVocabExamRecord, getVocabExamRecords, getAllVocabExamRecords, deleteVocabExamRecord } from '../../store';
@@ -33,6 +33,32 @@ export default function VocabExamTab({ currentUser }: Props) {
   const [saved, setSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [tick, setTick] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(600);
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  useEffect(() => {
+    if (phase === 'exam') {
+      setTimeLeft(600);
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'exam' && timeLeft === 0) {
+      grade();
+    }
+  }, [timeLeft, phase]);
 
   const examItems = (() => {
     const rangeNums = new Set(
@@ -274,6 +300,10 @@ export default function VocabExamTab({ currentUser }: Props) {
   }
 
   if (phase === 'exam') {
+    const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    const secs = String(timeLeft % 60).padStart(2, '0');
+    const urgent = timeLeft <= 60;
+
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-1">
@@ -284,6 +314,15 @@ export default function VocabExamTab({ currentUser }: Props) {
             취소
           </button>
         </div>
+
+        {/* 타이머 */}
+        <div className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-mono font-bold text-lg transition-colors ${
+          urgent ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-700 border border-gray-200'
+        }`}>
+          <Clock className={`w-4 h-4 ${urgent ? 'animate-pulse' : ''}`} />
+          {mins}:{secs}
+        </div>
+
         <p className="text-xs text-gray-400">띄어쓰기 무관 · 글자 일치 시 정답 처리</p>
 
         <div className="space-y-2">
