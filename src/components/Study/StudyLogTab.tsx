@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Save, ChevronDown, ChevronUp } from 'lucide-react';
 import type { User, StudyLog } from '../../types';
 import { getStudyLog, getStudyLogsForDate, upsertStudyLog, getUsers } from '../../store';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   date: string;
@@ -113,7 +114,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                   className="w-full flex items-center gap-2"
                   onClick={() => log && setExpandedMember(isExpanded ? null : user.id)}
                 >
-                  <span className="text-sm font-semibold text-gray-700 flex-1 text-left">{user.username}</span>
+                  <NameWithCrown name={user.username} className="text-sm font-semibold text-gray-700 flex-1 text-left" />
                   {log ? (
                     <>
                       <span className="text-[11px] text-gray-400 truncate max-w-[120px]">{log.workName || '—'}</span>

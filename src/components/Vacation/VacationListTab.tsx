@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { VacationRequest } from '../../types';
 import { getApprovedVacations } from '../../store';
+import NameWithCrown from '../common/NameWithCrown';
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
@@ -23,7 +24,7 @@ export default function VacationListTab() {
           {vacations.map(v => (
             <div key={v.id} className="card border border-gray-100 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-800">{v.requesterName}</span>
+                <NameWithCrown name={v.requesterName} className="text-sm font-semibold text-gray-800" />
                 <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
                   승인
                 </span>
@@ -41,7 +42,7 @@ export default function VacationListTab() {
                 </p>
                 {v.reviewedByName && (
                   <p className="text-xs text-gray-400">
-                    승인자: {v.reviewedByName}
+                    승인자: <NameWithCrown name={v.reviewedByName!} />
                   </p>
                 )}
               </div>

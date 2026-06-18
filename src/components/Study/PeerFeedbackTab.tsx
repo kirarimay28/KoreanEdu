@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Send, Trash2, MessageSquare, Inbox, ArrowRight, Users } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 import type { User, PeerFeedbackCategory } from '../../types';
 import {
   getUsers, getVocabTestScoresForDate,
@@ -138,7 +139,7 @@ export default function PeerFeedbackTab({ date, currentUser }: Props) {
             {received.map(f => (
               <div key={f.id} className="card p-3 space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700">{f.authorName}</span>
+                  <NameWithCrown name={f.authorName} className="text-xs font-semibold text-gray-700" />
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${CAT_COLOR[f.category as PeerFeedbackCategory]}`}>{f.category}</span>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">{f.content}</p>
@@ -160,7 +161,7 @@ export default function PeerFeedbackTab({ date, currentUser }: Props) {
             {sent.map(f => (
               <div key={f.id} className="card p-3 space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-700">→ {f.targetName}</span>
+                  <span className="text-xs font-semibold text-gray-700">→ <NameWithCrown name={f.targetName} /></span>
                   <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${CAT_COLOR[f.category as PeerFeedbackCategory]}`}>{f.category}</span>
                   <button
                     onClick={() => handleDelete(f.id)}
@@ -193,13 +194,9 @@ export default function PeerFeedbackTab({ date, currentUser }: Props) {
                 return (
                   <div key={f.id} className={`card p-3 space-y-1.5 ${isMe ? 'border-primary-100' : ''}`}>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`text-xs font-bold ${f.authorId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`}>
-                        {f.authorName}
-                      </span>
+                      <NameWithCrown name={f.authorName} className={`text-xs font-bold ${f.authorId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`} />
                       <ArrowRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                      <span className={`text-xs font-bold ${f.targetId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`}>
-                        {f.targetName}
-                      </span>
+                      <NameWithCrown name={f.targetName} className={`text-xs font-bold ${f.targetId === currentUser.id ? 'text-primary-600' : 'text-gray-700'}`} />
                       <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${CAT_COLOR[f.category as PeerFeedbackCategory]}`}>
                         {f.category}
                       </span>

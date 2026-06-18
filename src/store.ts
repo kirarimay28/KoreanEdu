@@ -201,6 +201,10 @@ export function getUsers(): User[] {
   return mem.users;
 }
 
+export function getUserByName(username: string): User | undefined {
+  return mem.users.find(u => u.username === username);
+}
+
 export function getUserById(id: string): User | undefined {
   return mem.users.find(u => u.id === id);
 }

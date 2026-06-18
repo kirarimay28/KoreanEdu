@@ -3,6 +3,7 @@ import type { User, Announcement } from '../../types';
 import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store';
 import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check, Share2 } from 'lucide-react';
 import { shareAnnouncement } from '../../kakao';
+import NameWithCrown from '../common/NameWithCrown';
 import { getWeekQuestion } from '../../data/educationQuestions';
 
 interface Props {
@@ -235,7 +236,7 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
                   </div>
                 ) : (
                   <>
-                    <p className="text-[10px] text-indigo-400 mt-0.5">{ann.authorName} · {formatDate(ann.createdAt)}</p>
+                    <p className="text-[10px] text-indigo-400 mt-0.5"><NameWithCrown name={ann.authorName} /> · {formatDate(ann.createdAt)}</p>
                     {isOpen && hasBody && (
                       <p className="text-sm text-indigo-800 whitespace-pre-wrap mt-2 leading-relaxed">{ann.content}</p>
                     )}

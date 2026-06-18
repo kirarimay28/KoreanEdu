@@ -3,6 +3,7 @@ import { Pencil, X, Check, Share2 } from 'lucide-react';
 import type { User } from '../../types';
 import { getAssignmentNotice, setAssignmentNotice, clearAssignmentNotice } from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -226,7 +227,7 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
                 <p className="text-sm text-primary-700"><span className="font-semibold">현대산문</span> · {notice.modernProseWork}</p>
               )}
             </div>
-            <p className="text-[10px] text-primary-400 mt-2">{notice.createdByName} 등록</p>
+            <p className="text-[10px] text-primary-400 mt-2"><NameWithCrown name={notice.createdByName} /> 등록</p>
           </div>
 
           {/* Classic method */}

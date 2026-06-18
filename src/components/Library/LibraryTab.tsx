@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { FileText, Download, Lock, Plus, X, Trash2, Upload, Loader2 } from 'lucide-react';
 import type { User, LibraryItem } from '../../types';
 import { getLibraryItems, addLibraryItem, removeLibraryItem } from '../../store';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -249,7 +250,7 @@ export default function LibraryTab({ currentUser }: Props) {
             </div>
             {item.description && <p className="text-xs text-gray-500 leading-relaxed">{item.description}</p>}
             <p className="text-[10px] text-gray-400 mt-1">
-              {item.uploadedByName}{item.fileSize ? ` · ${formatBytes(item.fileSize)}` : ''}
+              <NameWithCrown name={item.uploadedByName} />{item.fileSize ? ` · ${formatBytes(item.fileSize)}` : ''}
             </p>
           </div>
           {isAdmin ? (

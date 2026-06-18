@@ -11,6 +11,7 @@ import {
 import { getKSTToday } from '../common/DateNavigator';
 import CalendarPopup from '../common/CalendarPopup';
 import { CalendarDays } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -248,7 +249,7 @@ export default function VacationRequestTab({ currentUser }: Props) {
             {pendingOthers.map(req => (
               <div key={req.id} className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-800">{req.requesterName}</span>
+                  <NameWithCrown name={req.requesterName} className="text-sm font-semibold text-gray-800" />
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleReview(req.id, '승인')}

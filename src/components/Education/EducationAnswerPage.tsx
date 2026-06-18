@@ -3,6 +3,7 @@ import type { User, EducationAnswer } from '../../types';
 import { getWeekQuestion, getWeekKey } from '../../data/educationQuestions';
 import { upsertEducationAnswer, getMyEducationAnswer, getEducationAnswersForWeek, toggleReaction } from '../../store';
 import { ChevronLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   mode: 'write' | 'read';
@@ -97,7 +98,7 @@ export default function EducationAnswerPage({ mode, onBack, currentUser }: Props
               {answers.map(a => (
                 <div key={a.id} className="bg-gray-50 rounded-xl px-4 py-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-primary-600">{a.username}</span>
+                    <span className="text-xs font-semibold text-primary-600"><NameWithCrown name={a.username} /></span>
                     <span className="text-[10px] text-gray-400">
                       {formatDate(a.updatedAt ?? a.createdAt)}
                     </span>

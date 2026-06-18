@@ -5,6 +5,7 @@ import {
   issueWarning, getWarningsForUser, clearWarning, setUserRestrictions,
 } from '../../store';
 import { UserCircle2, CalendarCheck, Trophy, Star, Shield, ShieldCheck, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -117,7 +118,7 @@ function MemberCard({ user, rank, currentUser, onAction }: {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-800 text-sm">{user.username}</span>
+            <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" />
             {isMe && <span className="text-[10px] font-semibold bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">나</span>}
             <RoleBadge role={user.role} />
             {warnings.length > 0 && (

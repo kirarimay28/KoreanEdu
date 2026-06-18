@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { getAttendanceEntries, getUsers } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
+import NameWithCrown from '../common/NameWithCrown';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -93,7 +94,7 @@ export default function AttendanceTab() {
                   <span className="text-sm font-bold text-primary-700">{user.username[0]}</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">{user.username}</p>
+                  <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" />
                   <p className="text-xs text-gray-400">{attended}/{total}일 출석</p>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { MapPin, ChevronDown, ChevronUp, Pencil, X, Check, Share2 } from 'lucide
 import type { User } from '../../types';
 import { getLocationNotice, setLocationNotice, clearLocationNotice } from '../../store';
 import { shareLocationNotice } from '../../kakao';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -94,7 +95,7 @@ export default function LocationNoticeBar({ currentUser }: Props) {
             </span>
           )}
           {notice && (
-            <span className="text-[10px] text-teal-400 ml-1 flex-shrink-0">by {notice.createdByName}</span>
+            <span className="text-[10px] text-teal-400 ml-1 flex-shrink-0">by <NameWithCrown name={notice.createdByName} /></span>
           )}
           {expanded
             ? <ChevronUp className="w-3.5 h-3.5 text-teal-400 ml-auto flex-shrink-0" />

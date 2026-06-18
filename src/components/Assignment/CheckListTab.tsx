@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { User, CheckStatus } from '../../types';
 import { getUsers, getAssignmentCheck, getAssignmentChecksForWeek, upsertAssignmentCheck } from '../../store';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -158,7 +159,7 @@ export default function CheckListTab({ currentUser }: Props) {
       <div className="card">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-bold text-gray-800">내 체크리스트</p>
-          <span className="text-xs text-gray-400">{currentUser.username}</span>
+          <NameWithCrown name={currentUser.username} className="text-xs text-gray-400" />
         </div>
 
         <div className="space-y-4">
@@ -221,7 +222,7 @@ export default function CheckListTab({ currentUser }: Props) {
                   className="w-full flex items-center gap-3"
                   onClick={() => setExpandedMember(isExpanded ? null : user.id)}
                 >
-                  <span className="text-sm font-semibold text-gray-700 flex-1 text-left">{user.username}</span>
+                  <NameWithCrown name={user.username} className="text-sm font-semibold text-gray-700 flex-1 text-left" />
                   {!entry ? (
                     <span className="text-[10px] text-gray-300 mr-1">미입력</span>
                   ) : (

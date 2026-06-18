@@ -5,6 +5,7 @@ import {
   getQnAComments, createQnAComment, deleteQnAComment,
 } from '../../store';
 import { HelpCircle, ChevronDown, ChevronUp, Plus, X, Send, MessageSquare } from 'lucide-react';
+import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
@@ -164,7 +165,7 @@ export default function QnATab({ currentUser }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{post.title}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">
-                    {post.authorName} · {formatDate(post.createdAt)}
+                    <NameWithCrown name={post.authorName} /> · {formatDate(post.createdAt)}
                     {!isOpen && (
                       <span className="ml-1.5 inline-flex items-center gap-0.5">
                         <MessageSquare className="w-2.5 h-2.5" />
@@ -207,7 +208,7 @@ export default function QnATab({ currentUser }: Props) {
                       return (
                         <div key={c.id} className="flex items-start gap-2 px-4 py-2.5">
                           <div className="flex-1 min-w-0">
-                            <span className="text-[10px] font-semibold text-gray-600">{c.authorName}</span>
+                            <NameWithCrown name={c.authorName} className="text-[10px] font-semibold text-gray-600" />
                             <span className="text-[10px] text-gray-400 ml-1.5">{formatDate(c.createdAt)}</span>
                             <p className="text-sm text-gray-700 mt-0.5 whitespace-pre-wrap leading-relaxed">{c.content}</p>
                           </div>

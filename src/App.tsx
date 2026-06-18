@@ -18,6 +18,7 @@ import AssignmentTab from './components/Assignment/AssignmentTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import { BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays, LogOut, User as UserIcon, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail, BookMarked, Menu, ChevronLeft, Map, TableProperties } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
+import NameWithCrown from './components/common/NameWithCrown';
 import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
@@ -169,7 +170,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-sm text-gray-600">
               <UserIcon className="w-4 h-4 text-primary-400" />
-              <span className="font-medium">{currentUser.username}</span>
+              <NameWithCrown name={currentUser.username} className="font-medium" />
             </div>
             <button
               onClick={handleRefresh}
