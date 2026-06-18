@@ -98,18 +98,21 @@ export interface Feedback {
   createdAt: string;
 }
 
-export type PersonalSubject = '국교론' | '현대 문법' | '중세 문법' | '개론서' | '기타';
+export type PersonalSubject = '국교론' | '교육학' | '중세문법' | '현대문법' | '기타';
 
 export interface PersonalStudyEntry {
   id: string;
   date: string;
   userId: string;
-  subject: PersonalSubject;
+  subject: string;        // kept as string for backward compat with old data
   customSubject: string;
-  curriculum: string;
+  plannerActivity: string;   // replaces curriculum; '회독'|'기출풀이'|'기출분석'|'강의수강'|'단권화'|'오답정리'|'기타'
+  customActivity: string;    // for 기타 planner
   examStatus: ExamStatus;
+  feedbackCategories: string[];  // multi-select: '집중 부족'|'오답 다수 발생'|'개념 이해 부족'|'키워드 오류'
   feedback: string;
-  studyHours: number | '';
+  studySeconds: number;      // timer-based net study time in seconds
+  studyHours: number | '';   // kept for backward compat
 }
 
 export interface ReflectionEntry {
