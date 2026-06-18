@@ -28,6 +28,7 @@ import DailyVocab from './components/common/DailyVocab';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
+import VenueReminderBanner from './components/Admin/VenueReminderBanner';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
 import EducationAnswerPage from './components/Education/EducationAnswerPage';
 
@@ -351,6 +352,7 @@ export default function App() {
         /* Main tab content */
         ) : (
           <>
+            <VenueReminderBanner currentUser={currentUser} />
             <AnnouncementBar
               currentUser={currentUser}
               onShowWrite={() => setEducationMode('write')}
