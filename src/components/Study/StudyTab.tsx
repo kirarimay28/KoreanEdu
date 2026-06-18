@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { User, StudySubTab } from '../../types';
 import VocabTestTab from './VocabTestTab';
+import VocabExamTab from './VocabExamTab';
 import PeerFeedbackTab from './PeerFeedbackTab';
 import StudyLogTab from './StudyLogTab';
 import { Lock } from 'lucide-react';
@@ -12,6 +13,7 @@ interface Props {
 
 const TABS: { id: StudySubTab; label: string }[] = [
   { id: 'vocab',    label: '고어 시험' },
+  { id: 'exam',     label: '시험 응시' },
   { id: 'feedback', label: '상호 피드백' },
   { id: 'journal',  label: '스터디 일지' },
 ];
@@ -44,6 +46,7 @@ export default function StudyTab({ date, currentUser }: Props) {
       </div>
 
       {subTab === 'vocab'    && <VocabTestTab    date={date} currentUser={currentUser} />}
+      {subTab === 'exam'     && <VocabExamTab    currentUser={currentUser} />}
       {subTab === 'feedback' && <PeerFeedbackTab date={date} currentUser={currentUser} />}
       {subTab === 'journal'  && <StudyLogTab     date={date} currentUser={currentUser} />}
     </div>

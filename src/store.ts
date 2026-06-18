@@ -6,6 +6,7 @@ import type {
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
+  VocabExamRecord,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -33,6 +34,7 @@ const defaultData: AppData = {
   studyLogs: [],
   locationNotice: null,
   assignmentNotice: null,
+  vocabExamRecords: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -80,7 +82,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -103,6 +105,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('studyLogs'),
     safeGet('locationNotice'),
     safeGet('assignmentNotice'),
+    safeGet('vocabExamRecords'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -127,6 +130,7 @@ async function fetchFromFirestore(): Promise<void> {
     studyLogs:           sl.docs.map(d => d.data() as StudyLog),
     locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
     assignmentNotice:    (an2.docs[0]?.data() as AssignmentNotice) ?? null,
+    vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
   };
   bootstrapAdmin();
   saveCache();
@@ -738,5 +742,18 @@ export function setAssignmentNotice(notice: Omit<AssignmentNotice, 'id'>): void 
 export function clearAssignmentNotice(): void {
   mem.assignmentNotice = null;
   remove('assignmentNotice', 'current');
+  saveCache();
+}
+
+// ── Vocab Exam Records ─────────────────────────────────────
+export function getVocabExamRecords(userId: string): VocabExamRecord[] {
+  return mem.vocabExamRecords
+    .filter(r => r.userId === userId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function saveVocabExamRecord(record: VocabExamRecord): void {
+  mem.vocabExamRecords.push(record);
+  persist('vocabExamRecords', record.id, record);
   saveCache();
 }

@@ -258,6 +258,7 @@ export interface AppData {
   studyLogs: StudyLog[];
   locationNotice: LocationNotice | null;
   assignmentNotice: AssignmentNotice | null;
+  vocabExamRecords: VocabExamRecord[];
 }
 
 export interface LibraryItem {
@@ -299,7 +300,20 @@ export interface AssignmentCheck {
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment';
-export type StudySubTab = 'vocab' | 'feedback' | 'journal';
+export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
+
+export interface VocabExamRecord {
+  id: string;
+  userId: string;
+  username: string;
+  date: string;
+  startNum: number;
+  endNum: number;
+  carryoverNums: number[];
+  score: number;
+  total: number;
+  createdAt: string;
+}
 
 export interface VocabTestScore {
   id: string;        // `${userId}_${date}`
