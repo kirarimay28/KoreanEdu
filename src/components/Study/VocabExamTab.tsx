@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, XCircle, RotateCcw, Save, ChevronDown, Trash2, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Save, ChevronDown, Trash2, Clock } from 'lucide-react';
 import type { User } from '../../types';
 import { VOCAB_ITEMS, isAnswerCorrect } from '../../data/vocabData';
-import { saveVocabExamRecord, getVocabExamRecords, getAllVocabExamRecords, deleteVocabExamRecord } from '../../store';
+import { saveVocabExamRecord, getVocabExamRecords, getAllVocabExamRecords, deleteVocabExamRecord, upsertVocabTestScore } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import { isPrivileged } from '../../types';
 
@@ -95,22 +95,28 @@ export default function VocabExamTab({ currentUser }: Props) {
   }
 
   function handleSave() {
-    const score = results.filter(r => r.correct).length;
+    const correct = results.filter(r => r.correct).length;
+    const tot = results.length;
+    const today = getKSTToday();
     const record = {
       id: crypto.randomUUID(),
       userId: currentUser.id,
       username: currentUser.username,
-      date: getKSTToday(),
+      date: today,
       startNum,
       endNum,
       carryoverNums: noCarryover ? [] : carryoverNums,
-      score,
-      total: results.length,
+      score: correct,
+      total: tot,
       createdAt: new Date().toISOString(),
     };
     saveVocabExamRecord(record);
+    // 고어 시험 탭 점수 자동 반영 (20점 만점으로 환산)
+    const scaled = tot > 0 ? Math.max(1, Math.min(20, Math.round((correct / tot) * 20))) : 0;
+    if (scaled > 0) upsertVocabTestScore(currentUser.id, currentUser.username, today, scaled);
     setSaved(true);
     setTick(t => t + 1);
+    setTimeout(() => reset(), 1500);
   }
 
   function reset() {
@@ -120,6 +126,7 @@ export default function VocabExamTab({ currentUser }: Props) {
   }
 
   const history = getVocabExamRecords(currentUser.id);
+  const todayRecord = history.find(r => r.date === getKSTToday());
   const allRecords = isPrivileged(currentUser) ? getAllVocabExamRecords() : [];
   const score = results.filter(r => r.correct).length;
   const total = results.length;
@@ -133,6 +140,21 @@ export default function VocabExamTab({ currentUser }: Props) {
   if (phase === 'setup') {
     return (
       <div className="space-y-4" key={tick}>
+        {/* 오늘 이미 응시한 경우 */}
+        {todayRecord && (
+          <div className="card text-center space-y-2 py-6 border-primary-100 bg-primary-50">
+            <p className="text-sm font-bold text-primary-700">오늘 시험을 완료했습니다</p>
+            <p className="text-3xl font-black text-primary-600">{todayRecord.score} / {todayRecord.total}</p>
+            <p className="text-xs text-gray-400">
+              {todayRecord.startNum}~{todayRecord.endNum}번
+              {todayRecord.carryoverNums.length > 0 && ` + 이월 ${todayRecord.carryoverNums.join(', ')}`}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">다시 응시하려면 관리자에게 기록 삭제를 요청하세요.</p>
+          </div>
+        )}
+
+        {/* 번호 선택 — 오늘 기록 없을 때만 */}
+        {!todayRecord && (<>
         {/* 번호 선택 */}
         <div className="card space-y-4">
           <p className="text-sm font-bold text-gray-800">시험 범위 설정</p>
@@ -225,6 +247,7 @@ export default function VocabExamTab({ currentUser }: Props) {
         >
           시험 응시 ({examItems.length + (noCarryover ? 0 : carryoverNums.filter(n => n < startNum || n > endNum).length)}문항)
         </button>
+        </>)}
 
         {/* 최근 기록 */}
         {history.length > 0 && (
@@ -377,27 +400,18 @@ export default function VocabExamTab({ currentUser }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <button
-          onClick={reset}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-        >
-          <RotateCcw className="w-4 h-4" />
-          다시 응시
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={saved}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition ${
-            saved
-              ? 'bg-gray-100 text-gray-400 cursor-default'
-              : 'bg-primary-600 text-white hover:bg-primary-700'
-          }`}
-        >
-          <Save className="w-4 h-4" />
-          {saved ? '기록 완료' : '기록하기'}
-        </button>
-      </div>
+      <button
+        onClick={handleSave}
+        disabled={saved}
+        className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold transition ${
+          saved
+            ? 'bg-gray-100 text-gray-400 cursor-default'
+            : 'bg-primary-600 text-white hover:bg-primary-700'
+        }`}
+      >
+        <Save className="w-4 h-4" />
+        {saved ? '기록 완료 — 잠시 후 이동합니다' : '기록하기'}
+      </button>
 
       {/* Wrong answers */}
       {wrongItems.length > 0 && (
