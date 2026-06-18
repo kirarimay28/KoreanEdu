@@ -168,50 +168,55 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/20 backdrop-blur-md"
             onClick={() => setSideOpen(false)}
           />
 
-          {/* Panel */}
-          <div className="relative w-[82%] max-w-[320px] bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden">
+          {/* Panel — frosted glass */}
+          <div className="relative w-[82%] max-w-[320px] bg-white/75 backdrop-blur-2xl h-full shadow-2xl flex flex-col z-10 overflow-hidden">
 
             {/* Close */}
             <button
               onClick={() => setSideOpen(false)}
-              className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/80 text-gray-400 hover:text-gray-700 transition"
+              className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/60 text-gray-500 hover:text-gray-800 transition"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Profile header */}
+            {/* Profile header — auth-page gradient */}
             <div
               className="px-6 pt-10 pb-6 flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #4f46e5 0%, #3730a3 60%, #312e81 100%)' }}
+              style={{
+                background: `
+                  radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.65) 0%, rgba(197,210,255,0.35) 42%, transparent 65%),
+                  linear-gradient(145deg, #c7d7fe 0%, #a5bbfc 50%, #b0a8f0 100%)
+                `,
+              }}
             >
               {/* App identity */}
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-2xl bg-white/60 shadow-sm flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-6 h-6 text-primary-600" />
                 </div>
                 <div>
-                  <div className="text-white font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
-                  <div className="text-indigo-300 text-[11px] mt-0.5">국어 임용 스터디</div>
+                  <div className="text-indigo-900 font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
+                  <div className="text-indigo-500 text-[11px] mt-0.5">국어 임용 스터디</div>
                 </div>
               </div>
 
               {/* User card */}
-              <div className="bg-white/10 rounded-2xl px-4 py-3.5 space-y-2.5">
+              <div className="bg-white/50 rounded-2xl px-4 py-3.5 space-y-2.5 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg font-black text-white">{currentUser.username[0]}</span>
+                  <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg font-black text-primary-700">{currentUser.username[0]}</span>
                   </div>
                   <div className="min-w-0">
-                    <NameWithCrown name={currentUser.username} className="text-sm font-bold text-white" />
-                    <span className="text-[11px] text-indigo-200">{roleLabel}</span>
+                    <NameWithCrown name={currentUser.username} className="text-sm font-bold text-indigo-900" />
+                    <span className="text-[11px] text-indigo-500">{roleLabel}</span>
                   </div>
                 </div>
                 {currentUser.resolution && (
-                  <p className="text-[11px] text-indigo-200 leading-relaxed italic border-t border-white/10 pt-2.5">
+                  <p className="text-[11px] text-indigo-600 leading-relaxed italic border-t border-indigo-100 pt-2.5">
                     "{currentUser.resolution}"
                   </p>
                 )}
@@ -219,7 +224,7 @@ export default function App() {
             </div>
 
             {/* Menu items */}
-            <div className="flex-1 overflow-y-auto py-2">
+            <div className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
               {MENU_TABS.map(tab => {
                 const Icon = tab.icon;
                 const count = tab.id === 'resource' ? pendingCount : 0;
@@ -228,12 +233,14 @@ export default function App() {
                   <button
                     key={tab.id}
                     onClick={() => handleMenuNav(tab.id)}
-                    className={`w-full flex items-center gap-3 px-5 py-3 transition ${
-                      isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition ${
+                      isActive
+                        ? 'bg-white/70 text-primary-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-white/50'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition ${
-                      isActive ? 'bg-primary-100' : tab.iconBg
+                      isActive ? 'bg-primary-100' : 'bg-white/60'
                     }`}>
                       <Icon className={`w-4 h-4 ${isActive ? 'text-primary-600' : tab.iconColor}`} />
                     </div>
@@ -251,17 +258,17 @@ export default function App() {
             </div>
 
             {/* Bottom: refresh + logout */}
-            <div className="flex-shrink-0 border-t border-gray-100 px-4 py-3 space-y-1">
+            <div className="flex-shrink-0 border-t border-white/40 px-4 py-3 space-y-0.5">
               <button
                 onClick={handleRefresh}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-gray-100 transition text-sm font-medium"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-white/60 transition text-sm font-medium"
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-primary-500' : ''}`} />
                 새로고침
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-50 transition text-sm font-medium"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:text-red-500 hover:bg-white/60 transition text-sm font-medium"
               >
                 <LogOut className="w-4 h-4" />
                 로그아웃
