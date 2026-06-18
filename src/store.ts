@@ -769,7 +769,27 @@ export function saveVocabExamRecord(record: VocabExamRecord): void {
 }
 
 export function deleteVocabExamRecord(id: string): void {
+  const record = mem.vocabExamRecords.find(r => r.id === id);
   mem.vocabExamRecords = mem.vocabExamRecords.filter(r => r.id !== id);
   remove('vocabExamRecords', id);
+
+  if (record) {
+    // 연동된 고어 시험 점수도 삭제
+    const scoreId = `${record.userId}_${record.date}`;
+    mem.vocabTestScores = mem.vocabTestScores.filter(s => s.id !== scoreId);
+    remove('vocabTestScores', scoreId);
+
+    // 시스템이 자동 부여한 경고도 삭제
+    const autoWarning = mem.warnings.find(
+      w => w.targetUserId === record.userId &&
+           w.issuedById === 'system' &&
+           w.reason.includes(`[고어 시험] ${record.date}`)
+    );
+    if (autoWarning) {
+      mem.warnings = mem.warnings.filter(w => w.id !== autoWarning.id);
+      remove('warnings', autoWarning.id);
+    }
+  }
+
   saveCache();
 }
