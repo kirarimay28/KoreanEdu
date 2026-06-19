@@ -11,6 +11,7 @@ interface Props {
 }
 
 type Phase = 'setup' | 'exam' | 'result';
+type Mode = 'exam' | 'practice';
 
 interface GradeResult {
   itemNum: number;
@@ -24,6 +25,7 @@ const NUMS = VOCAB_ITEMS.map(v => v.num); // 1–60
 
 export default function VocabExamTab({ currentUser }: Props) {
   const [phase, setPhase] = useState<Phase>('setup');
+  const [mode, setMode] = useState<Mode>('exam');
   const [startNum, setStartNum] = useState(1);
   const [endNum, setEndNum] = useState(20);
   const [noCarryover, setNoCarryover] = useState(true);
@@ -75,7 +77,8 @@ export default function VocabExamTab({ currentUser }: Props) {
     );
   }
 
-  function startExam() {
+  function startExam(m: Mode) {
+    setMode(m);
     setAnswers({});
     setResults([]);
     setSaved(false);
@@ -153,8 +156,8 @@ export default function VocabExamTab({ currentUser }: Props) {
           </div>
         )}
 
-        {/* 번호 선택 — 오늘 기록 없을 때만 */}
-        {!todayRecord && (<>
+        {/* 번호 선택 */}
+        {(!todayRecord || true) && (<>
         {/* 번호 선택 */}
         <div className="card space-y-4">
           <p className="text-sm font-bold text-gray-800">시험 범위 설정</p>
@@ -240,13 +243,28 @@ export default function VocabExamTab({ currentUser }: Props) {
           )}
         </div>
 
-        <button
-          onClick={startExam}
-          disabled={examItems.length === 0}
-          className="btn-primary w-full"
-        >
-          시험 응시 ({examItems.length + (noCarryover ? 0 : carryoverNums.filter(n => n < startNum || n > endNum).length)}문항)
-        </button>
+        <div className="flex gap-2">
+          {!todayRecord && (
+            <button
+              onClick={() => startExam('exam')}
+              disabled={examItems.length === 0}
+              className="btn-primary flex-1"
+            >
+              시험 응시
+            </button>
+          )}
+          <button
+            onClick={() => startExam('practice')}
+            disabled={examItems.length === 0}
+            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border transition ${
+              examItems.length === 0
+                ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
+                : 'bg-white text-primary-600 border-primary-300 hover:bg-primary-50'
+            }`}
+          >
+            연습하기
+          </button>
+        </div>
         </>)}
 
         {/* 최근 기록 */}
@@ -331,7 +349,7 @@ export default function VocabExamTab({ currentUser }: Props) {
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm font-bold text-gray-800">
-            고어 시험 · {examItems.length}문항
+            {mode === 'practice' ? '연습하기' : '고어 시험'} · {examItems.length}문항
           </p>
           <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 transition">
             취소
@@ -400,18 +418,35 @@ export default function VocabExamTab({ currentUser }: Props) {
       </div>
 
       {/* Actions */}
-      <button
-        onClick={handleSave}
-        disabled={saved}
-        className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold transition ${
-          saved
-            ? 'bg-gray-100 text-gray-400 cursor-default'
-            : 'bg-primary-600 text-white hover:bg-primary-700'
-        }`}
-      >
-        <Save className="w-4 h-4" />
-        {saved ? '기록 완료 — 잠시 후 이동합니다' : '기록하기'}
-      </button>
+      {mode === 'practice' ? (
+        <div className="flex gap-2">
+          <button
+            onClick={() => startExam('practice')}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold border border-primary-300 text-primary-600 hover:bg-primary-50 transition"
+          >
+            다시 연습하기
+          </button>
+          <button
+            onClick={reset}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 text-gray-500 hover:bg-gray-200 transition"
+          >
+            처음으로
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={handleSave}
+          disabled={saved}
+          className={`w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold transition ${
+            saved
+              ? 'bg-gray-100 text-gray-400 cursor-default'
+              : 'bg-primary-600 text-white hover:bg-primary-700'
+          }`}
+        >
+          <Save className="w-4 h-4" />
+          {saved ? '기록 완료 — 잠시 후 이동합니다' : '기록하기'}
+        </button>
+      )}
 
       {/* Wrong answers */}
       {wrongItems.length > 0 && (
