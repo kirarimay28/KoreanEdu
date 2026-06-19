@@ -76,5 +76,9 @@ export function normalizeAnswer(s: string): string {
 }
 
 export function isAnswerCorrect(userAnswer: string, correctAnswer: string): boolean {
-  return normalizeAnswer(userAnswer) === normalizeAnswer(correctAnswer);
+  const split = (s: string) =>
+    normalizeAnswer(s).split(',').map(t => t.trim()).filter(Boolean).sort();
+  const u = split(userAnswer);
+  const c = split(correctAnswer);
+  return u.length === c.length && u.every((v, i) => v === c[i]);
 }
