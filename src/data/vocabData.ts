@@ -70,7 +70,7 @@ export const VOCAB_ITEMS: VocabItem[] = [
 ];
 
 export function normalizeAnswer(s: string): string {
-  return s.replace(/\s/g, '');
+  return s.replace(/\([^)]*\)/g, '').replace(/\s/g, '');
 }
 
 export function isAnswerCorrect(userAnswer: string, correctAnswer: string): boolean {
