@@ -115,6 +115,7 @@ export interface PersonalStudyEntry {
   studyHours: number | '';   // kept for backward compat
   studyContent?: string;     // what to study today (per subject)
   estimatedMinutes?: number; // estimated study time in minutes
+  manuallyCompleted?: boolean; // user clicked 완료 before reaching goal → △
 }
 
 export interface ReflectionEntry {
