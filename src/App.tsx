@@ -18,7 +18,7 @@ import AssignmentTab from './components/Assignment/AssignmentTab';
 import SettingsTab from './components/Settings/SettingsTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
-  BookOpen, GraduationCap, ClipboardList, CalendarCheck, CalendarDays,
+  BookOpen, ClipboardList, CalendarCheck, CalendarDays, Clock,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
   BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X,
 } from 'lucide-react';
@@ -43,7 +43,7 @@ const SESSION_KEY = 'korean_edu_session';
 
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study',      label: '스터디',   icon: BookOpen },
-  { id: 'personal',   label: '개인공부', icon: GraduationCap },
+  { id: 'personal',   label: '타이머', icon: Clock },
   { id: 'reflection', label: '반성',     icon: ClipboardList },
   { id: 'qna',        label: '질의응답', icon: HelpCircle },
   { id: 'calendar',   label: '캘린더',   icon: CalendarDays },

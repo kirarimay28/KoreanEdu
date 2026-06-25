@@ -113,6 +113,8 @@ export interface PersonalStudyEntry {
   feedback: string;
   studySeconds: number;      // timer-based net study time in seconds
   studyHours: number | '';   // kept for backward compat
+  studyContent?: string;     // what to study today (per subject)
+  estimatedMinutes?: number; // estimated study time in minutes
 }
 
 export interface ReflectionEntry {
