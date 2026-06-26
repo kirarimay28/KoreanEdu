@@ -196,13 +196,6 @@ function SubjectCard({ entry, onSave, onDelete }: {
     }
   }, [entry]);
 
-  // Auto-stop when goal is reached
-  useEffect(() => {
-    const planned = (draft.estimatedMinutes ?? 0) * 60;
-    if (planned > 0 && elapsed >= planned && timerState === 'running') {
-      stopTimer();
-    }
-  }, [elapsed]);
 
   /* ── Timer functions ── */
   function startTimer() {
