@@ -6,7 +6,7 @@ import {
   deletePersonalStudyEntry,
   markAttendance,
 } from '../../store';
-import { Plus, Trash2, Save, Play, Pause, Square, ChevronUp, ChevronDown, CheckCircle2, AlertTriangle, XCircle, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, Save, Play, Pause, Square, ChevronUp, ChevronDown, CheckCircle2, AlertTriangle, XCircle, Pencil, Check, X, Sparkles, TrendingUp, ThumbsUp, Target } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -564,6 +564,244 @@ function SubjectCard({ entry, onSave, onDelete }: {
   );
 }
 
+/* ── Analysis ───────────────────────────────────────────── */
+interface StudyAnalysis {
+  totalPlannedMins: number;
+  totalActualSecs: number;
+  achievementPct: number;
+  subjectBreakdown: Array<{ name: string; plannedMins: number; actualSecs: number; status: Status }>;
+  completedCount: number;
+  partialCount: number;
+  missedCount: number;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  tomorrowRecs: string[];
+}
+
+function analyzeStudy(entries: PersonalStudyEntry[]): StudyAnalysis {
+  const totalPlannedMins = entries.reduce((s, e) => s + (e.estimatedMinutes ?? 0), 0);
+  const totalActualSecs  = entries.reduce((s, e) => s + (e.studySeconds || 0), 0);
+  const achievementPct   = totalPlannedMins > 0
+    ? Math.min(200, Math.round((totalActualSecs / (totalPlannedMins * 60)) * 100))
+    : 0;
+
+  const subjectBreakdown = entries.map(e => ({
+    name: e.subject === '기타' ? (e.customSubject || '기타') : e.subject,
+    plannedMins: e.estimatedMinutes ?? 0,
+    actualSecs: e.studySeconds || 0,
+    status: computeStatus(e, e.studySeconds || 0),
+  }));
+
+  const completedCount = subjectBreakdown.filter(r => r.status === 'O').length;
+  const partialCount   = subjectBreakdown.filter(r => r.status === '△').length;
+  const missedCount    = subjectBreakdown.filter(r => r.status === 'X').length;
+
+  const totalH = Math.floor(totalActualSecs / 3600);
+  const totalM = Math.floor((totalActualSecs % 3600) / 60);
+  const timeStr = totalH > 0 ? `${totalH}시간 ${totalM}분` : `${totalM}분`;
+
+  let summary = '';
+  if (entries.length === 0) {
+    summary = '오늘 등록된 학습 기록이 없습니다.';
+  } else if (completedCount === entries.length) {
+    summary = `계획한 ${entries.length}개 과목을 모두 완료! 총 ${timeStr}의 알찬 학습이었습니다.`;
+  } else if (achievementPct >= 80) {
+    summary = `총 ${timeStr}을 공부하며 목표의 ${achievementPct}%를 달성했습니다. 매우 성실한 하루였어요.`;
+  } else if (achievementPct >= 60) {
+    summary = `총 ${timeStr}을 공부하며 목표의 ${achievementPct}%를 달성했습니다. 전반적으로 양호한 학습이었어요.`;
+  } else if (achievementPct >= 30) {
+    summary = `총 ${timeStr}을 공부했지만 목표의 ${achievementPct}%에 그쳤어요. 조금 더 집중이 필요합니다.`;
+  } else if (totalActualSecs > 0) {
+    summary = `총 ${timeStr}을 공부했지만 목표 대비 많이 부족했어요. 내일은 더 나은 하루를 만들어 봐요.`;
+  } else {
+    summary = '오늘 공부한 시간이 기록되지 않았습니다. 타이머를 활용해 보세요!';
+  }
+
+  const strengths: string[] = [];
+  const completedNames = subjectBreakdown.filter(r => r.status === 'O').map(r => r.name);
+  if (completedNames.length > 0) strengths.push(`${completedNames.join(', ')} — 목표 시간 달성`);
+  if (achievementPct > 100) strengths.push(`목표를 ${achievementPct - 100}% 초과 달성 — 높은 집중력`);
+  if (totalActualSecs >= 4 * 3600) strengths.push(`${Math.floor(totalActualSecs/3600)}시간 이상의 충실한 학습량`);
+  else if (totalActualSecs >= 2 * 3600) strengths.push('2시간 이상의 꾸준한 학습 유지');
+  if (entries.length >= 3 && completedCount >= 2) strengths.push('다과목 균형 학습');
+  if (strengths.length === 0 && totalActualSecs > 0) strengths.push('학습 기록을 꾸준히 남김');
+
+  const improvements: string[] = [];
+  const missedNames   = subjectBreakdown.filter(r => r.status === 'X').map(r => r.name);
+  const partialNames  = subjectBreakdown.filter(r => r.status === '△').map(r => r.name);
+  if (missedNames.length > 0)  improvements.push(`${missedNames.join(', ')} — 학습 누락`);
+  if (partialNames.length > 0) improvements.push(`${partialNames.join(', ')} — 목표 미달`);
+  const gapped = subjectBreakdown.filter(r => r.plannedMins > 0 && r.actualSecs > 0 && r.actualSecs < r.plannedMins * 60 * 0.6);
+  if (gapped.length > 0) improvements.push('예상 시간과 실제 시간 격차가 큼 — 시간 계획 재설정 권장');
+  if (improvements.length === 0) improvements.push('전반적으로 완벽한 달성! 다음 단계 목표 설정을 고려해 보세요.');
+
+  const tomorrowRecs: string[] = [];
+  const priorityNames = [...new Set([...missedNames, ...partialNames])];
+  if (priorityNames.length > 0) tomorrowRecs.push(`우선 보충: ${priorityNames.join(', ')}`);
+  [...missedNames, ...partialNames].forEach(name => {
+    if (name === '중세문법') tomorrowRecs.push('중세문법: 핵심 문법 항목별 예시 정리 + 기출 확인');
+    else if (name === '현대문법') tomorrowRecs.push('현대문법: 개념 단권화 후 기출 문제 적용 연습');
+    else if (name === '국교론') tomorrowRecs.push('국교론: 최신 출제 경향 파악 + 주요 논점 정리');
+    else if (name === '교육학') tomorrowRecs.push('교육학: 핵심 키워드 암기 + 서술형 답안 구성 연습');
+  });
+  if (tomorrowRecs.length === 0) {
+    tomorrowRecs.push('오늘 학습 내용 간단 복습 후 다음 단계로 진행');
+    tomorrowRecs.push('학습 목표 시간을 조금씩 늘려보는 도전');
+  }
+
+  return { totalPlannedMins, totalActualSecs, achievementPct, subjectBreakdown, completedCount, partialCount, missedCount, summary, strengths, improvements, tomorrowRecs };
+}
+
+/* ── Analysis Modal ─────────────────────────────────────── */
+function AnalysisModal({ analysis, date, onClose }: { analysis: StudyAnalysis; date: string; onClose: () => void }) {
+  const scoreEmoji = analysis.achievementPct >= 100 ? '🏆' : analysis.achievementPct >= 80 ? '🌟' : analysis.achievementPct >= 60 ? '👍' : analysis.achievementPct >= 30 ? '💪' : '🌱';
+  const totalH = Math.floor(analysis.totalActualSecs / 3600);
+  const totalM = Math.floor((analysis.totalActualSecs % 3600) / 60);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl overflow-hidden"
+        style={{ maxHeight: '90vh' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 px-5 pt-5 pb-4"
+          style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%)' }}>
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-white/80" />
+                <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">학습 분석 리포트</p>
+              </div>
+              <p className="text-white font-bold text-base">{formatKoreanDate(date)}</p>
+            </div>
+            <button onClick={onClose} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-xl transition">
+              <X className="w-4 h-4 text-white" />
+            </button>
+          </div>
+
+          {/* Score */}
+          <div className="flex items-center gap-4 bg-white/15 rounded-2xl px-4 py-3">
+            <div className="text-4xl">{scoreEmoji}</div>
+            <div className="flex-1">
+              <p className="text-white text-sm font-medium leading-relaxed">{analysis.summary}</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-2 mt-3">
+            {[
+              { label: '달성률', value: `${analysis.achievementPct}%` },
+              { label: '학습 시간', value: totalH > 0 ? `${totalH}h${totalM}m` : `${totalM}m` },
+              { label: '완료', value: String(analysis.completedCount) },
+              { label: '누락', value: String(analysis.missedCount) },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-white/15 rounded-xl px-2 py-2 text-center">
+                <p className="text-[9px] opacity-70 font-semibold">{label}</p>
+                <p className="text-sm font-black text-white">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto px-5 py-4 space-y-4" style={{ maxHeight: 'calc(90vh - 260px)' }}>
+
+          {/* Subject breakdown */}
+          {analysis.subjectBreakdown.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">과목별 현황</p>
+              <div className="space-y-2">
+                {analysis.subjectBreakdown.map((r, i) => {
+                  const pct = r.plannedMins > 0 ? Math.min(200, Math.round((r.actualSecs / (r.plannedMins * 60)) * 100)) : 0;
+                  const aH = Math.floor(r.actualSecs / 3600);
+                  const aM = Math.floor((r.actualSecs % 3600) / 60);
+                  const aS = r.actualSecs % 60;
+                  const timeDisplay = aH > 0 ? `${aH}h ${aM}m` : aM > 0 ? `${aM}m ${aS}s` : `${aS}s`;
+                  const barColor = r.status === 'O' ? 'bg-green-500' : r.status === '△' ? 'bg-amber-400' : r.status === 'X' ? 'bg-red-300' : 'bg-indigo-400';
+                  const c = getColor(r.name);
+                  return (
+                    <div key={i} className={`bg-gray-50 rounded-xl p-3 border-l-4 ${c.border}`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{r.name}</span>
+                          {r.status && <StatusBadge status={r.status} />}
+                        </div>
+                        <span className="text-xs font-bold font-mono text-gray-600">{timeDisplay}</span>
+                      </div>
+                      {r.plannedMins > 0 && (
+                        <div className="space-y-0.5">
+                          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                          </div>
+                          <p className="text-[10px] text-gray-400 text-right">목표 {formatMins(r.plannedMins)} · {pct}%</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Strengths */}
+          {analysis.strengths.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <ThumbsUp className="w-3.5 h-3.5 text-green-500" />
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">잘한 점</p>
+              </div>
+              <div className="space-y-1.5">
+                {analysis.strengths.map((s, i) => (
+                  <div key={i} className="flex items-start gap-2 bg-green-50 rounded-xl px-3 py-2.5">
+                    <span className="text-green-500 mt-0.5 flex-shrink-0 text-xs font-black">✓</span>
+                    <p className="text-xs text-green-800 font-medium">{s}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Improvements */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">보완할 점</p>
+            </div>
+            <div className="space-y-1.5">
+              {analysis.improvements.map((s, i) => (
+                <div key={i} className="flex items-start gap-2 bg-amber-50 rounded-xl px-3 py-2.5">
+                  <span className="text-amber-500 mt-0.5 flex-shrink-0 text-xs font-black">!</span>
+                  <p className="text-xs text-amber-800 font-medium">{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tomorrow */}
+          <div className="pb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-3.5 h-3.5 text-indigo-500" />
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">내일 권장</p>
+            </div>
+            <div className="space-y-1.5">
+              {analysis.tomorrowRecs.map((s, i) => (
+                <div key={i} className="flex items-start gap-2 bg-indigo-50 rounded-xl px-3 py-2.5">
+                  <span className="text-indigo-500 mt-0.5 flex-shrink-0 text-xs font-black">→</span>
+                  <p className="text-xs text-indigo-800 font-medium">{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main ───────────────────────────────────────────────── */
 export default function PersonalStudyTab({ date, currentUser }: Props) {
   const [entries, setEntries] = useState<PersonalStudyEntry[]>([]);
@@ -571,6 +809,8 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
   const [newTodo, setNewTodo] = useState('');
   const [newPriority, setNewPriority] = useState<'high'|'medium'|'low'>('medium');
   const [newTag, setNewTag] = useState<string>('없음');
+  const [analysis, setAnalysis] = useState<StudyAnalysis | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   function reload() {
     setEntries(getPersonalStudyEntriesForDate(date).filter(e => e.userId === currentUser.id));
@@ -625,6 +865,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
   }, { o: 0, d: 0, x: 0 });
 
   return (
+    <>
     <div className="space-y-5">
 
       {/* ── Header card ── */}
@@ -666,7 +907,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
         )}
 
         {totalPlanned > 0 && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 mb-4">
             <div className="flex justify-between text-xs opacity-80">
               <span>오늘 목표 달성률</span>
               <span className="font-bold">{overallPct}%</span>
@@ -676,6 +917,24 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
             </div>
           </div>
         )}
+
+        <button
+          onClick={() => {
+            if (analyzing) return;
+            setAnalyzing(true);
+            setTimeout(() => {
+              setAnalysis(analyzeStudy(entries));
+              setAnalyzing(false);
+            }, 900);
+          }}
+          disabled={analyzing || entries.length === 0}
+          className="w-full flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 disabled:opacity-40 text-white font-bold text-sm py-2.5 rounded-xl transition"
+        >
+          {analyzing
+            ? <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />분석 중...</>
+            : <><Sparkles className="w-3.5 h-3.5" />오늘 학습 완료 — AI 분석 받기</>
+          }
+        </button>
       </div>
 
       {/* ── Planner ── */}
@@ -798,5 +1057,8 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
       </div>
 
     </div>
+
+    {analysis && <AnalysisModal analysis={analysis} date={date} onClose={() => setAnalysis(null)} />}
+    </>
   );
 }
