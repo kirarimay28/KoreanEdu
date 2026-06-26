@@ -48,16 +48,20 @@ const PRIORITY_META = {
 function getColor(subject: string) { return COLORS[subject] ?? COLORS['기타']; }
 
 function formatTime(s: number): string {
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function formatClock(ts: number): string {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 function formatMins(t: number): string {
   if (!t) return '—';
-  const h = Math.floor(t/60), m = t%60;
+  const h = Math.floor(t / 60), m = t % 60;
   if (!h) return `${m}분`; if (!m) return `${h}시간`; return `${h}시간 ${m}분`;
 }
 function formatKoreanDate(d: string): string {
-  const dt = new Date(d+'T00:00:00');
+  const dt = new Date(d + 'T00:00:00');
   const days = ['일','월','화','수','목','금','토'];
   return `${dt.getFullYear()}년 ${dt.getMonth()+1}월 ${dt.getDate()}일 (${days[dt.getDay()]})`;
 }
@@ -118,57 +122,81 @@ function SubjectCard({ entry, onSave, onDelete }: {
 }) {
   const [draft, setDraft] = useState(entry);
   const [timerState, setTimerState] = useState<'idle'|'running'|'paused'>('idle');
+  const [startedAt, setStartedAt] = useState<number|null>(null);
+  const [endedAt, setEndedAt] = useState<number|null>(null);
+  const [breakSecs, setBreakSecs] = useState(0);
   const [elapsed, setElapsed] = useState(entry.studySeconds || 0);
+  const [liveBreakSecs, setLiveBreakSecs] = useState(0);
   const [saved, setSaved] = useState(false);
   const [open, setOpen] = useState(true);
-  const [editingTime, setEditingTime] = useState(false);
-  const [editH, setEditH] = useState(0);
-  const [editM, setEditM] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>|undefined>(undefined);
-  // 실제 시각 기반 타이머: 앱을 나갔다 돌아와도 경과 시간 유지
-  const startAtRef  = useRef<number>(0);   // 이번 run 시작 timestamp
-  const baseRef     = useRef<number>(entry.studySeconds || 0); // 이전까지 누적 초
+  const [editingEnd, setEditingEnd] = useState(false);
+  const [editEndH, setEditEndH] = useState(0);
+  const [editEndM, setEditEndM] = useState(0);
+
+  const intervalRef  = useRef<ReturnType<typeof setInterval>|undefined>(undefined);
+  const startedAtRef = useRef<number|null>(null);
+  const breakSecsRef = useRef(0);
+  const pausedAtRef  = useRef<number|null>(null);
 
   const LS_KEY = `timer_run_${entry.id}`;
 
-  // 마운트 시 localStorage에서 진행 중인 타이머 복원 (로그아웃 후 재진입 포함)
+  // Restore timer state from localStorage (survives app exit / logout)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (raw) {
-        const { startedAt, base } = JSON.parse(raw) as { startedAt: number; base: number };
-        baseRef.current    = base;
-        startAtRef.current = startedAt;
-        const restored     = base + Math.floor((Date.now() - startedAt) / 1000);
-        setElapsed(restored);
-        setTimerState('running');
+        const ls = JSON.parse(raw) as { startedAt: number; breakSecs: number; pausedAt: number | null };
+        startedAtRef.current = ls.startedAt;
+        breakSecsRef.current = ls.breakSecs;
+        pausedAtRef.current  = ls.pausedAt;
+        setStartedAt(ls.startedAt);
+        setBreakSecs(ls.breakSecs);
+        if (ls.pausedAt) {
+          // Was paused when app closed: elapsed frozen, break ticking since then
+          const frozen = Math.max(0, Math.floor((ls.pausedAt - ls.startedAt) / 1000) - ls.breakSecs);
+          const currentBreak = ls.breakSecs + Math.floor((Date.now() - ls.pausedAt) / 1000);
+          setElapsed(frozen);
+          setLiveBreakSecs(currentBreak);
+          setTimerState('paused');
+        } else {
+          // Was running when app closed: elapsed continues from real time
+          const live = Math.max(0, Math.floor((Date.now() - ls.startedAt) / 1000) - ls.breakSecs);
+          setElapsed(live);
+          setLiveBreakSecs(ls.breakSecs);
+          setTimerState('running');
+        }
       }
     } catch { localStorage.removeItem(LS_KEY); }
-    return () => { clearInterval(intervalRef.current); };
+    return () => clearInterval(intervalRef.current);
   }, []);
 
+  // Tick: running → update elapsed; paused → update liveBreakSecs
   useEffect(() => {
+    clearInterval(intervalRef.current);
     if (timerState === 'running') {
       intervalRef.current = setInterval(() => {
-        setElapsed(baseRef.current + Math.floor((Date.now() - startAtRef.current) / 1000));
+        setElapsed(Math.max(0, Math.floor((Date.now() - startedAtRef.current!) / 1000) - breakSecsRef.current));
       }, 1000);
-    } else {
-      clearInterval(intervalRef.current);
+    } else if (timerState === 'paused') {
+      intervalRef.current = setInterval(() => {
+        setLiveBreakSecs(breakSecsRef.current + Math.floor((Date.now() - pausedAtRef.current!) / 1000));
+      }, 1000);
     }
     return () => clearInterval(intervalRef.current);
   }, [timerState]);
 
-  // entry 갱신 시: LS에 진행 중 타이머 있으면 elapsed 건드리지 않음
-  // (마운트 직후 race condition 방지 + 로그아웃 재진입 후 복원 유지)
+  // Sync from entry prop when no active timer
   useEffect(() => {
     setDraft(entry);
     if (!localStorage.getItem(LS_KEY)) {
       setElapsed(entry.studySeconds || 0);
-      baseRef.current = entry.studySeconds || 0;
+      breakSecsRef.current = 0;
+      setBreakSecs(0);
+      setLiveBreakSecs(0);
     }
   }, [entry]);
 
-  // 목표 달성 시 자동 완료
+  // Auto-stop when goal is reached
   useEffect(() => {
     const planned = (draft.estimatedMinutes ?? 0) * 60;
     if (planned > 0 && elapsed >= planned && timerState === 'running') {
@@ -176,30 +204,97 @@ function SubjectCard({ entry, onSave, onDelete }: {
     }
   }, [elapsed]);
 
+  /* ── Timer functions ── */
   function startTimer() {
-    startAtRef.current = Date.now();
-    baseRef.current    = elapsed;
-    localStorage.setItem(LS_KEY, JSON.stringify({ startedAt: startAtRef.current, base: baseRef.current }));
+    const now = Date.now();
+    startedAtRef.current = now;
+    breakSecsRef.current = 0;
+    pausedAtRef.current  = null;
+    setStartedAt(now);
+    setEndedAt(null);
+    setBreakSecs(0);
+    setElapsed(0);
+    setLiveBreakSecs(0);
+    localStorage.setItem(LS_KEY, JSON.stringify({ startedAt: now, breakSecs: 0, pausedAt: null }));
     setTimerState('running');
   }
 
   function pauseTimer() {
-    baseRef.current = elapsed;
-    localStorage.removeItem(LS_KEY);
+    const now = Date.now();
+    pausedAtRef.current = now;
+    const frozen = Math.max(0, Math.floor((now - startedAtRef.current!) / 1000) - breakSecsRef.current);
+    setElapsed(frozen);
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      startedAt: startedAtRef.current,
+      breakSecs: breakSecsRef.current,
+      pausedAt: now,
+    }));
     setTimerState('paused');
   }
 
+  function resumeTimer() {
+    const now = Date.now();
+    breakSecsRef.current += Math.floor((now - pausedAtRef.current!) / 1000);
+    pausedAtRef.current = null;
+    setBreakSecs(breakSecsRef.current);
+    setLiveBreakSecs(breakSecsRef.current);
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      startedAt: startedAtRef.current,
+      breakSecs: breakSecsRef.current,
+      pausedAt: null,
+    }));
+    setTimerState('running');
+  }
+
   function stopTimer() {
+    const now = Date.now();
+    let finalBreak = breakSecsRef.current;
+    if (pausedAtRef.current) {
+      finalBreak += Math.floor((now - pausedAtRef.current) / 1000);
+      breakSecsRef.current = finalBreak;
+    }
+    const finalElapsed = Math.max(0, Math.floor((now - startedAtRef.current!) / 1000) - finalBreak);
+    setEndedAt(now);
+    setBreakSecs(finalBreak);
+    setLiveBreakSecs(finalBreak);
+    setElapsed(finalElapsed);
+    pausedAtRef.current = null;
     localStorage.removeItem(LS_KEY);
     setTimerState('idle');
-    setDraft(prev => ({ ...prev, studySeconds: elapsed }));
+    setDraft(prev => ({ ...prev, studySeconds: finalElapsed }));
+  }
+
+  function applyEndTimeEdit() {
+    if (startedAt === null) return;
+    const base = new Date(startedAt);
+    const candidate = new Date(base);
+    candidate.setHours(editEndH, editEndM, 0, 0);
+    // If user typed an earlier time, assume next day
+    let newEndTs = candidate.getTime();
+    if (newEndTs <= startedAt) newEndTs += 24 * 3600 * 1000;
+    const newElapsed = Math.max(0, Math.floor((newEndTs - startedAt) / 1000) - breakSecs);
+    setEndedAt(newEndTs);
+    setElapsed(newElapsed);
+    setDraft(prev => ({ ...prev, studySeconds: newElapsed }));
+    setEditingEnd(false);
   }
 
   function handleManualComplete() {
+    const now = Date.now();
+    let finalBreak = breakSecsRef.current;
+    if (pausedAtRef.current) finalBreak += Math.floor((now - pausedAtRef.current) / 1000);
+    const finalElapsed = startedAtRef.current
+      ? Math.max(0, Math.floor((now - startedAtRef.current) / 1000) - finalBreak)
+      : elapsed;
+    if (startedAtRef.current) setEndedAt(now);
+    setBreakSecs(finalBreak);
+    setLiveBreakSecs(finalBreak);
+    setElapsed(finalElapsed);
+    pausedAtRef.current = null;
     localStorage.removeItem(LS_KEY);
-    const updated = { ...draft, studySeconds: elapsed, manuallyCompleted: true };
-    setDraft(updated);
     setTimerState('idle');
+    const updated = { ...draft, studySeconds: finalElapsed, manuallyCompleted: true };
+    setDraft(updated);
     onSave(updated);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -211,14 +306,17 @@ function SubjectCard({ entry, onSave, onDelete }: {
     setTimeout(() => setSaved(false), 2000);
   }
 
-  const color = getColor(draft.subject);
-  const estSecs = (draft.estimatedMinutes ?? 0) * 60;
+  const color    = getColor(draft.subject);
+  const estSecs  = (draft.estimatedMinutes ?? 0) * 60;
   const progress = estSecs > 0 ? Math.min(100, Math.round((elapsed / estSecs) * 100)) : 0;
-  const estH = Math.floor((draft.estimatedMinutes ?? 0) / 60);
-  const estM = (draft.estimatedMinutes ?? 0) % 60;
+  const estH     = Math.floor((draft.estimatedMinutes ?? 0) / 60);
+  const estM     = (draft.estimatedMinutes ?? 0) % 60;
   const displayName = draft.subject === '기타' ? (draft.customSubject || '기타') : draft.subject;
-  const status = computeStatus({ ...draft, studySeconds: elapsed }, elapsed);
-  const canManualComplete = elapsed > 0 && status === null; // timer used, not auto-completed
+  const status   = computeStatus({ ...draft, studySeconds: elapsed }, elapsed);
+  const canManualComplete = elapsed > 0 && status === null;
+
+  // Break time shown: ticks when paused, static otherwise
+  const displayBreak = timerState === 'paused' ? liveBreakSecs : breakSecs;
 
   return (
     <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm border-l-4 ${color.border} overflow-hidden`}>
@@ -237,6 +335,11 @@ function SubjectCard({ entry, onSave, onDelete }: {
           {status === null && elapsed > 0 && timerState === 'running' && (
             <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full animate-pulse">
               ⏱ 진행 중
+            </span>
+          )}
+          {timerState === 'paused' && (
+            <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+              ⏸ 휴게 중
             </span>
           )}
         </div>
@@ -299,8 +402,10 @@ function SubjectCard({ entry, onSave, onDelete }: {
               onChange={e => setDraft(prev => ({ ...prev, studyContent: e.target.value }))} />
           </div>
 
-          {/* Time + progress */}
+          {/* Time section */}
           <div className="bg-gray-50 rounded-xl p-3.5 space-y-3">
+
+            {/* 예상 소요 + 실제 공부 시간 */}
             <div className="flex items-end justify-between gap-4">
               <div className="space-y-1.5">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">예상 소요</p>
@@ -309,76 +414,96 @@ function SubjectCard({ entry, onSave, onDelete }: {
                     className="w-14 text-center text-sm font-bold border border-gray-200 rounded-lg py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300"
                     value={estH || ''} placeholder="0"
                     onClick={e => e.stopPropagation()}
-                    onChange={e => { const h = Math.max(0,Math.min(12,Number(e.target.value)||0)); setDraft(prev=>({...prev,estimatedMinutes:h*60+estM})); }}
+                    onChange={e => { const h = Math.max(0, Math.min(12, Number(e.target.value)||0)); setDraft(prev=>({...prev, estimatedMinutes: h*60+estM})); }}
                   />
                   <span className="text-xs text-gray-400 font-medium">h</span>
                   <input type="number" min={0} max={59} step={5}
                     className="w-14 text-center text-sm font-bold border border-gray-200 rounded-lg py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300"
                     value={estM || ''} placeholder="0"
                     onClick={e => e.stopPropagation()}
-                    onChange={e => { const m = Math.max(0,Math.min(59,Number(e.target.value)||0)); setDraft(prev=>({...prev,estimatedMinutes:estH*60+m})); }}
+                    onChange={e => { const m = Math.max(0, Math.min(59, Number(e.target.value)||0)); setDraft(prev=>({...prev, estimatedMinutes: estH*60+m})); }}
                   />
                   <span className="text-xs text-gray-400 font-medium">m</span>
                 </div>
               </div>
               <div className="text-right space-y-1">
-                <div className="flex items-center justify-end gap-1.5">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">실제 시간</p>
-                  {!editingTime && timerState === 'idle' && (
-                    <button
-                      onClick={() => {
-                        setEditH(Math.floor(elapsed / 3600));
-                        setEditM(Math.floor((elapsed % 3600) / 60));
-                        setEditingTime(true);
-                      }}
-                      className="p-0.5 text-gray-300 hover:text-gray-500 transition"
-                      title="시간 수정"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                {editingTime ? (
-                  <div className="flex items-center gap-1 justify-end">
-                    <input
-                      type="number" min={0} max={23}
-                      className="w-12 text-center text-sm font-bold border border-primary-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary-300"
-                      value={editH}
-                      onChange={e => setEditH(Math.max(0, Math.min(23, Number(e.target.value) || 0)))}
-                    />
-                    <span className="text-xs text-gray-400 font-bold">:</span>
-                    <input
-                      type="number" min={0} max={59}
-                      className="w-12 text-center text-sm font-bold border border-primary-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary-300"
-                      value={String(editM).padStart(2, '0')}
-                      onChange={e => setEditM(Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
-                    />
-                    <button
-                      onClick={() => {
-                        const newSecs = editH * 3600 + editM * 60;
-                        setElapsed(newSecs);
-                        baseRef.current = newSecs;
-                        setEditingTime(false);
-                      }}
-                      className="p-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
-                    >
-                      <Check className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => setEditingTime(false)}
-                      className="p-1 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg transition"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <p className={`font-mono text-2xl font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
-                    {formatTime(elapsed)}
-                  </p>
-                )}
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">실제 공부 시간</p>
+                <p className={`font-mono text-2xl font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
+                  {formatTime(elapsed)}
+                </p>
               </div>
             </div>
 
+            {/* 시작 / 휴게 / 종료 row — shown when timer has been used */}
+            {startedAt !== null && (
+              <div className="grid grid-cols-3 gap-1 pt-1 border-t border-gray-200">
+                {/* 시작 */}
+                <div className="text-center">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">시작</p>
+                  <p className="text-xs font-bold font-mono text-gray-600">{formatClock(startedAt)}</p>
+                </div>
+
+                {/* 휴게 */}
+                <div className="text-center">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">휴게</p>
+                  <p className={`text-xs font-bold font-mono ${displayBreak > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {formatTime(displayBreak)}
+                  </p>
+                </div>
+
+                {/* 종료 */}
+                <div className="text-center">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">종료</p>
+                  {timerState !== 'idle' ? (
+                    <p className="text-xs font-bold font-mono text-gray-400">—</p>
+                  ) : editingEnd ? (
+                    <div className="flex items-center gap-0.5 justify-center">
+                      <input
+                        type="number" min={0} max={23}
+                        className="w-9 text-center text-xs font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
+                        value={editEndH}
+                        onChange={e => setEditEndH(Math.max(0, Math.min(23, Number(e.target.value)||0)))}
+                      />
+                      <span className="text-gray-400 text-xs font-bold">:</span>
+                      <input
+                        type="number" min={0} max={59}
+                        className="w-9 text-center text-xs font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
+                        value={String(editEndM).padStart(2,'0')}
+                        onChange={e => setEditEndM(Math.max(0, Math.min(59, Number(e.target.value)||0)))}
+                      />
+                      <button onClick={applyEndTimeEdit} className="p-0.5 text-green-500 hover:text-green-600">
+                        <Check className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => setEditingEnd(false)} className="p-0.5 text-gray-400 hover:text-gray-600">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1">
+                      <p className="text-xs font-bold font-mono text-gray-600">
+                        {endedAt ? formatClock(endedAt) : '—'}
+                      </p>
+                      {endedAt && (
+                        <button
+                          onClick={() => {
+                            const d = new Date(endedAt);
+                            setEditEndH(d.getHours());
+                            setEditEndM(d.getMinutes());
+                            setEditingEnd(true);
+                          }}
+                          className="p-0.5 text-gray-300 hover:text-gray-500 transition"
+                          title="종료 시간 수정"
+                        >
+                          <Pencil className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Progress bar */}
             {estSecs > 0 && (
               <div className="space-y-1">
                 <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
@@ -396,12 +521,19 @@ function SubjectCard({ entry, onSave, onDelete }: {
           {/* Timer controls */}
           <div className={`${color.timerBg} rounded-xl px-4 py-3 flex items-center justify-between gap-3`}>
             <div className="flex gap-2">
-              {timerState !== 'running' ? (
+              {timerState === 'idle' && (
                 <button onClick={startTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Play className="w-3.5 h-3.5" />{timerState === 'paused' ? '재개' : '시작'}
+                  <Play className="w-3.5 h-3.5" />시작
                 </button>
-              ) : (
+              )}
+              {timerState === 'paused' && (
+                <button onClick={resumeTimer}
+                  className="flex items-center gap-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
+                  <Play className="w-3.5 h-3.5" />재개
+                </button>
+              )}
+              {timerState === 'running' && (
                 <button onClick={pauseTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
                   <Pause className="w-3.5 h-3.5" />일시정지
@@ -410,7 +542,7 @@ function SubjectCard({ entry, onSave, onDelete }: {
               {timerState !== 'idle' && (
                 <button onClick={stopTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Square className="w-3.5 h-3.5" />중지
+                  <Square className="w-3.5 h-3.5" />종료
                 </button>
               )}
             </div>
@@ -431,7 +563,6 @@ function SubjectCard({ entry, onSave, onDelete }: {
             </div>
           </div>
 
-          {/* Status explanation */}
           {status === 'O' && <p className="text-xs text-green-600 text-center font-medium">🎉 목표 달성! 자동으로 완료 처리되었습니다.</p>}
           {status === '△' && <p className="text-xs text-amber-600 text-center font-medium">목표 시간에 미달했지만 완료 처리되었습니다.</p>}
         </div>
@@ -492,7 +623,6 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
   const overallPct   = totalPlanned > 0 ? Math.min(100, Math.round((totalActual/(totalPlanned*60))*100)) : 0;
   const doneTodos    = todos.filter(t => t.done).length;
 
-  // status counts for summary
   const statusCounts = entries.reduce((acc, e) => {
     const s = computeStatus(e, e.studySeconds || 0);
     if (s === 'O') acc.o++;
@@ -525,7 +655,6 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
           </div>
         </div>
 
-        {/* Status row */}
         {entries.length > 0 && (
           <div className="flex gap-2 mb-4">
             <div className="flex-1 flex items-center gap-1.5 bg-green-500/30 rounded-xl px-3 py-2">
@@ -585,7 +714,6 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-          {/* Priority sections */}
           {(['high','medium','low'] as const).map(p => {
             const items = todos.filter(t => t.priority === p);
             if (!items.length) return null;
@@ -638,7 +766,6 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
           {/* Add todo form */}
           <div className="p-3 border-t border-gray-100 bg-gray-50/50 space-y-2">
             <div className="flex gap-2">
-              {/* Priority selector */}
               <div className="flex gap-1">
                 {(['high','medium','low'] as const).map(p => {
                   const meta = PRIORITY_META[p];
