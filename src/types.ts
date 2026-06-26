@@ -98,7 +98,7 @@ export interface Feedback {
   createdAt: string;
 }
 
-export type PersonalSubject = '국교론' | '교육학' | '중세문법' | '현대문법' | '기타';
+export type PersonalSubject = '국교론' | '교육학' | '중세문법' | '현대문법' | '한능검' | '기타';
 
 export interface PersonalStudyEntry {
   id: string;
