@@ -43,13 +43,11 @@ function getDailyQuote(): string {
 const SESSION_KEY = 'korean_edu_session';
 
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'study',      label: '스터디',   icon: BookOpen },
-  { id: 'personal',   label: '타이머', icon: Clock },
-  { id: 'reflection', label: '반성',     icon: ClipboardList },
-  { id: 'qna',        label: '질의응답', icon: HelpCircle },
-  { id: 'calendar',   label: '캘린더',   icon: CalendarDays },
-  { id: 'assignment',  label: '과제',     icon: TableProperties },
-  { id: 'vocab_study', label: '고어',     icon: Languages },
+  { id: 'study',       label: '스터디', icon: BookOpen },
+  { id: 'personal',    label: '타이머', icon: Clock },
+  { id: 'reflection',  label: '반성',   icon: ClipboardList },
+  { id: 'assignment',  label: '과제',   icon: TableProperties },
+  { id: 'vocab_study', label: '고어',   icon: Languages },
 ];
 
 interface MenuTabDef {
@@ -61,15 +59,17 @@ interface MenuTabDef {
 }
 
 const MENU_TABS: MenuTabDef[] = [
-  { id: 'attendance', label: '출석',    icon: CalendarCheck, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
-  { id: 'member',     label: '멤버',    icon: Users,         iconBg: 'bg-pink-50',    iconColor: 'text-pink-500' },
-  { id: 'resource',   label: '자료요청', icon: Inbox,        iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
-  { id: 'vacation',   label: '휴가신청', icon: Plane,        iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
-  { id: 'vaclist',    label: '휴가명단', icon: ListChecks,   iconBg: 'bg-orange-50',  iconColor: 'text-orange-500' },
-  { id: 'messages',   label: '쪽지',    icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
-  { id: 'library',    label: '도서관',  icon: BookMarked,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
-  { id: 'settings',   label: '설정',    icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
-  { id: 'tutorial',   label: '튜토리얼', icon: Map,          iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
+  { id: 'qna',        label: '질의응답', icon: HelpCircle,   iconBg: 'bg-blue-50',    iconColor: 'text-blue-500' },
+  { id: 'calendar',   label: '캘린더',   icon: CalendarDays, iconBg: 'bg-indigo-50',  iconColor: 'text-indigo-500' },
+  { id: 'attendance', label: '출석',     icon: CalendarCheck, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
+  { id: 'member',     label: '멤버',     icon: Users,         iconBg: 'bg-pink-50',    iconColor: 'text-pink-500' },
+  { id: 'resource',   label: '자료요청', icon: Inbox,         iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
+  { id: 'vacation',   label: '휴가신청', icon: Plane,         iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
+  { id: 'vaclist',    label: '휴가명단', icon: ListChecks,    iconBg: 'bg-orange-50',  iconColor: 'text-orange-500' },
+  { id: 'messages',   label: '쪽지',     icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
+  { id: 'library',    label: '도서관',   icon: BookMarked,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
+  { id: 'settings',   label: '설정',     icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
+  { id: 'tutorial',   label: '튜토리얼', icon: Map,           iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
 ];
 
 const isMenuTab = (tab: MainTab) => MENU_TABS.some(t => t.id === tab);
