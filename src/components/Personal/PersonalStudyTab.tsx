@@ -128,7 +128,7 @@ function SubjectCard({ entry, onSave, onDelete }: {
 
   const LS_KEY = `timer_run_${entry.id}`;
 
-  // 마운트 시 localStorage에서 진행 중인 타이머 복원
+  // 마운트 시 localStorage에서 진행 중인 타이머 복원 (로그아웃 후 재진입 포함)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -139,17 +139,13 @@ function SubjectCard({ entry, onSave, onDelete }: {
         const restored     = base + Math.floor((Date.now() - startedAt) / 1000);
         setElapsed(restored);
         setTimerState('running');
-        setDraft(prev => ({ ...prev, studySeconds: restored }));
       }
     } catch { localStorage.removeItem(LS_KEY); }
+    return () => { clearInterval(intervalRef.current); };
   }, []);
-
-  // 언마운트 시 localStorage는 그대로 유지 (앱 이탈해도 복원 가능)
-  useEffect(() => () => { clearInterval(intervalRef.current); }, []);
 
   useEffect(() => {
     if (timerState === 'running') {
-      // 1초마다 실제 시각 기반으로 elapsed 계산 (누락·지연 없음)
       intervalRef.current = setInterval(() => {
         setElapsed(baseRef.current + Math.floor((Date.now() - startAtRef.current) / 1000));
       }, 1000);
@@ -159,10 +155,11 @@ function SubjectCard({ entry, onSave, onDelete }: {
     return () => clearInterval(intervalRef.current);
   }, [timerState]);
 
-  // 앱 진입 후 entry 갱신 시 타이머가 돌고 있으면 elapsed는 건드리지 않음
+  // entry 갱신 시: LS에 진행 중 타이머 있으면 elapsed 건드리지 않음
+  // (마운트 직후 race condition 방지 + 로그아웃 재진입 후 복원 유지)
   useEffect(() => {
     setDraft(entry);
-    if (timerState === 'idle') {
+    if (!localStorage.getItem(LS_KEY)) {
       setElapsed(entry.studySeconds || 0);
       baseRef.current = entry.studySeconds || 0;
     }
