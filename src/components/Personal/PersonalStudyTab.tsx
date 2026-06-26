@@ -122,33 +122,81 @@ function SubjectCard({ entry, onSave, onDelete }: {
   const [saved, setSaved] = useState(false);
   const [open, setOpen] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval>|undefined>(undefined);
+  // 실제 시각 기반 타이머: 앱을 나갔다 돌아와도 경과 시간 유지
+  const startAtRef  = useRef<number>(0);   // 이번 run 시작 timestamp
+  const baseRef     = useRef<number>(entry.studySeconds || 0); // 이전까지 누적 초
 
-  useEffect(() => { setDraft(entry); setElapsed(entry.studySeconds || 0); }, [entry]);
+  const LS_KEY = `timer_run_${entry.id}`;
+
+  // 마운트 시 localStorage에서 진행 중인 타이머 복원
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const { startedAt, base } = JSON.parse(raw) as { startedAt: number; base: number };
+        baseRef.current    = base;
+        startAtRef.current = startedAt;
+        const restored     = base + Math.floor((Date.now() - startedAt) / 1000);
+        setElapsed(restored);
+        setTimerState('running');
+        setDraft(prev => ({ ...prev, studySeconds: restored }));
+      }
+    } catch { localStorage.removeItem(LS_KEY); }
+  }, []);
+
+  // 언마운트 시 localStorage는 그대로 유지 (앱 이탈해도 복원 가능)
+  useEffect(() => () => { clearInterval(intervalRef.current); }, []);
 
   useEffect(() => {
     if (timerState === 'running') {
-      intervalRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+      // 1초마다 실제 시각 기반으로 elapsed 계산 (누락·지연 없음)
+      intervalRef.current = setInterval(() => {
+        setElapsed(baseRef.current + Math.floor((Date.now() - startAtRef.current) / 1000));
+      }, 1000);
     } else {
       clearInterval(intervalRef.current);
     }
     return () => clearInterval(intervalRef.current);
   }, [timerState]);
 
-  // auto-complete when reaching planned time
+  // 앱 진입 후 entry 갱신 시 타이머가 돌고 있으면 elapsed는 건드리지 않음
+  useEffect(() => {
+    setDraft(entry);
+    if (timerState === 'idle') {
+      setElapsed(entry.studySeconds || 0);
+      baseRef.current = entry.studySeconds || 0;
+    }
+  }, [entry]);
+
+  // 목표 달성 시 자동 완료
   useEffect(() => {
     const planned = (draft.estimatedMinutes ?? 0) * 60;
     if (planned > 0 && elapsed >= planned && timerState === 'running') {
-      setTimerState('idle');
-      setDraft(prev => ({ ...prev, studySeconds: elapsed }));
+      stopTimer();
     }
   }, [elapsed]);
 
-  function handleStop() {
+  function startTimer() {
+    startAtRef.current = Date.now();
+    baseRef.current    = elapsed;
+    localStorage.setItem(LS_KEY, JSON.stringify({ startedAt: startAtRef.current, base: baseRef.current }));
+    setTimerState('running');
+  }
+
+  function pauseTimer() {
+    baseRef.current = elapsed;
+    localStorage.removeItem(LS_KEY);
+    setTimerState('paused');
+  }
+
+  function stopTimer() {
+    localStorage.removeItem(LS_KEY);
     setTimerState('idle');
     setDraft(prev => ({ ...prev, studySeconds: elapsed }));
   }
 
   function handleManualComplete() {
+    localStorage.removeItem(LS_KEY);
     const updated = { ...draft, studySeconds: elapsed, manuallyCompleted: true };
     setDraft(updated);
     setTimerState('idle');
@@ -206,7 +254,7 @@ function SubjectCard({ entry, onSave, onDelete }: {
         )}
 
         <button
-          onClick={e => { e.stopPropagation(); onDelete(entry.id); }}
+          onClick={e => { e.stopPropagation(); localStorage.removeItem(LS_KEY); onDelete(entry.id); }}
           className="p-1 text-gray-300 hover:text-red-400 transition flex-shrink-0"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -299,18 +347,18 @@ function SubjectCard({ entry, onSave, onDelete }: {
           <div className={`${color.timerBg} rounded-xl px-4 py-3 flex items-center justify-between gap-3`}>
             <div className="flex gap-2">
               {timerState !== 'running' ? (
-                <button onClick={() => setTimerState('running')}
+                <button onClick={startTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
                   <Play className="w-3.5 h-3.5" />{timerState === 'paused' ? '재개' : '시작'}
                 </button>
               ) : (
-                <button onClick={() => setTimerState('paused')}
+                <button onClick={pauseTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
                   <Pause className="w-3.5 h-3.5" />일시정지
                 </button>
               )}
               {timerState !== 'idle' && (
-                <button onClick={handleStop}
+                <button onClick={stopTimer}
                   className="flex items-center gap-1.5 text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
                   <Square className="w-3.5 h-3.5" />중지
                 </button>
