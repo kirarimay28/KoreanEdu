@@ -6,7 +6,7 @@ import {
   deletePersonalStudyEntry,
   markAttendance,
 } from '../../store';
-import { Plus, Trash2, Save, Play, Pause, Square, ChevronUp, ChevronDown, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Plus, Trash2, Save, Play, Pause, Square, ChevronUp, ChevronDown, CheckCircle2, AlertTriangle, XCircle, Pencil, Check, X } from 'lucide-react';
 
 interface Props {
   date: string;
@@ -121,6 +121,9 @@ function SubjectCard({ entry, onSave, onDelete }: {
   const [elapsed, setElapsed] = useState(entry.studySeconds || 0);
   const [saved, setSaved] = useState(false);
   const [open, setOpen] = useState(true);
+  const [editingTime, setEditingTime] = useState(false);
+  const [editH, setEditH] = useState(0);
+  const [editM, setEditM] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>|undefined>(undefined);
   // 실제 시각 기반 타이머: 앱을 나갔다 돌아와도 경과 시간 유지
   const startAtRef  = useRef<number>(0);   // 이번 run 시작 timestamp
@@ -319,10 +322,60 @@ function SubjectCard({ entry, onSave, onDelete }: {
                 </div>
               </div>
               <div className="text-right space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">실제 시간</p>
-                <p className={`font-mono text-2xl font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
-                  {formatTime(elapsed)}
-                </p>
+                <div className="flex items-center justify-end gap-1.5">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">실제 시간</p>
+                  {!editingTime && timerState === 'idle' && (
+                    <button
+                      onClick={() => {
+                        setEditH(Math.floor(elapsed / 3600));
+                        setEditM(Math.floor((elapsed % 3600) / 60));
+                        setEditingTime(true);
+                      }}
+                      className="p-0.5 text-gray-300 hover:text-gray-500 transition"
+                      title="시간 수정"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                {editingTime ? (
+                  <div className="flex items-center gap-1 justify-end">
+                    <input
+                      type="number" min={0} max={23}
+                      className="w-12 text-center text-sm font-bold border border-primary-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                      value={editH}
+                      onChange={e => setEditH(Math.max(0, Math.min(23, Number(e.target.value) || 0)))}
+                    />
+                    <span className="text-xs text-gray-400 font-bold">:</span>
+                    <input
+                      type="number" min={0} max={59}
+                      className="w-12 text-center text-sm font-bold border border-primary-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                      value={String(editM).padStart(2, '0')}
+                      onChange={e => setEditM(Math.max(0, Math.min(59, Number(e.target.value) || 0)))}
+                    />
+                    <button
+                      onClick={() => {
+                        const newSecs = editH * 3600 + editM * 60;
+                        setElapsed(newSecs);
+                        baseRef.current = newSecs;
+                        setEditingTime(false);
+                      }}
+                      className="p-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => setEditingTime(false)}
+                      className="p-1 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-lg transition"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className={`font-mono text-2xl font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
+                    {formatTime(elapsed)}
+                  </p>
+                )}
               </div>
             </div>
 
