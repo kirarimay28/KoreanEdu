@@ -302,7 +302,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study';
 export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
 
 export interface VocabExamRecord {
