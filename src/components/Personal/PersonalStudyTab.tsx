@@ -361,17 +361,17 @@ function SubjectCard({ entry, onSave, onDelete }: {
       </div>
 
       {open && (
-        <div className="px-4 pb-4 space-y-4 pt-4">
+        <div className="px-4 pb-4 pt-3 space-y-3">
 
-          {/* Subject pills */}
-          <div className="flex gap-1.5 flex-wrap">
+          {/* 과목 선택 — compact horizontal scroll */}
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
             {SUBJECTS.map(s => {
               const c = getColor(s);
               const active = draft.subject === s;
               return (
                 <button key={s} onClick={() => setDraft(prev => ({ ...prev, subject: s }))}
-                  className={`text-xs px-3 py-1 rounded-full font-semibold transition ring-2 ring-offset-1 ${
-                    active ? `${c.badge} ${c.ring}` : 'bg-gray-100 text-gray-400 ring-transparent hover:bg-gray-200'
+                  className={`flex-shrink-0 text-[11px] px-2.5 py-1 rounded-full font-bold transition ${
+                    active ? `${c.badge} ring-2 ring-offset-1 ${c.ring}` : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                   }`}
                 >
                   {s}
@@ -386,106 +386,98 @@ function SubjectCard({ entry, onSave, onDelete }: {
               onChange={e => setDraft(prev => ({ ...prev, customSubject: e.target.value }))} />
           )}
 
-          {/* Content */}
-          <div>
-            <label className="label">오늘 할 내용</label>
-            <textarea className="textarea-field text-sm resize-none" rows={3}
-              placeholder="어떤 내용을 공부할 건가요? (예: 기출 20문제 풀이 + 오답 정리)"
-              value={draft.studyContent ?? ''}
-              onChange={e => setDraft(prev => ({ ...prev, studyContent: e.target.value }))} />
-          </div>
+          {/* 공부 내용 */}
+          <textarea
+            className="w-full text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none text-gray-700 placeholder-gray-300 bg-gray-50/60"
+            rows={2}
+            placeholder="오늘 공부할 내용 (예: 기출 20문제 풀이 + 오답 정리)"
+            value={draft.studyContent ?? ''}
+            onChange={e => setDraft(prev => ({ ...prev, studyContent: e.target.value }))}
+          />
 
-          {/* Time section */}
-          <div className="bg-gray-50 rounded-xl p-3.5 space-y-3">
+          {/* 통합 타이머 블록 */}
+          <div className="rounded-xl border border-gray-100 overflow-hidden">
 
-            {/* 예상 소요 + 실제 공부 시간 */}
-            <div className="flex items-end justify-between gap-4">
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">예상 소요</p>
-                <div className="flex items-center gap-1.5">
+            {/* 예상 소요 + 실제 시간 */}
+            <div className="flex items-center justify-between px-3.5 py-3 bg-gray-50">
+              <div>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">예상 소요</p>
+                <div className="flex items-center gap-1">
                   <input type="number" min={0} max={12}
-                    className="w-14 text-center text-sm font-bold border border-gray-200 rounded-lg py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300"
+                    className="w-11 text-center text-sm font-bold border border-gray-200 rounded-lg py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-200"
                     value={estH || ''} placeholder="0"
                     onClick={e => e.stopPropagation()}
                     onChange={e => { const h = Math.max(0, Math.min(12, Number(e.target.value)||0)); setDraft(prev=>({...prev, estimatedMinutes: h*60+estM})); }}
                   />
-                  <span className="text-xs text-gray-400 font-medium">h</span>
+                  <span className="text-[10px] text-gray-400">h</span>
                   <input type="number" min={0} max={59} step={5}
-                    className="w-14 text-center text-sm font-bold border border-gray-200 rounded-lg py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300"
+                    className="w-11 text-center text-sm font-bold border border-gray-200 rounded-lg py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-200"
                     value={estM || ''} placeholder="0"
                     onClick={e => e.stopPropagation()}
                     onChange={e => { const m = Math.max(0, Math.min(59, Number(e.target.value)||0)); setDraft(prev=>({...prev, estimatedMinutes: estH*60+m})); }}
                   />
-                  <span className="text-xs text-gray-400 font-medium">m</span>
+                  <span className="text-[10px] text-gray-400">m</span>
                 </div>
               </div>
-              <div className="text-right space-y-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">실제 공부 시간</p>
-                <p className={`font-mono text-2xl font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
+              <div className="text-right">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">실제</p>
+                <p className={`font-mono text-[22px] font-black tabular-nums leading-none ${elapsed > 0 ? color.text : 'text-gray-200'}`}>
                   {formatTime(elapsed)}
                 </p>
               </div>
             </div>
 
-            {/* 시작 / 휴게 / 종료 row — shown when timer has been used */}
-            {startedAt !== null && (
-              <div className="grid grid-cols-3 gap-1 pt-1 border-t border-gray-200">
-                {/* 시작 */}
-                <div className="text-center">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">시작</p>
-                  <p className="text-xs font-bold font-mono text-gray-600">{formatClock(startedAt)}</p>
-                </div>
+            {/* 진행 바 */}
+            {estSecs > 0 && (
+              <div className="relative h-1 bg-gray-100">
+                <div
+                  className={`absolute inset-y-0 left-0 transition-all duration-500 ${progress >= 100 ? 'bg-green-400' : color.bar}`}
+                  style={{ width: `${Math.min(100, progress)}%` }}
+                />
+                <span className="absolute right-2 -top-4 text-[9px] text-gray-400 font-bold">{progress}%</span>
+              </div>
+            )}
 
-                {/* 휴게 */}
-                <div className="text-center">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">휴게</p>
-                  <p className={`text-xs font-bold font-mono ${displayBreak > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+            {/* 시작 / 휴게 / 종료 */}
+            {startedAt !== null && (
+              <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100">
+                <div className="py-2 text-center">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">시작</p>
+                  <p className="text-xs font-bold font-mono text-gray-600 mt-0.5">{formatClock(startedAt)}</p>
+                </div>
+                <div className="py-2 text-center">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">휴게</p>
+                  <p className={`text-xs font-bold font-mono mt-0.5 ${displayBreak > 0 ? 'text-amber-500' : 'text-gray-300'}`}>
                     {formatTime(displayBreak)}
                   </p>
                 </div>
-
-                {/* 종료 */}
-                <div className="text-center">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">종료</p>
+                <div className="py-2 text-center">
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">종료</p>
                   {timerState !== 'idle' ? (
-                    <p className="text-xs font-bold font-mono text-gray-400">—</p>
+                    <p className="text-xs font-bold font-mono text-gray-300 mt-0.5">—</p>
                   ) : editingEnd ? (
-                    <div className="flex items-center gap-0.5 justify-center">
-                      <input
-                        type="number" min={0} max={23}
-                        className="w-9 text-center text-xs font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
+                    <div className="flex items-center gap-0.5 justify-center mt-0.5">
+                      <input type="number" min={0} max={23}
+                        className="w-8 text-center text-[11px] font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
                         value={editEndH}
                         onChange={e => setEditEndH(Math.max(0, Math.min(23, Number(e.target.value)||0)))}
                       />
-                      <span className="text-gray-400 text-xs font-bold">:</span>
-                      <input
-                        type="number" min={0} max={59}
-                        className="w-9 text-center text-xs font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
+                      <span className="text-[10px] text-gray-400">:</span>
+                      <input type="number" min={0} max={59}
+                        className="w-8 text-center text-[11px] font-bold border border-primary-300 rounded py-0.5 focus:outline-none"
                         value={String(editEndM).padStart(2,'0')}
                         onChange={e => setEditEndM(Math.max(0, Math.min(59, Number(e.target.value)||0)))}
                       />
-                      <button onClick={applyEndTimeEdit} className="p-0.5 text-green-500 hover:text-green-600">
-                        <Check className="w-3 h-3" />
-                      </button>
-                      <button onClick={() => setEditingEnd(false)} className="p-0.5 text-gray-400 hover:text-gray-600">
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={applyEndTimeEdit} className="text-green-500 hover:text-green-600"><Check className="w-3 h-3" /></button>
+                      <button onClick={() => setEditingEnd(false)} className="text-gray-400 hover:text-gray-500"><X className="w-3 h-3" /></button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-1">
-                      <p className="text-xs font-bold font-mono text-gray-600">
-                        {endedAt ? formatClock(endedAt) : '—'}
-                      </p>
+                    <div className="flex items-center justify-center gap-0.5 mt-0.5">
+                      <p className="text-xs font-bold font-mono text-gray-600">{endedAt ? formatClock(endedAt) : '—'}</p>
                       {endedAt && (
                         <button
-                          onClick={() => {
-                            const d = new Date(endedAt);
-                            setEditEndH(d.getHours());
-                            setEditEndM(d.getMinutes());
-                            setEditingEnd(true);
-                          }}
-                          className="p-0.5 text-gray-300 hover:text-gray-500 transition"
-                          title="종료 시간 수정"
+                          onClick={() => { const d = new Date(endedAt); setEditEndH(d.getHours()); setEditEndM(d.getMinutes()); setEditingEnd(true); }}
+                          className="text-gray-300 hover:text-gray-500 transition"
                         >
                           <Pencil className="w-2.5 h-2.5" />
                         </button>
@@ -496,68 +488,52 @@ function SubjectCard({ entry, onSave, onDelete }: {
               </div>
             )}
 
-            {/* Progress bar */}
-            {estSecs > 0 && (
-              <div className="space-y-1">
-                <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-500 ${progress >= 100 ? 'bg-green-500' : color.bar}`}
-                    style={{ width: `${progress}%` }} />
-                </div>
-                <div className="flex justify-between text-[10px] text-gray-400">
-                  <span>목표 {formatMins(draft.estimatedMinutes ?? 0)}</span>
-                  <span className={progress >= 100 ? 'text-green-600 font-bold' : ''}>{progress}%</span>
-                </div>
+            {/* 버튼 컨트롤 */}
+            <div className="flex items-center justify-between px-3 py-2.5 border-t border-gray-100 bg-white gap-2">
+              <div className="flex gap-1.5">
+                {timerState === 'idle' && (
+                  <button onClick={startTimer}
+                    className="flex items-center gap-1 text-[11px] font-bold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-xl transition">
+                    <Play className="w-3 h-3" />시작
+                  </button>
+                )}
+                {timerState === 'paused' && (
+                  <button onClick={resumeTimer}
+                    className="flex items-center gap-1 text-[11px] font-bold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-xl transition">
+                    <Play className="w-3 h-3" />재개
+                  </button>
+                )}
+                {timerState === 'running' && (
+                  <button onClick={pauseTimer}
+                    className="flex items-center gap-1 text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-xl transition">
+                    <Pause className="w-3 h-3" />일시정지
+                  </button>
+                )}
+                {timerState !== 'idle' && (
+                  <button onClick={stopTimer}
+                    className="flex items-center gap-1 text-[11px] font-bold bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl transition">
+                    <Square className="w-3 h-3" />종료
+                  </button>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Timer controls */}
-          <div className={`${color.timerBg} rounded-xl px-4 py-3 flex items-center justify-between gap-3`}>
-            <div className="flex gap-2">
-              {timerState === 'idle' && (
-                <button onClick={startTimer}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Play className="w-3.5 h-3.5" />시작
+              <div className="flex gap-1.5">
+                {canManualComplete && (
+                  <button onClick={handleManualComplete}
+                    className="flex items-center gap-1 text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 px-2.5 py-1.5 rounded-xl transition">
+                    <AlertTriangle className="w-3 h-3" />완료
+                  </button>
+                )}
+                <button onClick={handleSave}
+                  className={`flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-xl transition ${
+                    saved ? 'bg-gray-100 text-gray-400' : 'bg-primary-600 hover:bg-primary-700 text-white'
+                  }`}>
+                  <Save className="w-3 h-3" />
+                  {saved ? '저장됨' : '저장'}
                 </button>
-              )}
-              {timerState === 'paused' && (
-                <button onClick={resumeTimer}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Play className="w-3.5 h-3.5" />재개
-                </button>
-              )}
-              {timerState === 'running' && (
-                <button onClick={pauseTimer}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Pause className="w-3.5 h-3.5" />일시정지
-                </button>
-              )}
-              {timerState !== 'idle' && (
-                <button onClick={stopTimer}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-xl transition shadow-sm">
-                  <Square className="w-3.5 h-3.5" />종료
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {canManualComplete && (
-                <button onClick={handleManualComplete}
-                  className="flex items-center gap-1.5 text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200 px-3.5 py-2 rounded-xl transition">
-                  <AlertTriangle className="w-3.5 h-3.5" />완료 처리
-                </button>
-              )}
-              <button onClick={handleSave}
-                className={`flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-sm ${
-                  saved ? 'bg-gray-200 text-gray-500' : 'bg-primary-600 hover:bg-primary-700 text-white'
-                }`}>
-                <Save className="w-3.5 h-3.5" />
-                {saved ? '저장됨!' : '저장'}
-              </button>
+              </div>
             </div>
           </div>
 
-          {status === 'O' && <p className="text-xs text-green-600 text-center font-medium">🎉 목표 달성! 자동으로 완료 처리되었습니다.</p>}
-          {status === '△' && <p className="text-xs text-amber-600 text-center font-medium">목표 시간에 미달했지만 완료 처리되었습니다.</p>}
         </div>
       )}
     </div>
