@@ -308,7 +308,7 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
           <p className="text-sm text-gray-400 italic">등록된 과제가 없습니다.</p>
           {canEdit && (
             <button
-              onClick={startEdit}
+              onClick={() => startEdit(false)}
               className="mt-3 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition"
             >
               과제 입력하기
