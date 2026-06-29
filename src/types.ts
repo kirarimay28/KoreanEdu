@@ -348,9 +348,12 @@ export interface StudyLog {
   date: string;
   workType?: string;
   workName: string;
-  assignedQuestions?: string;
+  newInsights?: string;
   difficulties: string;
+  wrongAnswerAnalysis?: string;
+  studyGroupLearnings?: string;
   selfFeedback: string;
+  assignedQuestions?: string;
   updatedAt: string;
 }
 
