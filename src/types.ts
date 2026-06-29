@@ -329,8 +329,9 @@ export interface StudyLog {
   userId: string;
   username: string;
   date: string;
+  workType?: string;
   workName: string;
-  assignedQuestions: string;
+  assignedQuestions?: string;
   difficulties: string;
   selfFeedback: string;
   updatedAt: string;
