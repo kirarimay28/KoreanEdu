@@ -33,7 +33,7 @@ const defaultData: AppData = {
   peerFeedbacks: [],
   studyLogs: [],
   locationNotice: null,
-  assignmentNotice: null,
+  assignmentNotices: [],
   vocabExamRecords: [],
 };
 
@@ -129,7 +129,7 @@ async function fetchFromFirestore(): Promise<void> {
     peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
     studyLogs:           sl.docs.map(d => d.data() as StudyLog),
     locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
-    assignmentNotice:    (an2.docs[0]?.data() as AssignmentNotice) ?? null,
+    assignmentNotices:   an2.docs.map(d => d.data() as AssignmentNotice),
     vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
   };
   bootstrapAdmin();
@@ -765,20 +765,39 @@ export function clearLocationNotice(): void {
 }
 
 // ── Assignment Notice ──────────────────────────────────────
+function weekMondayKey(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d.toISOString().slice(0, 10);
+}
+
 export function getAssignmentNotice(): AssignmentNotice | null {
-  return mem.assignmentNotice;
+  if (mem.assignmentNotices.length === 0) return null;
+  return [...mem.assignmentNotices]
+    .filter(n => n.date)
+    .sort((a, b) => b.date.localeCompare(a.date))[0] ?? null;
+}
+
+export function getAssignmentNoticeForWeek(weekKey: string): AssignmentNotice | undefined {
+  return mem.assignmentNotices.find(n => n.date === weekKey);
 }
 
 export function setAssignmentNotice(notice: Omit<AssignmentNotice, 'id'>): void {
-  const full: AssignmentNotice = { ...notice, id: 'current' };
-  mem.assignmentNotice = full;
-  persist('assignmentNotice', 'current', full);
+  const weekKey = weekMondayKey(notice.date);
+  const full: AssignmentNotice = { ...notice, id: weekKey, date: weekKey };
+  const idx = mem.assignmentNotices.findIndex(n => n.id === weekKey);
+  if (idx >= 0) mem.assignmentNotices[idx] = full;
+  else mem.assignmentNotices.push(full);
+  persist('assignmentNotice', weekKey, full);
   saveCache();
 }
 
-export function clearAssignmentNotice(): void {
-  mem.assignmentNotice = null;
-  remove('assignmentNotice', 'current');
+export function clearAssignmentNotice(weekKey?: string): void {
+  const key = weekKey ?? getAssignmentNotice()?.id;
+  if (!key) return;
+  mem.assignmentNotices = mem.assignmentNotices.filter(n => n.id !== key);
+  remove('assignmentNotice', key);
   saveCache();
 }
 

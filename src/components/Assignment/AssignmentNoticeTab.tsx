@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pencil, X, Check, Share2 } from 'lucide-react';
 import type { User } from '../../types';
-import { getAssignmentNotice, setAssignmentNotice, clearAssignmentNotice } from '../../store';
+import { getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice, clearAssignmentNotice } from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
 import NameWithCrown from '../common/NameWithCrown';
 
@@ -55,13 +55,20 @@ const MODERN_METHOD = `1. 수능 기출 풀이
 →키워드 위주로 분석합니다!
 지문/문제/선지 삼단 구조로 꼼꼼히!!`;
 
+function getThisWeekMonday(): string {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d.toISOString().slice(0, 10);
+}
+
 export default function AssignmentNoticeTab({ currentUser }: Props) {
   const canEdit = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const [editing, setEditing] = useState(false);
   const [tick, setTick] = useState(0);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const [date, setDate] = useState(today);
+  const thisWeekMonday = getThisWeekMonday();
+  const [date, setDate] = useState(thisWeekMonday);
   const [classicWork, setClassicWork] = useState('');
   const [modernPoetWork, setModernPoetWork] = useState('');
   const [modernProseWork, setModernProseWork] = useState('');
@@ -69,17 +76,19 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
   const [goeoEnd, setGoeoEnd] = useState(20);
 
   const notice = getAssignmentNotice();
+  const thisWeekNotice = getAssignmentNoticeForWeek(thisWeekMonday);
 
-  function startEdit() {
-    if (notice) {
-      setDate(notice.date);
-      setClassicWork(notice.classicWork);
-      setModernPoetWork(notice.modernPoetWork);
-      setModernProseWork(notice.modernProseWork);
-      setGoeoStart(notice.goeoStart);
-      setGoeoEnd(notice.goeoEnd);
+  function startEdit(editExisting = false) {
+    const src = editExisting ? thisWeekNotice : null;
+    if (src) {
+      setDate(src.date);
+      setClassicWork(src.classicWork);
+      setModernPoetWork(src.modernPoetWork);
+      setModernProseWork(src.modernProseWork);
+      setGoeoStart(src.goeoStart);
+      setGoeoEnd(src.goeoEnd);
     } else {
-      setDate(today);
+      setDate(thisWeekMonday);
       setClassicWork('');
       setModernPoetWork('');
       setModernProseWork('');
@@ -107,7 +116,7 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
 
   function handleClear() {
     if (!window.confirm('과제 공지를 삭제할까요?')) return;
-    clearAssignmentNotice();
+    clearAssignmentNotice(thisWeekNotice?.id);
     setEditing(false);
     setTick(t => t + 1);
   }
@@ -118,12 +127,24 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold text-gray-700">이번 주 과제</h2>
         {canEdit && !editing && (
-          <button
-            onClick={startEdit}
-            className="flex items-center gap-1 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition"
-          >
-            <Pencil className="w-3 h-3" />{notice ? '수정' : '입력'}
-          </button>
+          <div className="flex gap-2">
+            {thisWeekNotice && (
+              <button
+                onClick={() => startEdit(true)}
+                className="flex items-center gap-1 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition"
+              >
+                <Pencil className="w-3 h-3" />수정
+              </button>
+            )}
+            {!thisWeekNotice && (
+              <button
+                onClick={() => startEdit(false)}
+                className="flex items-center gap-1 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition"
+              >
+                <Pencil className="w-3 h-3" />이번 주 입력
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -213,6 +234,17 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
         </div>
       ) : notice ? (
         <div className="space-y-3">
+          {!thisWeekNotice && canEdit && (
+            <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 flex items-center justify-between">
+              <p className="text-xs text-amber-700">이번 주 과제가 아직 등록되지 않았습니다.</p>
+              <button
+                onClick={() => startEdit(false)}
+                className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline ml-2 flex-shrink-0"
+              >
+                이번 주 입력
+              </button>
+            </div>
+          )}
           {/* Date + works summary */}
           <div className="bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3">
             <p className="text-sm font-bold text-primary-800 mb-2">{formatDate(notice.date)}</p>

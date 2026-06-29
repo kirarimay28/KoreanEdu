@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Save, ChevronDown, ChevronUp } from 'lucide-react';
 import type { User, StudyLog } from '../../types';
-import { getStudyLog, getStudyLogsForDate, upsertStudyLog, getUsers, getAssignmentNotice } from '../../store';
+import { getStudyLog, getStudyLogsForDate, upsertStudyLog, getUsers, getAssignmentNoticeForWeek } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
 
 type WorkType = '고전시가' | '고전산문' | '현대시' | '현대산문';
@@ -16,7 +16,7 @@ function getWeekMonday(dateStr: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-function noticeWorkName(wt: WorkType, notice: NonNullable<ReturnType<typeof getAssignmentNotice>>): string {
+function noticeWorkName(wt: WorkType, notice: NonNullable<ReturnType<typeof getAssignmentNoticeForWeek>>): string {
   if (wt === '고전시가' || wt === '고전산문') return notice.classicWork;
   if (wt === '현대시') return notice.modernPoetWork;
   return notice.modernProseWork;
@@ -29,9 +29,11 @@ interface Props {
 
 export default function StudyLogTab({ date, currentUser }: Props) {
   const saved = getStudyLog(currentUser.id, date);
-  const notice = getAssignmentNotice();
-  const weekMonday = getWeekMonday(date);
-  const canAutoFill = !!notice && notice.date < weekMonday;
+  const thisWeekMonday = getWeekMonday(date);
+  const d = new Date(thisWeekMonday + 'T00:00:00');
+  d.setDate(d.getDate() - 7);
+  const prevWeekMonday = d.toISOString().slice(0, 10);
+  const notice = getAssignmentNoticeForWeek(prevWeekMonday);
 
   const [workType, setWorkType] = useState<WorkType | ''>((saved?.workType as WorkType) ?? '');
   const [workName, setWorkName] = useState(saved?.workName ?? '');
@@ -42,7 +44,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   function handleWorkTypeSelect(wt: WorkType) {
     setWorkType(wt);
-    if (!workName && canAutoFill && notice) {
+    if (!workName && notice) {
       setWorkName(noticeWorkName(wt, notice));
     }
   }
@@ -112,9 +114,9 @@ export default function StudyLogTab({ date, currentUser }: Props) {
             value={workName}
             onChange={e => setWorkName(e.target.value)}
           />
-          {canAutoFill && workType && notice && (
+          {notice && workType && (
             <p className="mt-0.5 text-[10px] text-gray-400">
-              과제 작품: {noticeWorkName(workType, notice) || '—'}
+              저번 주 과제: {noticeWorkName(workType, notice) || '—'}
             </p>
           )}
         </div>

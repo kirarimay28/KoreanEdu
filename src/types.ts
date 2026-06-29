@@ -226,7 +226,7 @@ export interface LocationNotice {
 }
 
 export interface AssignmentNotice {
-  id: 'current';
+  id: string;              // weekKey (YYYY-MM-DD, Monday)
   date: string;            // YYYY-MM-DD
   classicWork: string;     // 고전 작품명
   modernPoetWork: string;  // 현대시 작품명
@@ -260,7 +260,7 @@ export interface AppData {
   peerFeedbacks: PeerFeedback[];
   studyLogs: StudyLog[];
   locationNotice: LocationNotice | null;
-  assignmentNotice: AssignmentNotice | null;
+  assignmentNotices: AssignmentNotice[];
   vocabExamRecords: VocabExamRecord[];
 }
 
