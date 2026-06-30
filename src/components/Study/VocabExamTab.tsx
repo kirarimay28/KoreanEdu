@@ -73,8 +73,8 @@ export default function VocabExamTab({ currentUser }: Props) {
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
-    if (phase === 'exam' && quizFormat === '단답형') {
-      setTimeLeft(600);
+    if (phase === 'exam') {
+      setTimeLeft(quizFormat === '객관식' ? 300 : 600);
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -91,8 +91,9 @@ export default function VocabExamTab({ currentUser }: Props) {
   }, [phase, quizFormat]);
 
   useEffect(() => {
-    if (phase === 'exam' && quizFormat === '단답형' && timeLeft === 0) {
-      grade();
+    if (phase === 'exam' && timeLeft === 0) {
+      if (quizFormat === '객관식') gradeMC();
+      else grade();
     }
   }, [timeLeft, phase, quizFormat]);
 
@@ -421,6 +422,9 @@ export default function VocabExamTab({ currentUser }: Props) {
     const selected = mcSelected[mcIndex] ?? -1;
     const progress = ((mcIndex + 1) / mcQuestions.length) * 100;
     const isLast = mcIndex === mcQuestions.length - 1;
+    const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+    const secs = String(timeLeft % 60).padStart(2, '0');
+    const urgent = timeLeft <= 60;
 
     return (
       <div className="space-y-4">
@@ -429,6 +433,13 @@ export default function VocabExamTab({ currentUser }: Props) {
             {mode === 'practice' ? '연습하기' : '객관식 시험'} · {mcIndex + 1}/{mcQuestions.length}
           </p>
           <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 transition">취소</button>
+        </div>
+
+        <div className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-mono font-bold text-lg transition-colors ${
+          urgent ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-700 border border-gray-200'
+        }`}>
+          <Clock className={`w-4 h-4 ${urgent ? 'animate-pulse' : ''}`} />
+          {mins}:{secs}
         </div>
 
         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
