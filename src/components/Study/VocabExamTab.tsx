@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, XCircle, Save, ChevronDown, Trash2, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Save, ChevronDown, Trash2, Clock, ChevronRight } from 'lucide-react';
 import type { User } from '../../types';
 import { VOCAB_ITEMS, isAnswerCorrect } from '../../data/vocabData';
+import type { VocabItem } from '../../data/vocabData';
 import { saveVocabExamRecord, getVocabExamRecords, getAllVocabExamRecords, deleteVocabExamRecord, upsertVocabTestScore } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import { isPrivileged } from '../../types';
@@ -12,6 +13,7 @@ interface Props {
 
 type Phase = 'setup' | 'exam' | 'result';
 type Mode = 'exam' | 'practice';
+type QuizFormat = '단답형' | '객관식';
 
 interface GradeResult {
   itemNum: number;
@@ -21,17 +23,49 @@ interface GradeResult {
   correct: boolean;
 }
 
-const NUMS = VOCAB_ITEMS.map(v => v.num); // 1–60
+interface McQuestion {
+  item: VocabItem;
+  choices: string[];
+  correctIndex: number;
+}
+
+const NUMS = VOCAB_ITEMS.map(v => v.num);
+const CIRCLE_NUMS = ['①', '②', '③', '④', '⑤'];
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildMCQuestions(items: VocabItem[]): McQuestion[] {
+  return shuffleArray(items).map(item => {
+    const others = VOCAB_ITEMS.filter(v => v.num !== item.num);
+    const distractors = shuffleArray(others).slice(0, 4).map(v => v.answer);
+    const allChoices = shuffleArray([item.answer, ...distractors]);
+    return { item, choices: allChoices, correctIndex: allChoices.indexOf(item.answer) };
+  });
+}
 
 export default function VocabExamTab({ currentUser }: Props) {
   const [phase, setPhase] = useState<Phase>('setup');
   const [mode, setMode] = useState<Mode>('exam');
+  const [quizFormat, setQuizFormat] = useState<QuizFormat>('단답형');
   const [startNum, setStartNum] = useState(1);
   const [endNum, setEndNum] = useState(20);
   const [noCarryover, setNoCarryover] = useState(true);
   const [carryoverNums, setCarryoverNums] = useState<number[]>([]);
+  // 단답형 state
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [results, setResults] = useState<GradeResult[]>([]);
+  // 객관식 state
+  const [mcQuestions, setMcQuestions] = useState<McQuestion[]>([]);
+  const [mcIndex, setMcIndex] = useState(0);
+  const [mcSelected, setMcSelected] = useState<number[]>([]);
+
   const [saved, setSaved] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [tick, setTick] = useState(0);
@@ -39,7 +73,7 @@ export default function VocabExamTab({ currentUser }: Props) {
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   useEffect(() => {
-    if (phase === 'exam') {
+    if (phase === 'exam' && quizFormat === '단답형') {
       setTimeLeft(600);
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
@@ -54,13 +88,13 @@ export default function VocabExamTab({ currentUser }: Props) {
       clearInterval(timerRef.current);
     }
     return () => clearInterval(timerRef.current);
-  }, [phase]);
+  }, [phase, quizFormat]);
 
   useEffect(() => {
-    if (phase === 'exam' && timeLeft === 0) {
+    if (phase === 'exam' && quizFormat === '단답형' && timeLeft === 0) {
       grade();
     }
-  }, [timeLeft, phase]);
+  }, [timeLeft, phase, quizFormat]);
 
   const examItems = (() => {
     const rangeNums = new Set(
@@ -79,9 +113,16 @@ export default function VocabExamTab({ currentUser }: Props) {
 
   function startExam(m: Mode) {
     setMode(m);
-    setAnswers({});
     setResults([]);
     setSaved(false);
+    if (quizFormat === '객관식') {
+      const qs = buildMCQuestions(examItems);
+      setMcQuestions(qs);
+      setMcIndex(0);
+      setMcSelected(new Array(qs.length).fill(-1));
+    } else {
+      setAnswers({});
+    }
     setPhase('exam');
   }
 
@@ -95,6 +136,27 @@ export default function VocabExamTab({ currentUser }: Props) {
     }));
     setResults(graded);
     setPhase('result');
+  }
+
+  function gradeMC() {
+    const graded: GradeResult[] = mcQuestions.map((q, i) => ({
+      itemNum: q.item.num,
+      vocab: q.item.vocab,
+      userAnswer: mcSelected[i] >= 0 ? q.choices[mcSelected[i]] : '',
+      correctAnswer: q.item.answer,
+      correct: mcSelected[i] === q.correctIndex,
+    }));
+    setResults(graded);
+    setPhase('result');
+  }
+
+  function handleMCNext() {
+    if ((mcSelected[mcIndex] ?? -1) === -1) return;
+    if (mcIndex < mcQuestions.length - 1) {
+      setMcIndex(i => i + 1);
+    } else {
+      gradeMC();
+    }
   }
 
   function handleSave() {
@@ -114,7 +176,6 @@ export default function VocabExamTab({ currentUser }: Props) {
       createdAt: new Date().toISOString(),
     };
     saveVocabExamRecord(record);
-    // 고어 시험 탭 점수 자동 반영 (20점 만점으로 환산)
     const scaled = tot > 0 ? Math.max(1, Math.min(20, Math.round((correct / tot) * 20))) : 0;
     if (scaled > 0) upsertVocabTestScore(currentUser.id, currentUser.username, today, scaled);
     setSaved(true);
@@ -140,10 +201,10 @@ export default function VocabExamTab({ currentUser }: Props) {
     setTick(t => t + 1);
   }
 
+  /* ── Setup ── */
   if (phase === 'setup') {
     return (
       <div className="space-y-4" key={tick}>
-        {/* 오늘 이미 응시한 경우 */}
         {todayRecord && (
           <div className="card text-center space-y-2 py-6 border-primary-100 bg-primary-50">
             <p className="text-sm font-bold text-primary-700">오늘 시험을 완료했습니다</p>
@@ -156,9 +217,7 @@ export default function VocabExamTab({ currentUser }: Props) {
           </div>
         )}
 
-        {/* 번호 선택 */}
         {(!todayRecord || true) && (<>
-        {/* 번호 선택 */}
         <div className="card space-y-4">
           <p className="text-sm font-bold text-gray-800">시험 범위 설정</p>
           <div className="flex gap-3 items-end">
@@ -193,7 +252,6 @@ export default function VocabExamTab({ currentUser }: Props) {
           </p>
         </div>
 
-        {/* 이월 번호 선택 */}
         <div className="card space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-gray-800">이월 번호 선택</p>
@@ -210,7 +268,6 @@ export default function VocabExamTab({ currentUser }: Props) {
               없음
             </label>
           </div>
-
           {!noCarryover && (
             <div className="grid grid-cols-3 gap-1.5 max-h-56 overflow-y-auto pr-1">
               {VOCAB_ITEMS.map(item => {
@@ -243,6 +300,26 @@ export default function VocabExamTab({ currentUser }: Props) {
           )}
         </div>
 
+        {/* 문제 유형 선택 */}
+        <div className="card space-y-3">
+          <p className="text-sm font-bold text-gray-800">문제 유형</p>
+          <div className="grid grid-cols-2 gap-2">
+            {(['단답형', '객관식'] as QuizFormat[]).map(fmt => (
+              <button
+                key={fmt}
+                onClick={() => setQuizFormat(fmt)}
+                className={`py-3 rounded-xl border-2 text-sm font-semibold transition ${
+                  quizFormat === fmt
+                    ? 'bg-primary-600 border-primary-600 text-white'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-primary-300 hover:bg-primary-50'
+                }`}
+              >
+                {fmt === '단답형' ? '단답형' : '객관식 (5지선다)'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex gap-2">
           {!todayRecord && (
             <button
@@ -267,7 +344,6 @@ export default function VocabExamTab({ currentUser }: Props) {
         </div>
         </>)}
 
-        {/* 최근 기록 */}
         {history.length > 0 && (
           <div className="card space-y-2">
             <button
@@ -301,7 +377,6 @@ export default function VocabExamTab({ currentUser }: Props) {
           </div>
         )}
 
-        {/* 어드민: 전체 응시 기록 관리 */}
         {isPrivileged(currentUser) && allRecords.length > 0 && (
           <div className="card space-y-2 border-amber-100">
             <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">전체 응시 기록 (관리자)</p>
@@ -340,6 +415,71 @@ export default function VocabExamTab({ currentUser }: Props) {
     );
   }
 
+  /* ── 객관식 시험 ── */
+  if (phase === 'exam' && quizFormat === '객관식' && mcQuestions.length > 0) {
+    const q = mcQuestions[mcIndex];
+    const selected = mcSelected[mcIndex] ?? -1;
+    const progress = ((mcIndex + 1) / mcQuestions.length) * 100;
+    const isLast = mcIndex === mcQuestions.length - 1;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold text-gray-800">
+            {mode === 'practice' ? '연습하기' : '객관식 시험'} · {mcIndex + 1}/{mcQuestions.length}
+          </p>
+          <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 transition">취소</button>
+        </div>
+
+        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary-500 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="bg-white rounded-2xl border border-primary-100 shadow-sm p-5 text-center space-y-2">
+          <p className="text-xs font-mono text-gray-400">No. {q.item.num}</p>
+          <p className="text-2xl font-black text-gray-800 leading-relaxed">{q.item.vocab}</p>
+          <p className="text-xs text-gray-400">현대어 뜻을 고르세요</p>
+        </div>
+
+        <div className="space-y-2">
+          {q.choices.map((choice, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setMcSelected(prev => {
+                  const updated = [...prev];
+                  updated[mcIndex] = i;
+                  return updated;
+                });
+              }}
+              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition ${
+                selected === i
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+              }`}
+            >
+              <span className="inline-block w-5 text-xs font-bold opacity-60 mr-1">{CIRCLE_NUMS[i]}</span>
+              {choice}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleMCNext}
+          disabled={selected === -1}
+          className="w-full py-3 text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white"
+        >
+          {isLast ? '채점하기' : '다음'}
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  /* ── 단답형 시험 ── */
   if (phase === 'exam') {
     const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
     const secs = String(timeLeft % 60).padStart(2, '0');
@@ -356,7 +496,6 @@ export default function VocabExamTab({ currentUser }: Props) {
           </button>
         </div>
 
-        {/* 타이머 */}
         <div className={`flex items-center justify-center gap-2 py-2.5 rounded-xl font-mono font-bold text-lg transition-colors ${
           urgent ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-50 text-gray-700 border border-gray-200'
         }`}>
@@ -393,13 +532,12 @@ export default function VocabExamTab({ currentUser }: Props) {
     );
   }
 
-  // result phase
+  /* ── 결과 ── */
   const wrongItems = results.filter(r => !r.correct);
   const correctItems = results.filter(r => r.correct);
 
   return (
     <div className="space-y-4">
-      {/* Score card */}
       <div className={`card text-center space-y-1 py-5 ${
         pct >= 80 ? 'bg-green-50 border-green-200' :
         pct >= 50 ? 'bg-amber-50 border-amber-200' :
@@ -417,7 +555,6 @@ export default function VocabExamTab({ currentUser }: Props) {
         </p>
       </div>
 
-      {/* Actions */}
       {mode === 'practice' ? (
         <div className="flex gap-2">
           <button
@@ -448,7 +585,6 @@ export default function VocabExamTab({ currentUser }: Props) {
         </button>
       )}
 
-      {/* Wrong answers */}
       {wrongItems.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">
@@ -475,7 +611,6 @@ export default function VocabExamTab({ currentUser }: Props) {
         </div>
       )}
 
-      {/* Correct answers */}
       {correctItems.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">
