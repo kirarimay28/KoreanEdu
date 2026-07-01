@@ -333,6 +333,8 @@ export default function App() {
               로비로 돌아가기
             </button>
             <div key={refreshKey}>
+              {activeTab === 'qna'        && <QnATab currentUser={currentUser} />}
+              {activeTab === 'calendar'   && <CalendarTab currentUser={currentUser} />}
               {activeTab === 'attendance' && <AttendanceTab />}
               {activeTab === 'resource'   && <ResourceTab currentUser={currentUser} />}
               {activeTab === 'member'     && <MemberTab currentUser={currentUser} />}
