@@ -346,13 +346,24 @@ export interface StudyLog {
   userId: string;
   username: string;
   date: string;
+  // 작품별 분석 (저번 주 과제 기준)
+  classicAnalysis?: string;
+  classicDifficulty?: string;
+  modernPoetAnalysis?: string;
+  modernPoetDifficulty?: string;
+  modernProseAnalysis?: string;
+  modernProseDifficulty?: string;
+  // 기출 풀이
+  wrongAnswerAnalysis?: string;
+  examTypeAnalysis?: string;
+  // 스터디 소감
+  studyGroupLearnings?: string;
+  selfFeedback: string;
+  // 이전 버전 호환
   workType?: string;
   workName: string;
   newInsights?: string;
   difficulties: string;
-  wrongAnswerAnalysis?: string;
-  studyGroupLearnings?: string;
-  selfFeedback: string;
   assignedQuestions?: string;
   updatedAt: string;
 }
