@@ -46,6 +46,8 @@ export default function AttendanceTab() {
     let total = 0;
     let attended = 0;
     for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(viewYear, viewMonth, d);
+      if (date.getDay() !== 1) continue; // Mondays only
       const dateStr = `${monthPrefix}-${pad(d)}`;
       if (dateStr > today) break;
       total++;
@@ -95,7 +97,7 @@ export default function AttendanceTab() {
                 </div>
                 <div>
                   <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" />
-                  <p className="text-xs text-gray-400">{attended}/{total}일 출석</p>
+                  <p className="text-xs text-gray-400">{attended}/{total}주 출석</p>
                 </div>
               </div>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${
@@ -112,7 +114,12 @@ export default function AttendanceTab() {
               {DAY_LABELS.map((d, i) => (
                 <div
                   key={d}
-                  className={`text-center text-xs font-medium py-0.5 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}`}
+                  className={`text-center text-xs font-medium py-0.5 ${
+                    i === 1 ? 'text-primary-600 font-bold' :
+                    i === 0 ? 'text-red-400' :
+                    i === 6 ? 'text-blue-400' :
+                    'text-gray-400'
+                  }`}
                 >
                   {d}
                 </div>
@@ -127,6 +134,8 @@ export default function AttendanceTab() {
                 const attended_ = !isFuture && isAttended(user.id, day);
                 const isToday_ = viewYear === todayYear && viewMonth === todayMonth && day === todayDay;
                 const col = idx % 7;
+                const isMonday = col === 1;
+                const showAttended = isMonday && attended_;
 
                 return (
                   <div
@@ -134,18 +143,19 @@ export default function AttendanceTab() {
                     className={[
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium',
                       isFuture ? 'opacity-20' : '',
-                      attended_ ? 'bg-primary-100' : isToday_ ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-gray-50',
+                      isMonday
+                        ? (showAttended ? 'bg-primary-100' : isToday_ ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-gray-50')
+                        : 'bg-transparent',
                     ].join(' ')}
                   >
-                    {attended_ ? (
+                    {showAttended ? (
                       <CheckCircle2 className="w-4 h-4 text-primary-500" />
                     ) : (
                       <span className={
+                        !isMonday ? 'text-gray-200' :
                         isFuture ? 'text-gray-300' :
                         isToday_ ? 'text-amber-600 font-bold' :
-                        col === 0 ? 'text-red-400' :
-                        col === 6 ? 'text-blue-400' :
-                        'text-gray-400'
+                        'text-gray-500'
                       }>
                         {day}
                       </span>
