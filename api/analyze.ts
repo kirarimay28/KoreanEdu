@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 export const config = {
   api: {
     bodyParser: {
@@ -30,9 +28,6 @@ export default async function handler(req: any, res: any) {
     ? `이번 주 과제 — 고전: ${notice.classicWork || '미정'}, 현대시: ${notice.modernPoetWork || '미정'}, 현대산문: ${notice.modernProseWork || '미정'}`
     : '';
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
-
   const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
 
 --- 자료 내용 시작 ---
@@ -56,8 +51,26 @@ ${pdfText}
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
+
+    const data = await response.json() as any;
+
+    if (!response.ok) {
+      const msg = data?.error?.message ?? `Gemini 오류 (${response.status})`;
+      res.status(500).json({ error: msg });
+      return;
+    }
+
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
     const match = text.match(/\{[\s\S]*\}/);
     res.status(200).json(match ? JSON.parse(match[0]) : {});
   } catch (e: unknown) {
