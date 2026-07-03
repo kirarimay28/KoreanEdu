@@ -1,8 +1,5 @@
 import { useState, useRef } from 'react';
 import { Check, Upload, Sparkles, X, Trash2 } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import type { StorageReference } from 'firebase/storage';
-import { storage } from '../../firebase';
 import type { User, StudyLog, StudySessionNote } from '../../types';
 import {
   getStudyLog, getStudyLogsForDate, getUsers,
@@ -51,13 +48,31 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
   );
 }
 
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.mjs',
+    import.meta.url,
+  ).toString();
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((item: any) => item.str).join(' '));
+  }
+  return pages.join('\n');
+}
+
 export default function StudyLogTab({ date, currentUser }: Props) {
   const [logDate, setLogDate] = useState(date);
   const [tick, setTick]       = useState(0);
 
   const [pdfFile, setPdfFile]           = useState<File | null>(null);
   const [analyzing, setAnalyzing]       = useState(false);
-  const [analyzeStep, setAnalyzeStep]   = useState<'upload' | 'ai'>('upload');
+  const [analyzeStep, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,23 +123,20 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     }
 
     setAnalyzing(true);
-    setAnalyzeStep('upload');
+    setAnalyzeStep('extract');
     setAnalyzeError('');
 
-    let storageRef: StorageReference | null = null;
-
     try {
-      const path = `studylogs/${currentUser.id}/${Date.now()}.pdf`;
-      storageRef = ref(storage, path);
-      await uploadBytes(storageRef, pdfFile);
-      const pdfUrl = await getDownloadURL(storageRef);
+      const pdfText = await extractPdfText(pdfFile);
+      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
+
       setAnalyzeStep('ai');
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfUrl,
+          pdfText,
           notice: notice
             ? { classicWork: notice.classicWork, modernPoetWork: notice.modernPoetWork, modernProseWork: notice.modernProseWork }
             : null,
@@ -151,7 +163,6 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     } catch (e: unknown) {
       setAnalyzeError(e instanceof Error ? e.message : 'AI 분석 중 오류가 발생했습니다.');
     } finally {
-      if (storageRef) deleteObject(storageRef).catch(() => {});
       setAnalyzing(false);
       setTick(t => t + 1);
     }
@@ -276,7 +287,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
             {analyzing ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}
+                {analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}
               </>
             ) : (
               <>
