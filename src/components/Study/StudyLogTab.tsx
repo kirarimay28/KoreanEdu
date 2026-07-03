@@ -215,12 +215,12 @@ export default function StudyLogTab({ date, currentUser }: Props) {
             <div className="space-y-3">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">① 작품 분석</p>
               <div className="space-y-2.5">
-                <NoteSection label="고전 — 분석"       value={fields.classicAnalysis}       color="text-amber-600" />
-                <NoteSection label="고전 — 어려웠던 점" value={fields.classicDifficulty}     color="text-amber-500" />
-                <NoteSection label="현대시 — 분석"      value={fields.modernPoetAnalysis}    color="text-sky-600" />
-                <NoteSection label="현대시 — 어려웠던 점" value={fields.modernPoetDifficulty} color="text-sky-500" />
-                <NoteSection label="현대산문 — 분석"    value={fields.modernProseAnalysis}   color="text-violet-600" />
-                <NoteSection label="현대산문 — 어려웠던 점" value={fields.modernProseDifficulty} color="text-violet-500" />
+                <NoteSection label={`${notice?.classicWork || '고전'} — 분석`}        value={fields.classicAnalysis}       color="text-amber-600" />
+                <NoteSection label={`${notice?.classicWork || '고전'} — 어려웠던 점`} value={fields.classicDifficulty}     color="text-amber-500" />
+                <NoteSection label={`${notice?.modernPoetWork || '현대시'} — 분석`}        value={fields.modernPoetAnalysis}    color="text-sky-600" />
+                <NoteSection label={`${notice?.modernPoetWork || '현대시'} — 어려웠던 점`} value={fields.modernPoetDifficulty} color="text-sky-500" />
+                <NoteSection label={`${notice?.modernProseWork || '현대산문'} — 분석`}        value={fields.modernProseAnalysis}   color="text-violet-600" />
+                <NoteSection label={`${notice?.modernProseWork || '현대산문'} — 어려웠던 점`} value={fields.modernProseDifficulty} color="text-violet-500" />
               </div>
             </div>
           )}
