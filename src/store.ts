@@ -746,6 +746,13 @@ export function upsertStudyLog(log: StudyLog): void {
   saveCache();
 }
 
+export function removeStudyLog(userId: string, date: string): void {
+  const id = `${userId}_${date}`;
+  mem.studyLogs = mem.studyLogs.filter(l => l.id !== id);
+  remove('studyLogs', id);
+  saveCache();
+}
+
 // ── Location Notice ───────────────────────────────────────────────
 export function getLocationNotice(): LocationNotice | null {
   return mem.locationNotice;
