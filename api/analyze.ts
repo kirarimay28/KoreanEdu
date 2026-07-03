@@ -35,19 +35,23 @@ ${pdfText}
 --- 자료 내용 끝 ---
 
 위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+각 필드는 **단권화 스타일**로 작성해주세요:
+- 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
+- 각 항목은 줄바꿈으로 구분
+- 줄글 대신 간결한 불릿(•) 형식
 없는 내용은 빈 문자열("")로 남겨두세요. JSON만 반환하세요.
 
 {
-  "classicAnalysis": "고전 작품 분석 내용 요약",
-  "classicDifficulty": "고전 작품에서 어려웠던 부분",
-  "modernPoetAnalysis": "현대시 분석 내용 요약",
-  "modernPoetDifficulty": "현대시에서 어려웠던 부분",
-  "modernProseAnalysis": "현대산문 분석 내용 요약",
-  "modernProseDifficulty": "현대산문에서 어려웠던 부분",
-  "wrongAnswerAnalysis": "오답 원인 분석",
-  "examTypeAnalysis": "임용 기출 유형 분석",
-  "studyGroupLearnings": "스터디에서 배운 것",
-  "selfFeedback": "자가 피드백 및 다음 계획"
+  "classicAnalysis": "• **핵심어**: 설명\n• **핵심어**: 설명",
+  "classicDifficulty": "• 어려웠던 부분 요점",
+  "modernPoetAnalysis": "• **핵심어**: 설명\n• **핵심어**: 설명",
+  "modernPoetDifficulty": "• 어려웠던 부분 요점",
+  "modernProseAnalysis": "• **핵심어**: 설명\n• **핵심어**: 설명",
+  "modernProseDifficulty": "• 어려웠던 부분 요점",
+  "wrongAnswerAnalysis": "• 오답 원인 요점",
+  "examTypeAnalysis": "• 기출 유형 요점",
+  "studyGroupLearnings": "• 배운 점 요점",
+  "selfFeedback": "• 피드백 및 계획 요점"
 }`;
 
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-3.5-flash'];

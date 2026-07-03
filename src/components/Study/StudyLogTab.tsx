@@ -38,12 +38,31 @@ function parseNote(note: StudySessionNote): NoteFields {
   try { return JSON.parse(note.content) as NoteFields; } catch { return {}; }
 }
 
+function renderLine(line: string, i: number) {
+  const isBullet = line.startsWith('•');
+  const content = isBullet ? line.slice(1).trim() : line;
+  const parts = content.split(/\*\*(.*?)\*\*/g);
+  return (
+    <p key={i} className={`text-xs text-gray-600 leading-relaxed ${isBullet ? 'flex gap-1.5' : ''}`}>
+      {isBullet && <span className="text-gray-300 flex-shrink-0 mt-px">•</span>}
+      <span>
+        {parts.map((part, j) =>
+          j % 2 === 1
+            ? <strong key={j} className="font-semibold text-gray-800">{part}</strong>
+            : part
+        )}
+      </span>
+    </p>
+  );
+}
+
 function NoteSection({ label, value, color }: { label: string; value?: string; color: string }) {
   if (!value) return null;
+  const lines = value.split('\n').filter(l => l.trim());
   return (
     <div>
-      <p className={`text-[10px] font-bold mb-1 ${color}`}>{label}</p>
-      <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{value}</p>
+      <p className={`text-[10px] font-bold mb-1.5 ${color}`}>{label}</p>
+      <div className="space-y-1">{lines.map((line, i) => renderLine(line, i))}</div>
     </div>
   );
 }
