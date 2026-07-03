@@ -238,6 +238,15 @@ export interface AssignmentNotice {
   createdByName: string;
 }
 
+export interface StudySessionNote {
+  id: string;       // date (YYYY-MM-DD)
+  date: string;
+  content: string;  // JSON string of AI analysis fields
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -262,6 +271,7 @@ export interface AppData {
   locationNotice: LocationNotice | null;
   assignmentNotices: AssignmentNotice[];
   vocabExamRecords: VocabExamRecord[];
+  studySessionNotes: StudySessionNote[];
 }
 
 export interface LibraryItem {

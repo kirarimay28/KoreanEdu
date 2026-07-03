@@ -6,7 +6,7 @@ import type {
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
-  VocabExamRecord,
+  VocabExamRecord, StudySessionNote,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -35,6 +35,7 @@ const defaultData: AppData = {
   locationNotice: null,
   assignmentNotices: [],
   vocabExamRecords: [],
+  studySessionNotes: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -82,7 +83,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -106,6 +107,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('locationNotice'),
     safeGet('assignmentNotice'),
     safeGet('vocabExamRecords'),
+    safeGet('studySessionNotes'),
   ]);
   mem = {
     users:                u.docs.map(d => d.data() as User),
@@ -131,6 +133,7 @@ async function fetchFromFirestore(): Promise<void> {
     locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
     assignmentNotices:   an2.docs.map(d => d.data() as AssignmentNotice),
     vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
+    studySessionNotes:   sn.docs.map(d => d.data() as StudySessionNote),
   };
   bootstrapAdmin();
   saveCache();
@@ -750,6 +753,27 @@ export function removeStudyLog(userId: string, date: string): void {
   const id = `${userId}_${date}`;
   mem.studyLogs = mem.studyLogs.filter(l => l.id !== id);
   remove('studyLogs', id);
+  saveCache();
+}
+
+// ── Study Session Notes ───────────────────────────────────────────
+export function getStudySessionNote(date: string): StudySessionNote | undefined {
+  return mem.studySessionNotes.find(n => n.date === date);
+}
+
+export function saveStudySessionNote(note: StudySessionNote): void {
+  const idx = mem.studySessionNotes.findIndex(n => n.date === note.date);
+  if (idx >= 0) mem.studySessionNotes[idx] = note;
+  else mem.studySessionNotes.push(note);
+  persist('studySessionNotes', note.id, note);
+  saveCache();
+}
+
+export function deleteStudySessionNote(date: string): void {
+  const note = mem.studySessionNotes.find(n => n.date === date);
+  if (!note) return;
+  mem.studySessionNotes = mem.studySessionNotes.filter(n => n.date !== date);
+  remove('studySessionNotes', note.id);
   saveCache();
 }
 
