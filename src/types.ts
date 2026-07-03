@@ -239,8 +239,10 @@ export interface AssignmentNotice {
 }
 
 export interface StudySessionNote {
-  id: string;       // date (YYYY-MM-DD)
+  id: string;       // `${userId}_${date}`
   date: string;
+  userId: string;
+  username: string;
   content: string;  // JSON string of AI analysis fields
   createdAt: string;
   createdById: string;

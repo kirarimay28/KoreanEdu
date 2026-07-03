@@ -757,22 +757,26 @@ export function removeStudyLog(userId: string, date: string): void {
 }
 
 // ── Study Session Notes ───────────────────────────────────────────
-export function getStudySessionNote(date: string): StudySessionNote | undefined {
-  return mem.studySessionNotes.find(n => n.date === date);
+export function getStudySessionNote(userId: string, date: string): StudySessionNote | undefined {
+  return mem.studySessionNotes.find(n => n.userId === userId && n.date === date);
+}
+
+export function getStudySessionNotesForDate(date: string): StudySessionNote[] {
+  return mem.studySessionNotes.filter(n => n.date === date);
 }
 
 export function saveStudySessionNote(note: StudySessionNote): void {
-  const idx = mem.studySessionNotes.findIndex(n => n.date === note.date);
+  const idx = mem.studySessionNotes.findIndex(n => n.id === note.id);
   if (idx >= 0) mem.studySessionNotes[idx] = note;
   else mem.studySessionNotes.push(note);
   persist('studySessionNotes', note.id, note);
   saveCache();
 }
 
-export function deleteStudySessionNote(date: string): void {
-  const note = mem.studySessionNotes.find(n => n.date === date);
+export function deleteStudySessionNote(id: string): void {
+  const note = mem.studySessionNotes.find(n => n.id === id);
   if (!note) return;
-  mem.studySessionNotes = mem.studySessionNotes.filter(n => n.date !== date);
+  mem.studySessionNotes = mem.studySessionNotes.filter(n => n.id !== id);
   remove('studySessionNotes', note.id);
   saveCache();
 }
