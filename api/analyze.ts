@@ -50,29 +50,33 @@ ${pdfText}
   "selfFeedback": "자가 피드백 및 다음 계획"
 }`;
 
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-3.5-flash'];
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
+    let data: any = null;
+    let lastError = '';
+
+    for (const model of MODELS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+        );
+        data = await response.json() as any;
+        if (response.ok) {
+          const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+          const match = text.match(/\{[\s\S]*\}/);
+          res.status(200).json(match ? JSON.parse(match[0]) : {});
+          return;
+        }
+        lastError = data?.error?.message ?? `오류 (${response.status})`;
+        if (response.status !== 503 && response.status !== 429) break;
+        await new Promise(r => setTimeout(r, 1500));
       }
-    );
-
-    const data = await response.json() as any;
-
-    if (!response.ok) {
-      const msg = data?.error?.message ?? `Gemini 오류 (${response.status})`;
-      res.status(500).json({ error: msg });
-      return;
     }
 
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
-    const match = text.match(/\{[\s\S]*\}/);
-    res.status(200).json(match ? JSON.parse(match[0]) : {});
+    res.status(500).json({ error: lastError });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     res.status(500).json({ error: msg });
