@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const config = {
   api: {
@@ -14,9 +14,9 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: 'ANTHROPIC_API_KEY가 설정되지 않았습니다.' });
+    res.status(500).json({ error: 'GOOGLE_AI_API_KEY가 설정되지 않았습니다.' });
     return;
   }
 
@@ -30,15 +30,10 @@ export default async function handler(req: any, res: any) {
     ? `이번 주 과제 — 고전: ${notice.classicWork || '미정'}, 현대시: ${notice.modernPoetWork || '미정'}, 현대산문: ${notice.modernProseWork || '미정'}`
     : '';
 
-  const client = new Anthropic({ apiKey });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-  const msg = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
-    messages: [
-      {
-        role: 'user',
-        content: `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
+  const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
 
 --- 자료 내용 시작 ---
 ${pdfText}
@@ -58,12 +53,10 @@ ${pdfText}
   "examTypeAnalysis": "임용 기출 유형 분석",
   "studyGroupLearnings": "스터디에서 배운 것",
   "selfFeedback": "자가 피드백 및 다음 계획"
-}`,
-      },
-    ],
-  });
+}`;
 
-  const text = msg.content[0]?.type === 'text' ? (msg.content[0] as any).text : '{}';
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
 
   try {
     const match = text.match(/\{[\s\S]*\}/);
