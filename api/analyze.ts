@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '8mb',
+      sizeLimit: '1mb',
     },
   },
 };
@@ -20,9 +20,9 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { pdfBase64, notice } = req.body ?? {};
-  if (!pdfBase64 || typeof pdfBase64 !== 'string') {
-    res.status(400).json({ error: 'PDF 데이터가 없습니다.' });
+  const { pdfUrl, notice } = req.body ?? {};
+  if (!pdfUrl || typeof pdfUrl !== 'string') {
+    res.status(400).json({ error: 'PDF URL이 없습니다.' });
     return;
   }
 
@@ -42,11 +42,10 @@ export default async function handler(req: any, res: any) {
           {
             type: 'document',
             source: {
-              type: 'base64',
-              media_type: 'application/pdf',
-              data: pdfBase64,
-            },
-          } as any,
+              type: 'url',
+              url: pdfUrl,
+            } as any,
+          },
           {
             type: 'text',
             text: `이 PDF는 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다.${noticeStr ? '\n' + noticeStr : ''}

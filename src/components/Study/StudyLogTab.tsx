@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Save, ChevronDown, ChevronUp, Upload, Sparkles, X } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import type { StorageReference } from 'firebase/storage';
+import { storage } from '../../firebase';
 import type { User, StudyLog } from '../../types';
 import { getStudyLog, getStudyLogsForDate, upsertStudyLog, getUsers, getAssignmentNoticeForWeek } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
@@ -62,8 +65,9 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   const [fields, setFields]           = useState<LogFields>(() => fieldsFromSaved(getStudyLog(currentUser.id, date)));
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [tick, setTick]               = useState(0);
-  const [pdfFile, setPdfFile]         = useState<File | null>(null);
-  const [analyzing, setAnalyzing]     = useState(false);
+  const [pdfFile, setPdfFile]           = useState<File | null>(null);
+  const [analyzing, setAnalyzing]       = useState(false);
+  const [analyzeStep, setAnalyzeStep]   = useState<'upload' | 'ai'>('upload');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,31 +116,26 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       setAnalyzeError('PDF 파일만 업로드 가능합니다.');
       return;
     }
-    if (pdfFile.size > 4 * 1024 * 1024) {
-      setAnalyzeError('파일 크기가 4MB를 초과합니다.');
-      return;
-    }
 
     setAnalyzing(true);
+    setAnalyzeStep('upload');
     setAnalyzeError('');
 
+    let storageRef: StorageReference | null = null;
+
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const result = e.target?.result;
-          if (typeof result !== 'string') { reject(new Error('파일 읽기 실패')); return; }
-          resolve(result.split(',')[1] ?? '');
-        };
-        reader.onerror = () => reject(new Error('파일 읽기 실패'));
-        reader.readAsDataURL(pdfFile);
-      });
+      // Firebase Storage에 임시 업로드 → URL 획득
+      const path = `studylogs/${currentUser.id}/${Date.now()}.pdf`;
+      storageRef = ref(storage, path);
+      await uploadBytes(storageRef, pdfFile);
+      const pdfUrl = await getDownloadURL(storageRef);
+      setAnalyzeStep('ai');
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfBase64: base64,
+          pdfUrl,
           notice: notice
             ? { classicWork: notice.classicWork, modernPoetWork: notice.modernPoetWork, modernProseWork: notice.modernProseWork }
             : null,
@@ -164,6 +163,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     } catch (e: unknown) {
       setAnalyzeError(e instanceof Error ? e.message : 'AI 분석 중 오류가 발생했습니다.');
     } finally {
+      if (storageRef) deleteObject(storageRef).catch(() => {});
       setAnalyzing(false);
     }
   }
@@ -233,7 +233,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="w-4 h-4" />
-            PDF 파일 선택 (최대 4MB)
+            PDF 파일 선택
           </button>
         )}
 
@@ -247,7 +247,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
           {analyzing ? (
             <>
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              AI 분석 중...
+              {analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}
             </>
           ) : (
             <>
