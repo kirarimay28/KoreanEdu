@@ -55,13 +55,13 @@ ${pdfText}
   "selfFeedback": "자가 피드백 및 다음 계획"
 }`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-
   try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
     const match = text.match(/\{[\s\S]*\}/);
     res.status(200).json(match ? JSON.parse(match[0]) : {});
-  } catch {
-    res.status(500).json({ error: 'AI 응답 파싱에 실패했습니다.' });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    res.status(500).json({ error: msg });
   }
 }
