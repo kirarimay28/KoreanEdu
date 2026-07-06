@@ -28,14 +28,14 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const STUDY_START = '2026-06-29'; // 스터디 시작일 (1주차 월요일)
+
 function getWeekLabel(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  const month = d.getMonth() + 1;
-  const dayOfMonth = d.getDate();
-  const firstDayJS = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
-  const firstDayISO = firstDayJS === 0 ? 7 : firstDayJS;
-  const weekNum = Math.ceil((dayOfMonth + firstDayISO - 1) / 7);
-  return `${month}월 ${weekNum}주차`;
+  const monday = new Date(getWeekMonday(dateStr) + 'T00:00:00');
+  const start  = new Date(STUDY_START + 'T00:00:00');
+  const diffDays = Math.round((monday.getTime() - start.getTime()) / 86400000);
+  const weekNum  = Math.floor(diffDays / 7) + 1;
+  return `${weekNum}주차`;
 }
 
 interface NoteFields {
