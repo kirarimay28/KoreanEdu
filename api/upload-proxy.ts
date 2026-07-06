@@ -1,17 +1,30 @@
-export const config = { runtime: 'edge' };
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
 
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'API key missing' }), { status: 500 });
+    res.status(500).json({ error: 'API key missing' });
+    return;
   }
 
-  const fileName = req.headers.get('x-file-name') ?? 'upload.pdf';
-  const bodyBuffer = await req.arrayBuffer();
+  const fileName = req.headers['x-file-name'] ?? 'upload.pdf';
+
+  // req.body is a Buffer when Content-Type is application/pdf
+  const bodyBuffer: Buffer = Buffer.isBuffer(req.body)
+    ? req.body
+    : Buffer.from(req.body);
+
   const contentLength = String(bodyBuffer.byteLength);
 
   const initRes = await fetch(
@@ -31,7 +44,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   const uploadUrl = initRes.headers.get('x-goog-upload-url');
   if (!uploadUrl) {
-    return new Response(JSON.stringify({ error: '업로드 URL을 받을 수 없습니다.' }), { status: 500 });
+    res.status(500).json({ error: '업로드 URL을 받을 수 없습니다.' });
+    return;
   }
 
   const uploadRes = await fetch(uploadUrl, {
@@ -45,17 +59,16 @@ export default async function handler(req: Request): Promise<Response> {
   });
 
   if (!uploadRes.ok) {
-    return new Response(JSON.stringify({ error: `Gemini 업로드 오류 (${uploadRes.status})` }), { status: 500 });
+    res.status(500).json({ error: `Gemini 업로드 오류 (${uploadRes.status})` });
+    return;
   }
 
   const fileData = await uploadRes.json() as any;
   const fileUri = fileData.uri ?? fileData.file?.uri;
   if (!fileUri) {
-    return new Response(JSON.stringify({ error: '파일 URI를 받을 수 없습니다.' }), { status: 500 });
+    res.status(500).json({ error: '파일 URI를 받을 수 없습니다.' });
+    return;
   }
 
-  return new Response(JSON.stringify({ fileUri }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  res.status(200).json({ fileUri });
 }
