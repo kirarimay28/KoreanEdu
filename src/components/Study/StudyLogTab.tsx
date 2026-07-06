@@ -86,25 +86,14 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 
 async function extractPdfText(file: File): Promise<string> {
-  const [pdfjsLib, workerModule] = await Promise.all([
-    // @ts-ignore
-    import('pdfjs-dist/legacy/build/pdf.mjs'),
-    // @ts-ignore
-    import('pdfjs-dist/legacy/build/pdf.worker.mjs'),
-  ]);
-  // Legacy build includes polyfills for Array.prototype.at etc.
-  // Empty workerSrc forces LoopbackPort (main-thread) mode.
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-  (globalThis as any).pdfjsWorker = { WorkerMessageHandler: workerModule.WorkerMessageHandler };
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => item.str ?? '').join(' '));
-  }
-  return pages.join('\n');
+  const res = await fetch('/api/extract-text', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/pdf' },
+    body: file,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? `서버 오류 (${res.status})`);
+  return data.text ?? '';
 }
 
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
