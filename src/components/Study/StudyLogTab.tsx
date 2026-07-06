@@ -84,22 +84,6 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
   );
 }
 
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.mjs',
-    import.meta.url,
-  ).toString();
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => item.str).join(' '));
-  }
-  return pages.join('\n');
-}
 
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
   const hasWork = fields.classicAnalysis || fields.classicDifficulty || fields.modernPoetAnalysis || fields.modernPoetDifficulty || fields.modernProseAnalysis || fields.modernProseDifficulty;
@@ -152,7 +136,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   const [pdfFile, setPdfFile]           = useState<File | null>(null);
   const [analyzing, setAnalyzing]       = useState(false);
-  const [analyzeStep, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
+  const [analyzeStep, setAnalyzeStep]   = useState<'upload' | 'ai'>('upload');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -186,17 +170,41 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       return;
     }
     setAnalyzing(true);
-    setAnalyzeStep('extract');
+    setAnalyzeStep('upload');
     setAnalyzeError('');
     try {
-      const pdfText = await extractPdfText(pdfFile);
-      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
+      // Step 1: get Gemini resumable upload URL from server
+      const initRes = await fetch('/api/upload-init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileSize: pdfFile.size, fileName: pdfFile.name }),
+      });
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? `업로드 초기화 오류 (${initRes.status})`);
+      }
+      const { uploadUrl } = await initRes.json() as { uploadUrl: string };
+
+      // Step 2: stream PDF directly to Gemini (no size limit on client side)
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'X-Goog-Upload-Command': 'upload, finalize',
+          'X-Goog-Upload-Offset': '0',
+        },
+        body: pdfFile,
+      });
+      if (!uploadRes.ok) throw new Error(`Gemini 업로드 오류 (${uploadRes.status})`);
+      const fileData = await uploadRes.json() as { uri?: string; file?: { uri?: string } };
+      const fileUri = fileData.uri ?? fileData.file?.uri;
+      if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfText,
+          fileUri,
           notice: notice
             ? {
                 classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
@@ -224,7 +232,6 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         createdByName: currentUser.username,
       };
       saveStudySessionNote(newNote);
-      // mark study log as done
       const log: StudyLog = {
         id: `${targetUser.id}_${logDate}`,
         userId: targetUser.id,
@@ -379,7 +386,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
-                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
                             </button>
                           )}
@@ -413,7 +420,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
-                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
                           : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
                       </button>
                     </div>

@@ -1,7 +1,8 @@
 export const config = {
+  maxDuration: 60,
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: '1mb',
     },
   },
 };
@@ -18,9 +19,9 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { pdfText, notice } = req.body ?? {};
-  if (!pdfText || typeof pdfText !== 'string') {
-    res.status(400).json({ error: 'PDF 텍스트가 없습니다.' });
+  const { fileUri, notice } = req.body ?? {};
+  if (!fileUri || typeof fileUri !== 'string') {
+    res.status(400).json({ error: 'fileUri가 없습니다.' });
     return;
   }
 
@@ -34,13 +35,9 @@ export default async function handler(req: any, res: any) {
     noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
   }
 
-  const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
+  const prompt = `다음 PDF는 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다.${noticeStr ? '\n' + noticeStr : ''}
 
---- 자료 내용 시작 ---
-${pdfText}
---- 자료 내용 끝 ---
-
-위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+위 PDF 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
 각 필드는 **단권화 스타일**로 작성해주세요:
 - 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
 - 각 항목은 줄바꿈으로 구분
@@ -60,20 +57,26 @@ ${pdfText}
   "selfFeedback": "• 피드백 및 계획 요점"
 }`;
 
-  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-3.5-flash'];
-  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const body = JSON.stringify({
+    contents: [{
+      parts: [
+        { text: prompt },
+        { fileData: { mimeType: 'application/pdf', fileUri } },
+      ],
+    }],
+  });
 
   try {
-    let data: any = null;
     let lastError = '';
 
     for (const model of MODELS) {
       for (let attempt = 0; attempt < 2; attempt++) {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
         );
-        data = await response.json() as any;
+        const data = await response.json() as any;
         if (response.ok) {
           const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
           const match = text.match(/\{[\s\S]*\}/);
