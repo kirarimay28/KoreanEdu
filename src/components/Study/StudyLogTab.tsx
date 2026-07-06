@@ -170,12 +170,8 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       setAnalyzeError('PDF 파일만 업로드 가능합니다.');
       return;
     }
-    if (pdfFile.size > 4 * 1024 * 1024) {
-      setAnalyzeError('파일이 너무 큽니다. 4MB 이하의 PDF만 사용 가능합니다.');
-      return;
-    }
     setAnalyzing(true);
-    setAnalyzeStep('ai');
+    setAnalyzeStep('extract');
     setAnalyzeError('');
     try {
       const noticePayload = notice
@@ -187,14 +183,41 @@ export default function StudyLogTab({ date, currentUser }: Props) {
           }
         : null;
 
-      const res = await fetch('/api/analyze-pdf', {
+      // 1단계: 서버에서 Gemini 업로드 URL 발급
+      const initRes = await fetch('/api/upload-init', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileSize: pdfFile.size, fileName: pdfFile.name }),
+      });
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? '업로드 초기화 실패');
+      }
+      const { uploadUrl } = await initRes.json();
+
+      // 2단계: 브라우저에서 Gemini에 직접 업로드
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/pdf',
-          'X-File-Name': pdfFile.name,
-          'X-Notice': noticePayload ? JSON.stringify(noticePayload) : '',
+          'X-Goog-Upload-Command': 'upload, finalize',
+          'X-Goog-Upload-Offset': '0',
         },
         body: pdfFile,
+      });
+      if (!uploadRes.ok) {
+        throw new Error(`파일 업로드 실패 (${uploadRes.status})`);
+      }
+      const uploadData = await uploadRes.json();
+      const fileUri: string = uploadData.uri ?? uploadData.file?.uri ?? '';
+      if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
+
+      // 3단계: AI 분석
+      setAnalyzeStep('ai');
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUri, notice: noticePayload }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };

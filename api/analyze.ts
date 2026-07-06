@@ -18,9 +18,9 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { pdfText, notice } = req.body ?? {};
-  if (!pdfText || typeof pdfText !== 'string') {
-    res.status(400).json({ error: 'PDF 텍스트가 없습니다.' });
+  const { pdfText, fileUri, notice } = req.body ?? {};
+  if (!pdfText && !fileUri) {
+    res.status(400).json({ error: 'PDF 텍스트 또는 파일 URI가 없습니다.' });
     return;
   }
 
@@ -34,11 +34,7 @@ export default async function handler(req: any, res: any) {
     noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
   }
 
-  const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
-
---- 자료 내용 시작 ---
-${pdfText}
---- 자료 내용 끝 ---
+  const promptBase = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다.${noticeStr ? '\n' + noticeStr : ''}
 
 위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
 각 필드는 **단권화 스타일**로 작성해주세요:
@@ -61,7 +57,43 @@ ${pdfText}
 }`;
 
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+
+  let parts: object[];
+  if (fileUri) {
+    parts = [
+      { fileData: { mimeType: 'application/pdf', fileUri } },
+      { text: promptBase },
+    ];
+  } else {
+    const textPrompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
+
+--- 자료 내용 시작 ---
+${pdfText}
+--- 자료 내용 끝 ---
+
+위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+각 필드는 **단권화 스타일**로 작성해주세요:
+- 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
+- 각 항목은 줄바꿈으로 구분
+- 줄글 대신 간결한 불릿(•) 형식
+없는 내용은 빈 문자열("")로 남겨두세요. JSON만 반환하세요.
+
+{
+  "classicAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "classicDifficulty": "• 어려웠던 부분 요점",
+  "modernPoetAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "modernPoetDifficulty": "• 어려웠던 부분 요점",
+  "modernProseAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "modernProseDifficulty": "• 어려웠던 부분 요점",
+  "wrongAnswerAnalysis": "• 오답 원인 요점",
+  "examTypeAnalysis": "• 기출 유형 요점",
+  "studyGroupLearnings": "• 배운 점 요점",
+  "selfFeedback": "• 피드백 및 계획 요점"
+}`;
+    parts = [{ text: textPrompt }];
+  }
+
+  const body = JSON.stringify({ contents: [{ parts }] });
 
   try {
     let lastError = '';
