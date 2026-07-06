@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { storage } from '../../firebase';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -143,7 +145,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   const [pdfFile, setPdfFile]           = useState<File | null>(null);
   const [analyzing, setAnalyzing]       = useState(false);
-  const [, setAnalyzeStep]   = useState<'ai'>('ai');
+  const [analyzeStep, setAnalyzeStep]   = useState<'upload' | 'ai'>('upload');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,29 +178,31 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       setAnalyzeError('PDF 파일만 업로드 가능합니다.');
       return;
     }
-    if (pdfFile.size > 4.4 * 1024 * 1024) {
-      setAnalyzeError('PDF 파일이 너무 큽니다. 4.4MB 이하 파일을 사용해주세요.');
-      return;
-    }
     setAnalyzing(true);
-    setAnalyzeStep('ai');
+    setAnalyzeStep('upload');
     setAnalyzeError('');
+    const storageRef = ref(storage, `studylogs/${currentUser.id}/${Date.now()}.pdf`);
     try {
-      const noticeHeader = notice
-        ? JSON.stringify({
-            classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
-            classicProseWork: notice.classicProseWork ?? '',
-            modernPoetWork: notice.modernPoetWork,
-            modernProseWork: notice.modernProseWork,
-          })
-        : '';
+      await new Promise<void>((resolve, reject) => {
+        const task = uploadBytesResumable(storageRef, pdfFile);
+        task.on('state_changed', null, reject, resolve);
+      });
+      const pdfUrl = await getDownloadURL(storageRef);
+      setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/pdf',
-          ...(noticeHeader ? { 'X-Notice': noticeHeader } : {}),
-        },
-        body: pdfFile,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pdfUrl,
+          notice: notice
+            ? {
+                classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
+                classicProseWork: notice.classicProseWork ?? '',
+                modernPoetWork: notice.modernPoetWork,
+                modernProseWork: notice.modernProseWork,
+              }
+            : null,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
@@ -236,6 +240,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     } finally {
       setAnalyzing(false);
       setTick(t => t + 1);
+      deleteObject(storageRef).catch(() => {});
     }
   }
 
@@ -372,7 +377,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
-                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{'AI 분석 중...'}</>
+                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
                             </button>
                           )}
@@ -406,7 +411,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
-                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{'AI 분석 중...'}</>
+                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
                           : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
                       </button>
                     </div>

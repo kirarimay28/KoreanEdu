@@ -1,6 +1,9 @@
 export const config = {
+  maxDuration: 60,
   api: {
-    bodyParser: false,
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
   },
 };
 
@@ -16,33 +19,30 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // Collect raw PDF binary
-  const chunks: Buffer[] = [];
-  await new Promise<void>((resolve, reject) => {
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
-    req.on('end', resolve);
-    req.on('error', reject);
-  });
-  const pdfBuffer = Buffer.concat(chunks);
-  if (!pdfBuffer.length) {
-    res.status(400).json({ error: 'PDF 데이터가 없습니다.' });
+  const { pdfUrl, notice } = req.body ?? {};
+  if (!pdfUrl || typeof pdfUrl !== 'string') {
+    res.status(400).json({ error: 'PDF URL이 없습니다.' });
     return;
   }
+
+  // Fetch PDF from Firebase Storage
+  const pdfResponse = await fetch(pdfUrl);
+  if (!pdfResponse.ok) {
+    res.status(400).json({ error: 'PDF를 가져올 수 없습니다.' });
+    return;
+  }
+  const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
   const pdfBase64 = pdfBuffer.toString('base64');
 
   let noticeStr = '';
-  try {
-    const noticeHeader = req.headers['x-notice'];
-    if (noticeHeader) {
-      const notice = JSON.parse(noticeHeader);
-      const classicParts: string[] = [];
-      if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
-      if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
-      const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
-      const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
-      noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
-    }
-  } catch {}
+  if (notice) {
+    const classicParts: string[] = [];
+    if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
+    if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
+    const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
+    const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
+    noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
+  }
 
   const prompt = `다음 PDF는 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다.${noticeStr ? '\n' + noticeStr : ''}
 
