@@ -251,6 +251,23 @@ export interface StudySessionNote {
   createdByName: string;
 }
 
+export type FineType = '지각' | '과제' | '일지';
+
+export interface FineRecord {
+  id: string;
+  type: FineType;
+  targetUserId: string;
+  targetUsername: string;
+  amount: number;        // 원 단위
+  reason: string;        // 세부 사유 (ex: "18:12 도착", "미수행 2작품")
+  weekKey: string;       // YYYY-MM-DD (해당 주 월요일)
+  issuedAt: string;
+  issuedById: string;
+  issuedByName: string;
+  paid: boolean;
+  paidAt?: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -276,6 +293,7 @@ export interface AppData {
   assignmentNotices: AssignmentNotice[];
   vocabExamRecords: VocabExamRecord[];
   studySessionNotes: StudySessionNote[];
+  fines: FineRecord[];
 }
 
 export interface LibraryItem {
@@ -316,7 +334,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study';
 export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
 
 export interface VocabExamRecord {

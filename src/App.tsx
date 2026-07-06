@@ -3,7 +3,7 @@ import type { User, MainTab } from './types';
 import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
 import PersonalStudyTab from './components/Personal/PersonalStudyTab';
-import ReflectionTab from './components/Reflection/ReflectionTab';
+import FineTab from './components/Fine/FineTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import ResourceTab from './components/Resource/ResourceTab';
 import MemberTab from './components/Member/MemberTab';
@@ -19,7 +19,7 @@ import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
-  BookOpen, ClipboardList, CalendarCheck, CalendarDays, Clock,
+  BookOpen, Receipt, CalendarCheck, CalendarDays, Clock,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
   BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages,
 } from 'lucide-react';
@@ -30,6 +30,7 @@ import { initializeData, refreshData, getPendingRequestsForUser, getUserById } f
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
+import StudyLogWarningBanner from './components/Admin/StudyLogWarningBanner';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
 import EducationAnswerPage from './components/Education/EducationAnswerPage';
 
@@ -45,7 +46,7 @@ const SESSION_KEY = 'korean_edu_session';
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study',       label: '스터디', icon: BookOpen },
   { id: 'personal',    label: '타이머', icon: Clock },
-  { id: 'reflection',  label: '반성',   icon: ClipboardList },
+  { id: 'fine',        label: '벌금',   icon: Receipt },
   { id: 'assignment',  label: '과제',   icon: TableProperties },
   { id: 'vocab_study', label: '고어',   icon: Languages },
 ];
@@ -364,7 +365,8 @@ export default function App() {
             />
             <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
-            {['study', 'personal', 'reflection'].includes(activeTab) && (
+            <StudyLogWarningBanner />
+            {['study', 'personal'].includes(activeTab) && (
               <DateNavigator date={date} onChange={setDate} />
             )}
 
@@ -388,11 +390,11 @@ export default function App() {
             </div>
 
             <div key={refreshKey}>
-              {activeTab === 'study'      && <StudyTab date={date} currentUser={currentUser} />}
-              {activeTab === 'personal'   && <PersonalStudyTab date={date} currentUser={currentUser} />}
-              {activeTab === 'reflection' && <ReflectionTab date={date} currentUser={currentUser} />}
-              {activeTab === 'qna'        && <QnATab currentUser={currentUser} />}
-              {activeTab === 'calendar'   && <CalendarTab currentUser={currentUser} />}
+              {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'personal'    && <PersonalStudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'fine'        && <FineTab currentUser={currentUser} />}
+              {activeTab === 'qna'         && <QnATab currentUser={currentUser} />}
+              {activeTab === 'calendar'    && <CalendarTab currentUser={currentUser} />}
               {activeTab === 'assignment'  && <AssignmentTab currentUser={currentUser} />}
               {activeTab === 'vocab_study' && <VocabStudyTab />}
             </div>

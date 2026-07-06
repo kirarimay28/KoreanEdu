@@ -6,7 +6,7 @@ import type {
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
-  VocabExamRecord, StudySessionNote,
+  VocabExamRecord, StudySessionNote, FineRecord,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -36,6 +36,7 @@ const defaultData: AppData = {
   assignmentNotices: [],
   vocabExamRecords: [],
   studySessionNotes: [],
+  fines: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -83,7 +84,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -108,6 +109,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('assignmentNotice'),
     safeGet('vocabExamRecords'),
     safeGet('studySessionNotes'),
+    safeGet('fines'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -145,6 +147,7 @@ async function fetchFromFirestore(): Promise<void> {
     assignmentNotices:   an2.docs.map(d => d.data() as AssignmentNotice),
     vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
     studySessionNotes:   mergeById(sn.docs.map(d => d.data() as StudySessionNote), mem.studySessionNotes),
+    fines:               fi.docs.map(d => d.data() as FineRecord),
   };
   bootstrapAdmin();
   saveCache();
@@ -890,4 +893,52 @@ export function deleteVocabExamRecord(id: string): void {
   }
 
   saveCache();
+}
+
+// ── Fines ──────────────────────────────────────────────────
+export function getFinesForWeek(weekKey: string): FineRecord[] {
+  return mem.fines
+    .filter(f => f.weekKey === weekKey)
+    .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
+}
+
+export function getAllFines(): FineRecord[] {
+  return [...mem.fines].sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
+}
+
+export function addFine(fine: Omit<FineRecord, 'id'>): void {
+  const record: FineRecord = { ...fine, id: crypto.randomUUID() };
+  mem.fines.push(record);
+  persist('fines', record.id, record);
+  saveCache();
+}
+
+export function markFinePaid(fineId: string, paid: boolean): void {
+  const fine = mem.fines.find(f => f.id === fineId);
+  if (!fine) return;
+  fine.paid = paid;
+  fine.paidAt = paid ? new Date().toISOString() : undefined;
+  persist('fines', fine.id, fine);
+  saveCache();
+}
+
+export function deleteFine(fineId: string): void {
+  mem.fines = mem.fines.filter(f => f.id !== fineId);
+  remove('fines', fineId);
+  saveCache();
+}
+
+// ── Study Session Notes (week) ─────────────────────────────
+export function getStudySessionNotesForWeek(weekKey: string): StudySessionNote[] {
+  // Generate all 7 dates of the week (local time)
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekKey + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${dd}`);
+  }
+  return mem.studySessionNotes.filter(n => dates.includes(n.date));
 }
