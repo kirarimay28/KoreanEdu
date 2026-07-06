@@ -86,18 +86,21 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 
 async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.mjs',
-    import.meta.url,
-  ).toString();
+  const [pdfjsLib, workerModule] = await Promise.all([
+    import('pdfjs-dist'),
+    // @ts-ignore
+    import('pdfjs-dist/build/pdf.worker.mjs'),
+  ]);
+  // Run pdfjs on the main thread via LoopbackPort — no web worker spawned.
+  // Main-thread polyfills (Array.prototype.at etc.) apply automatically.
+  (globalThis as any).pdfjsWorker = { WorkerMessageHandler: workerModule.WorkerMessageHandler };
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => ('str' in item ? item.str : '')).join(' '));
+    pages.push(content.items.map((item: any) => item.str ?? '').join(' '));
   }
   return pages.join('\n');
 }
