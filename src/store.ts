@@ -109,6 +109,17 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('vocabExamRecords'),
     safeGet('studySessionNotes'),
   ]);
+  // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
+  function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
+    const map = new Map<string, T>();
+    remote.forEach(r => map.set(r.id, r));
+    local.forEach(l => {
+      const r = map.get(l.id);
+      if (!r || (l.updatedAt && r.updatedAt && l.updatedAt > r.updatedAt)) map.set(l.id, l);
+    });
+    return Array.from(map.values());
+  }
+
   mem = {
     users:                u.docs.map(d => d.data() as User),
     classicalEntries:    cl.docs.map(d => d.data() as ClassicalLiteratureEntry),
@@ -124,16 +135,16 @@ async function fetchFromFirestore(): Promise<void> {
     qnaPosts:            qp.docs.map(d => d.data() as QnAPost),
     qnaComments:         qc.docs.map(d => d.data() as QnAComment),
     messages:            ms.docs.map(d => d.data() as Message),
-    assignmentChecks:    ac.docs.map(d => d.data() as AssignmentCheck),
+    assignmentChecks:    mergeById(ac.docs.map(d => d.data() as AssignmentCheck), mem.assignmentChecks),
     calendarEvents:      ce.docs.map(d => d.data() as CalendarEvent),
     libraryItems:        li.docs.map(d => d.data() as LibraryItem),
     vocabTestScores:     vt.docs.map(d => d.data() as VocabTestScore),
     peerFeedbacks:       pf.docs.map(d => d.data() as PeerFeedback),
-    studyLogs:           sl.docs.map(d => d.data() as StudyLog),
+    studyLogs:           mergeById(sl.docs.map(d => d.data() as StudyLog), mem.studyLogs),
     locationNotice:      (ln.docs[0]?.data() as LocationNotice) ?? null,
     assignmentNotices:   an2.docs.map(d => d.data() as AssignmentNotice),
     vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
-    studySessionNotes:   sn.docs.map(d => d.data() as StudySessionNote),
+    studySessionNotes:   mergeById(sn.docs.map(d => d.data() as StudySessionNote), mem.studySessionNotes),
   };
   bootstrapAdmin();
   saveCache();
