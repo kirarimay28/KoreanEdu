@@ -1,8 +1,6 @@
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '20mb',
-    },
+    bodyParser: false,
   },
 };
 
@@ -18,14 +16,21 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const fileName = req.headers['x-file-name'] ?? 'upload.pdf';
+  const fileName: string = (req.headers['x-file-name'] as string) ?? 'upload.pdf';
 
-  // req.body is a Buffer when Content-Type is application/pdf
-  const bodyBuffer: Buffer = Buffer.isBuffer(req.body)
-    ? req.body
-    : Buffer.from(req.body);
-
-  const contentLength = String(bodyBuffer.byteLength);
+  const chunks: Uint8Array[] = [];
+  await new Promise<void>((resolve, reject) => {
+    req.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+    req.on('end', resolve);
+    req.on('error', reject);
+  });
+  const totalLength = chunks.reduce((n, c) => n + c.byteLength, 0);
+  const bodyBuffer = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bodyBuffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
 
   const initRes = await fetch(
     `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
@@ -34,7 +39,7 @@ export default async function handler(req: any, res: any) {
       headers: {
         'X-Goog-Upload-Protocol': 'resumable',
         'X-Goog-Upload-Command': 'start',
-        'X-Goog-Upload-Header-Content-Length': contentLength,
+        'X-Goog-Upload-Header-Content-Length': String(totalLength),
         'X-Goog-Upload-Header-Content-Type': 'application/pdf',
         'Content-Type': 'application/json',
       },
@@ -64,7 +69,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const fileData = await uploadRes.json() as any;
-  const fileUri = fileData.uri ?? fileData.file?.uri;
+  const fileUri: string = fileData.uri ?? fileData.file?.uri;
   if (!fileUri) {
     res.status(500).json({ error: '파일 URI를 받을 수 없습니다.' });
     return;
