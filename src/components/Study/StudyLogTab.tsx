@@ -174,63 +174,97 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     setAnalyzeStep('extract');
     setAnalyzeError('');
     try {
-      const noticePayload = notice
-        ? {
-            classicPoetWork: notice.classicPoetWork ?? (notice as any).classicWork ?? '',
-            classicProseWork: notice.classicProseWork ?? '',
-            modernPoetWork: notice.modernPoetWork,
-            modernProseWork: notice.modernProseWork,
-          }
-        : null;
+      // API 키 가져오기
+      const cfgRes = await fetch('/api/config');
+      const { geminiKey } = await cfgRes.json();
+      if (!geminiKey) throw new Error('API 키가 설정되지 않았습니다.');
 
-      // 1단계: 서버에서 Gemini 업로드 URL 발급
-      const initRes = await fetch('/api/upload-init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileSize: pdfFile.size, fileName: pdfFile.name }),
+      // PDF → base64 변환 (FileReader — 모든 브라우저/iOS 호환)
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = () => reject(new Error('파일 읽기 실패'));
+        reader.readAsDataURL(pdfFile);
       });
-      if (!initRes.ok) {
-        const err = await initRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? '업로드 초기화 실패');
-      }
-      const { uploadUrl } = await initRes.json();
 
-      // 2단계: 브라우저에서 Gemini에 직접 업로드
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/pdf',
-          'X-Goog-Upload-Command': 'upload, finalize',
-          'X-Goog-Upload-Offset': '0',
-        },
-        body: pdfFile,
-      });
-      if (!uploadRes.ok) {
-        throw new Error(`파일 업로드 실패 (${uploadRes.status})`);
+      // 과제 공지 문자열 구성
+      let noticeStr = '';
+      if (notice) {
+        const classicParts: string[] = [];
+        if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
+        if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
+        const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
+        const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
+        noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
       }
-      const uploadData = await uploadRes.json();
-      const fileUri: string = uploadData.uri ?? uploadData.file?.uri ?? '';
-      if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
 
-      // 3단계: AI 분석
+      const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 PDF입니다.${noticeStr ? '\n' + noticeStr : ''}
+
+위 PDF 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+각 필드는 **단권화 스타일**로 작성해주세요:
+- 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
+- 각 항목은 줄바꿈으로 구분
+- 줄글 대신 간결한 불릿(•) 형식
+없는 내용은 빈 문자열("")로 남겨두세요. JSON만 반환하세요.
+
+{
+  "classicAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "classicDifficulty": "• 어려웠던 부분 요점",
+  "modernPoetAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "modernPoetDifficulty": "• 어려웠던 부분 요점",
+  "modernProseAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
+  "modernProseDifficulty": "• 어려웠던 부분 요점",
+  "wrongAnswerAnalysis": "• 오답 원인 요점",
+  "examTypeAnalysis": "• 기출 유형 요점",
+  "studyGroupLearnings": "• 배운 점 요점",
+  "selfFeedback": "• 피드백 및 계획 요점"
+}`;
+
+      // Gemini에 직접 요청 (generateContent는 CORS 허용, 파일 크기 제한 없음)
       setAnalyzeStep('ai');
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUri, notice: noticePayload }),
+      const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const body = JSON.stringify({
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: 'application/pdf', data: base64 } },
+            { text: prompt },
+          ],
+        }],
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? `서버 오류 (${res.status})`);
+
+      let lastError = '';
+      let analysisData: any = null;
+      for (const model of MODELS) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+          );
+          const data = await response.json();
+          if (response.ok) {
+            const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+            const match = text.match(/\{[\s\S]*\}/);
+            analysisData = match ? JSON.parse(match[0]) : {};
+            break;
+          }
+          lastError = data?.error?.message ?? `오류 (${response.status})`;
+          if (response.status !== 503 && response.status !== 429) break;
+          await new Promise(r => setTimeout(r, 1500));
+        }
+        if (analysisData) break;
       }
-      const data = await res.json();
+      if (!analysisData) throw new Error(lastError || 'AI 분석 실패');
+
       const noteId = `${targetUser.id}_${logDate}`;
       const newNote: StudySessionNote = {
         id: noteId,
         date: logDate,
         userId: targetUser.id,
         username: targetUser.username,
-        content: JSON.stringify(data),
+        content: JSON.stringify(analysisData),
         createdAt: new Date().toISOString(),
         createdById: currentUser.id,
         createdByName: currentUser.username,
