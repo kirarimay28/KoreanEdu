@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -92,18 +93,8 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 }
 
 async function extractPdfText(file: File): Promise<string> {
-  // Import both pdfjs-dist and its worker module dynamically (code-splitting)
-  const [pdfjsLib, workerModule] = await Promise.all([
-    import('pdfjs-dist'),
-    // @ts-ignore — no type declaration for the worker build
-    import('pdfjs-dist/build/pdf.worker.mjs'),
-  ]);
-
-  // Setting globalThis.pdfjsWorker causes pdfjs to run WorkerMessageHandler
-  // in the main thread via LoopbackPort — no actual web worker needed.
-  // This avoids all worker URL / iOS Safari compat issues entirely.
-  (globalThis as any).pdfjsWorker = { WorkerMessageHandler: workerModule.WorkerMessageHandler };
-
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];
