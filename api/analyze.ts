@@ -1,8 +1,6 @@
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '4mb',
-    },
+    bodyParser: false,
   },
 };
 
@@ -18,29 +16,37 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { pdfText, notice } = req.body ?? {};
-  if (!pdfText || typeof pdfText !== 'string') {
-    res.status(400).json({ error: 'PDF 텍스트가 없습니다.' });
+  // Collect raw PDF binary
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', resolve);
+    req.on('error', reject);
+  });
+  const pdfBuffer = Buffer.concat(chunks);
+  if (!pdfBuffer.length) {
+    res.status(400).json({ error: 'PDF 데이터가 없습니다.' });
     return;
   }
+  const pdfBase64 = pdfBuffer.toString('base64');
 
   let noticeStr = '';
-  if (notice) {
-    const classicParts: string[] = [];
-    if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
-    if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
-    const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
-    const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
-    noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
-  }
+  try {
+    const noticeHeader = req.headers['x-notice'];
+    if (noticeHeader) {
+      const notice = JSON.parse(noticeHeader);
+      const classicParts: string[] = [];
+      if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
+      if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
+      const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
+      const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
+      noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
+    }
+  } catch {}
 
-  const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
+  const prompt = `다음 PDF는 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다.${noticeStr ? '\n' + noticeStr : ''}
 
---- 자료 내용 시작 ---
-${pdfText}
---- 자료 내용 끝 ---
-
-위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+위 PDF 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
 각 필드는 **단권화 스타일**로 작성해주세요:
 - 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
 - 각 항목은 줄바꿈으로 구분
@@ -61,7 +67,14 @@ ${pdfText}
 }`;
 
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+  const body = JSON.stringify({
+    contents: [{
+      parts: [
+        { text: prompt },
+        { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+      ],
+    }],
+  });
 
   try {
     let lastError = '';
