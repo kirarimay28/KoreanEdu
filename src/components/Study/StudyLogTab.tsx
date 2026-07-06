@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -92,18 +91,18 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
   );
 }
 
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => item.str ?? '').join(' '));
-  }
-  return pages.join('\n');
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // result is "data:application/pdf;base64,<data>" — strip the prefix
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
@@ -157,7 +156,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   const [pdfFile, setPdfFile]           = useState<File | null>(null);
   const [analyzing, setAnalyzing]       = useState(false);
-  const [analyzeStep, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
+  const [, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -194,14 +193,13 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     setAnalyzeStep('extract');
     setAnalyzeError('');
     try {
-      const pdfText = await extractPdfText(pdfFile);
-      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
+      const pdfBase64 = await readFileAsBase64(pdfFile);
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfText,
+          pdfBase64,
           notice: notice
             ? {
                 classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
@@ -384,7 +382,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
-                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
                             </button>
                           )}
@@ -418,7 +416,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
-                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{'AI 분석 중...'}</>
                           : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
                       </button>
                     </div>
