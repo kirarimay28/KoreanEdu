@@ -85,6 +85,23 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 }
 
 
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    '../../pdfWorkerWithPolyfills.ts',
+    import.meta.url,
+  ).toString();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((item: any) => ('str' in item ? item.str : '')).join(' '));
+  }
+  return pages.join('\n');
+}
+
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
   const hasWork = fields.classicAnalysis || fields.classicDifficulty || fields.modernPoetAnalysis || fields.modernPoetDifficulty || fields.modernProseAnalysis || fields.modernProseDifficulty;
   const hasExam = fields.wrongAnswerAnalysis || fields.examTypeAnalysis;
@@ -136,7 +153,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   const [pdfFile, setPdfFile]           = useState<File | null>(null);
   const [analyzing, setAnalyzing]       = useState(false);
-  const [analyzeStep, setAnalyzeStep]   = useState<'upload' | 'ai'>('upload');
+  const [analyzeStep, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -170,30 +187,17 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       return;
     }
     setAnalyzing(true);
-    setAnalyzeStep('upload');
+    setAnalyzeStep('extract');
     setAnalyzeError('');
     try {
-      // Step 1: upload PDF through our server proxy (avoids CORS, API key stays server-side)
-      const uploadRes = await fetch('/api/upload-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/pdf',
-          'X-File-Name': pdfFile.name,
-        },
-        body: pdfFile,
-      });
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? `업로드 오류 (${uploadRes.status})`);
-      }
-      const { fileUri } = await uploadRes.json() as { fileUri: string };
-      if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
+      const pdfText = await extractPdfText(pdfFile);
+      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fileUri,
+          pdfText,
           notice: notice
             ? {
                 classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
@@ -375,7 +379,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
-                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
+                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
                             </button>
                           )}
@@ -409,7 +413,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
-                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'upload' ? '업로드 중...' : 'AI 분석 중...'}</>
+                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
                           : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
                       </button>
                     </div>
