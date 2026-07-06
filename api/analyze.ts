@@ -1,8 +1,7 @@
 export const config = {
-  maxDuration: 60,
   api: {
     bodyParser: {
-      sizeLimit: '2mb',
+      sizeLimit: '4mb',
     },
   },
 };
@@ -37,9 +36,9 @@ export default async function handler(req: any, res: any) {
 
   const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
 
---- 자료 내용 ---
+--- 자료 내용 시작 ---
 ${pdfText}
---- 끝 ---
+--- 자료 내용 끝 ---
 
 위 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
 각 필드는 **단권화 스타일**로 작성해주세요:
@@ -62,9 +61,7 @@ ${pdfText}
 }`;
 
   const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-  });
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
 
   try {
     let lastError = '';
