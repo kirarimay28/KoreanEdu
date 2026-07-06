@@ -78,7 +78,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try { const raw = sessionStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }
+    try { const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; }
     catch { return null; }
   });
   const [activeTab, setActiveTab] = useState<MainTab>('study');
@@ -99,8 +99,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (currentUser) sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
-    else sessionStorage.removeItem(SESSION_KEY);
+    if (currentUser) localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    else localStorage.removeItem(SESSION_KEY);
   }, [currentUser]);
 
   // Lock body scroll when side panel is open
