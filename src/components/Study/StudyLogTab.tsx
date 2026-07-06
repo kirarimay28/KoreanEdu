@@ -85,16 +85,6 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 }
 
 
-async function extractPdfText(file: File): Promise<string> {
-  const res = await fetch('/api/extract-text', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/pdf' },
-    body: file,
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? `서버 오류 (${res.status})`);
-  return data.text ?? '';
-}
 
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
   const hasWork = fields.classicAnalysis || fields.classicDifficulty || fields.modernPoetAnalysis || fields.modernPoetDifficulty || fields.modernProseAnalysis || fields.modernProseDifficulty;
@@ -180,27 +170,31 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       setAnalyzeError('PDF 파일만 업로드 가능합니다.');
       return;
     }
+    if (pdfFile.size > 4 * 1024 * 1024) {
+      setAnalyzeError('파일이 너무 큽니다. 4MB 이하의 PDF만 사용 가능합니다.');
+      return;
+    }
     setAnalyzing(true);
-    setAnalyzeStep('extract');
+    setAnalyzeStep('ai');
     setAnalyzeError('');
     try {
-      const pdfText = await extractPdfText(pdfFile);
-      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
-      setAnalyzeStep('ai');
-      const res = await fetch('/api/analyze', {
+      const noticePayload = notice
+        ? {
+            classicPoetWork: notice.classicPoetWork ?? (notice as any).classicWork ?? '',
+            classicProseWork: notice.classicProseWork ?? '',
+            modernPoetWork: notice.modernPoetWork,
+            modernProseWork: notice.modernProseWork,
+          }
+        : null;
+
+      const res = await fetch('/api/analyze-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pdfText,
-          notice: notice
-            ? {
-                classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
-                classicProseWork: notice.classicProseWork ?? '',
-                modernPoetWork: notice.modernPoetWork,
-                modernProseWork: notice.modernProseWork,
-              }
-            : null,
-        }),
+        headers: {
+          'Content-Type': 'application/pdf',
+          'X-File-Name': pdfFile.name,
+          'X-Notice': noticePayload ? JSON.stringify(noticePayload) : '',
+        },
+        body: pdfFile,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
