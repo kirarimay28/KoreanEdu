@@ -75,25 +75,27 @@ function WorkRow({
 }) {
   const isNone = value === '없음';
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-500 w-16 flex-shrink-0 font-medium">{label}</span>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-gray-500">{label}</span>
+        <button
+          onClick={() => onChange(isNone ? '' : '없음')}
+          className={`text-[10px] px-2 py-0.5 rounded-lg border transition ${
+            isNone
+              ? 'bg-gray-200 text-gray-600 border-gray-300 font-semibold'
+              : 'text-gray-300 border-gray-200 hover:border-gray-300 hover:text-gray-500'
+          }`}
+        >
+          없음
+        </button>
+      </div>
       <input
         disabled={isNone}
-        className={`flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 transition ${isNone ? 'bg-gray-50 text-gray-300' : 'bg-white'}`}
-        placeholder={placeholder}
+        className={`w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 transition ${isNone ? 'bg-gray-50 text-gray-300' : 'bg-white'}`}
+        placeholder={isNone ? '' : placeholder}
         value={isNone ? '' : value}
         onChange={e => onChange(e.target.value)}
       />
-      <button
-        onClick={() => onChange(isNone ? '' : '없음')}
-        className={`text-[10px] px-2 py-1 rounded-lg border transition flex-shrink-0 ${
-          isNone
-            ? 'bg-gray-200 text-gray-600 border-gray-300 font-semibold'
-            : 'text-gray-300 border-gray-200 hover:border-gray-300 hover:text-gray-500'
-        }`}
-      >
-        없음
-      </button>
     </div>
   );
 }
