@@ -173,31 +173,20 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     setAnalyzeStep('upload');
     setAnalyzeError('');
     try {
-      // Step 1: get Gemini resumable upload URL from server
-      const initRes = await fetch('/api/upload-init', {
+      // Step 1: upload PDF through our server proxy (avoids CORS, API key stays server-side)
+      const uploadRes = await fetch('/api/upload-proxy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileSize: pdfFile.size, fileName: pdfFile.name }),
-      });
-      if (!initRes.ok) {
-        const err = await initRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(err.error ?? `업로드 초기화 오류 (${initRes.status})`);
-      }
-      const { uploadUrl } = await initRes.json() as { uploadUrl: string };
-
-      // Step 2: stream PDF directly to Gemini (no size limit on client side)
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
         headers: {
           'Content-Type': 'application/pdf',
-          'X-Goog-Upload-Command': 'upload, finalize',
-          'X-Goog-Upload-Offset': '0',
+          'X-File-Name': pdfFile.name,
         },
         body: pdfFile,
       });
-      if (!uploadRes.ok) throw new Error(`Gemini 업로드 오류 (${uploadRes.status})`);
-      const fileData = await uploadRes.json() as { uri?: string; file?: { uri?: string } };
-      const fileUri = fileData.uri ?? fileData.file?.uri;
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? `업로드 오류 (${uploadRes.status})`);
+      }
+      const { fileUri } = await uploadRes.json() as { fileUri: string };
       if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
