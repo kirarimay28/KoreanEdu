@@ -87,10 +87,19 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    '../../pdfWorkerWithPolyfills.ts',
+
+  // Blob worker: polyfill Array.prototype.at inline, then import the real pdfjs worker.
+  // This avoids bundling the pdfjs worker via Vite (which breaks its message handler setup).
+  const pdfjsWorkerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.mjs',
     import.meta.url,
   ).toString();
+  const polyfillAndLoad =
+    `if(typeof Array.prototype.at==='undefined'){Object.defineProperty(Array.prototype,'at',{value:function(n){n=Math.trunc(n)||0;if(n<0)n+=this.length;return n<0||n>=this.length?undefined:this[n]},writable:true,configurable:true})}` +
+    `import(${JSON.stringify(pdfjsWorkerSrc)});`;
+  const blob = new Blob([polyfillAndLoad], { type: 'text/javascript' });
+  pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];
