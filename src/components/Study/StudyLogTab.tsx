@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -93,17 +94,14 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.mjs',
-    import.meta.url,
-  ).toString();
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => item.str).join(' '));
+    pages.push(content.items.map((item: any) => item.str ?? '').join(' '));
   }
   return pages.join('\n');
 }
