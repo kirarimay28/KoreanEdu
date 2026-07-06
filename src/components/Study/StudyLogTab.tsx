@@ -15,17 +15,24 @@ interface Props {
   currentUser: User;
 }
 
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
 function getWeekMonday(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 const STUDY_START = '2026-06-29'; // 스터디 시작일 (1주차 월요일)
@@ -247,7 +254,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   }
 
   const completedCount = allNotes.length;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateStr(new Date());
   const canGoForward = addDays(logDate, 7) <= today;
 
   return (
