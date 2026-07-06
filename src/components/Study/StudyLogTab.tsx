@@ -225,7 +225,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
       // Gemini에 직접 요청 (generateContent는 CORS 허용, 파일 크기 제한 없음)
       setAnalyzeStep('ai');
-      const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
       const body = JSON.stringify({
         contents: [{
           parts: [
@@ -235,7 +235,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         }],
       });
 
-      let lastError = '';
+      let firstError = '';
       let analysisData: any = null;
       for (const model of MODELS) {
         for (let attempt = 0; attempt < 2; attempt++) {
@@ -250,13 +250,14 @@ export default function StudyLogTab({ date, currentUser }: Props) {
             analysisData = match ? JSON.parse(match[0]) : {};
             break;
           }
-          lastError = data?.error?.message ?? `오류 (${response.status})`;
+          const errMsg = data?.error?.message ?? `오류 (${response.status})`;
+          if (!firstError) firstError = `[${model}] ${errMsg}`;
           if (response.status !== 503 && response.status !== 429) break;
           await new Promise(r => setTimeout(r, 1500));
         }
         if (analysisData) break;
       }
-      if (!analysisData) throw new Error(lastError || 'AI 분석 실패');
+      if (!analysisData) throw new Error(firstError || 'AI 분석 실패');
 
       const noteId = `${targetUser.id}_${logDate}`;
       const newNote: StudySessionNote = {
