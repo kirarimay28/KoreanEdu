@@ -87,12 +87,13 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 async function extractPdfText(file: File): Promise<string> {
   const [pdfjsLib, workerModule] = await Promise.all([
-    import('pdfjs-dist'),
     // @ts-ignore
-    import('pdfjs-dist/build/pdf.worker.mjs'),
+    import('pdfjs-dist/legacy/build/pdf.mjs'),
+    // @ts-ignore
+    import('pdfjs-dist/legacy/build/pdf.worker.mjs'),
   ]);
-  // Force main-thread (LoopbackPort) mode: empty workerSrc prevents pdfjs from
-  // spawning a real web worker; globalThis.pdfjsWorker provides the handler.
+  // Legacy build includes polyfills for Array.prototype.at etc.
+  // Empty workerSrc forces LoopbackPort (main-thread) mode.
   pdfjsLib.GlobalWorkerOptions.workerSrc = '';
   (globalThis as any).pdfjsWorker = { WorkerMessageHandler: workerModule.WorkerMessageHandler };
   const arrayBuffer = await file.arrayBuffer();
