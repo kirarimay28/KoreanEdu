@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
-import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -94,7 +93,10 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(
+    new URL('../../pdfWorkerWithPolyfills.ts', import.meta.url),
+    { type: 'module' }
+  );
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];

@@ -30,6 +30,9 @@ const versionPlugin = {
 
 export default defineConfig({
   plugins: [react(), versionPlugin],
+  worker: {
+    format: 'es',
+  },
   build: {
     rollupOptions: {
       output: {
