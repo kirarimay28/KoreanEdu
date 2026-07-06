@@ -19,20 +19,11 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { pdfUrl, notice } = req.body ?? {};
-  if (!pdfUrl || typeof pdfUrl !== 'string') {
-    res.status(400).json({ error: 'PDF URL이 없습니다.' });
+  const { fileUri, notice } = req.body ?? {};
+  if (!fileUri || typeof fileUri !== 'string') {
+    res.status(400).json({ error: 'fileUri가 없습니다.' });
     return;
   }
-
-  // Fetch PDF from Firebase Storage
-  const pdfResponse = await fetch(pdfUrl);
-  if (!pdfResponse.ok) {
-    res.status(400).json({ error: 'PDF를 가져올 수 없습니다.' });
-    return;
-  }
-  const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
-  const pdfBase64 = pdfBuffer.toString('base64');
 
   let noticeStr = '';
   if (notice) {
@@ -71,7 +62,7 @@ export default async function handler(req: any, res: any) {
     contents: [{
       parts: [
         { text: prompt },
-        { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+        { fileData: { mimeType: 'application/pdf', fileUri } },
       ],
     }],
   });

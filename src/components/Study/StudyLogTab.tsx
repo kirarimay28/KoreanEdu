@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../../firebase';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -17,34 +15,27 @@ interface Props {
   currentUser: User;
 }
 
-function localDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
-}
-
 function getWeekMonday(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-  return localDateStr(d);
+  return d.toISOString().slice(0, 10);
 }
 
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + days);
-  return localDateStr(d);
+  return d.toISOString().slice(0, 10);
 }
 
-const STUDY_START = '2026-06-29'; // 스터디 시작일 (1주차 월요일)
-
 function getWeekLabel(dateStr: string): string {
-  const monday = new Date(getWeekMonday(dateStr) + 'T00:00:00');
-  const start  = new Date(STUDY_START + 'T00:00:00');
-  const diffDays = Math.round((monday.getTime() - start.getTime()) / 86400000);
-  const weekNum  = Math.floor(diffDays / 7) + 1;
-  return `${weekNum}주차`;
+  const d = new Date(dateStr + 'T00:00:00');
+  const month = d.getMonth() + 1;
+  const dayOfMonth = d.getDate();
+  const firstDayJS = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  const firstDayISO = firstDayJS === 0 ? 7 : firstDayJS;
+  const weekNum = Math.ceil((dayOfMonth + firstDayISO - 1) / 7);
+  return `${month}월 ${weekNum}주차`;
 }
 
 interface NoteFields {
@@ -181,19 +172,39 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     setAnalyzing(true);
     setAnalyzeStep('upload');
     setAnalyzeError('');
-    const storageRef = ref(storage, `studylogs/${currentUser.id}/${Date.now()}.pdf`);
     try {
-      await new Promise<void>((resolve, reject) => {
-        const task = uploadBytesResumable(storageRef, pdfFile);
-        task.on('state_changed', null, reject, resolve);
+      // Step 1: get Gemini resumable upload URL from server
+      const initRes = await fetch('/api/upload-init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileSize: pdfFile.size, fileName: pdfFile.name }),
       });
-      const pdfUrl = await getDownloadURL(storageRef);
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(err.error ?? `업로드 초기화 오류 (${initRes.status})`);
+      }
+      const { uploadUrl } = await initRes.json() as { uploadUrl: string };
+
+      // Step 2: stream PDF directly to Gemini (no size limit on client side)
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'X-Goog-Upload-Command': 'upload, finalize',
+          'X-Goog-Upload-Offset': '0',
+        },
+        body: pdfFile,
+      });
+      if (!uploadRes.ok) throw new Error(`Gemini 업로드 오류 (${uploadRes.status})`);
+      const fileData = await uploadRes.json() as { uri?: string; file?: { uri?: string } };
+      const fileUri = fileData.uri ?? fileData.file?.uri;
+      if (!fileUri) throw new Error('파일 URI를 받을 수 없습니다.');
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfUrl,
+          fileUri,
           notice: notice
             ? {
                 classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
@@ -221,7 +232,6 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         createdByName: currentUser.username,
       };
       saveStudySessionNote(newNote);
-      // mark study log as done
       const log: StudyLog = {
         id: `${targetUser.id}_${logDate}`,
         userId: targetUser.id,
@@ -240,12 +250,11 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     } finally {
       setAnalyzing(false);
       setTick(t => t + 1);
-      deleteObject(storageRef).catch(() => {});
     }
   }
 
   const completedCount = allNotes.length;
-  const today = localDateStr(new Date());
+  const today = new Date().toISOString().slice(0, 10);
   const canGoForward = addDays(logDate, 7) <= today;
 
   return (
