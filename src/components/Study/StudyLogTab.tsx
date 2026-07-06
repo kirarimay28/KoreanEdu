@@ -91,8 +91,9 @@ async function extractPdfText(file: File): Promise<string> {
     // @ts-ignore
     import('pdfjs-dist/build/pdf.worker.mjs'),
   ]);
-  // Run pdfjs on the main thread via LoopbackPort — no web worker spawned.
-  // Main-thread polyfills (Array.prototype.at etc.) apply automatically.
+  // Force main-thread (LoopbackPort) mode: empty workerSrc prevents pdfjs from
+  // spawning a real web worker; globalThis.pdfjsWorker provides the handler.
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
   (globalThis as any).pdfjsWorker = { WorkerMessageHandler: workerModule.WorkerMessageHandler };
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
