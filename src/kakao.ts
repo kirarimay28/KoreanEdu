@@ -24,22 +24,32 @@ export function shareAnnouncement(params: {
 
 export function shareAssignmentNotice(params: {
   date: string;
-  classicWork: string;
+  classicPoetWork: string;
+  classicProseWork: string;
+  classicWork?: string;
   modernPoetWork: string;
   modernProseWork: string;
   goeoStart: number;
   goeoEnd: number;
 }): void {
-  const { date, classicWork, modernPoetWork, modernProseWork, goeoStart, goeoEnd } = params;
+  const { date, classicPoetWork, classicProseWork, classicWork, modernPoetWork, modernProseWork, goeoStart, goeoEnd } = params;
   const d = new Date(date);
   const days = ['일', '월', '화', '수', '목', '금', '토'];
   const dateStr = `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+
+  const classicLines: string[] = [];
+  if (classicPoetWork || classicProseWork) {
+    if (classicPoetWork) classicLines.push(`■ 고전 시가: ${classicPoetWork}`);
+    if (classicProseWork) classicLines.push(`■ 고전 산문: ${classicProseWork}`);
+  } else if (classicWork) {
+    classicLines.push(`■ 고전: ${classicWork}`);
+  }
 
   const lines = [
     '📋 [나랏말ᄊᆞ미] 이번 주 과제',
     `날짜: ${dateStr}`,
     '',
-    ...(classicWork ? [`■ 고전: ${classicWork}`] : []),
+    ...classicLines,
     ...(modernPoetWork ? [`■ 현대시: ${modernPoetWork}`] : []),
     ...(modernProseWork ? [`■ 현대산문: ${modernProseWork}`] : []),
     '',

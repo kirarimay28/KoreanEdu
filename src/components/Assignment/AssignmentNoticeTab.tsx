@@ -62,6 +62,52 @@ function getThisWeekMonday(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function WorkRow({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const isNone = value === '없음';
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-gray-500 w-16 flex-shrink-0 font-medium">{label}</span>
+      <input
+        disabled={isNone}
+        className={`flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 transition ${isNone ? 'bg-gray-50 text-gray-300' : 'bg-white'}`}
+        placeholder={placeholder}
+        value={isNone ? '' : value}
+        onChange={e => onChange(e.target.value)}
+      />
+      <button
+        onClick={() => onChange(isNone ? '' : '없음')}
+        className={`text-[10px] px-2 py-1 rounded-lg border transition flex-shrink-0 ${
+          isNone
+            ? 'bg-gray-200 text-gray-600 border-gray-300 font-semibold'
+            : 'text-gray-300 border-gray-200 hover:border-gray-300 hover:text-gray-500'
+        }`}
+      >
+        없음
+      </button>
+    </div>
+  );
+}
+
+function WorkDisplay({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+  return (
+    <p className="text-sm text-primary-700">
+      <span className="font-semibold">{label}</span> ·{' '}
+      {value === '없음' ? <span className="text-gray-400 font-normal">없음</span> : value}
+    </p>
+  );
+}
+
 export default function AssignmentNoticeTab({ currentUser }: Props) {
   const canEdit = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const [editing, setEditing] = useState(false);
@@ -69,7 +115,8 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
 
   const thisWeekMonday = getThisWeekMonday();
   const [date, setDate] = useState(thisWeekMonday);
-  const [classicWork, setClassicWork] = useState('');
+  const [classicPoetWork, setClassicPoetWork] = useState('');
+  const [classicProseWork, setClassicProseWork] = useState('');
   const [modernPoetWork, setModernPoetWork] = useState('');
   const [modernProseWork, setModernProseWork] = useState('');
   const [goeoStart, setGoeoStart] = useState(1);
@@ -82,14 +129,16 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
     const src = editExisting ? thisWeekNotice : null;
     if (src) {
       setDate(src.date);
-      setClassicWork(src.classicWork);
+      setClassicPoetWork(src.classicPoetWork ?? src.classicWork ?? '');
+      setClassicProseWork(src.classicProseWork ?? '');
       setModernPoetWork(src.modernPoetWork);
       setModernProseWork(src.modernProseWork);
       setGoeoStart(src.goeoStart);
       setGoeoEnd(src.goeoEnd);
     } else {
       setDate(thisWeekMonday);
-      setClassicWork('');
+      setClassicPoetWork('');
+      setClassicProseWork('');
       setModernPoetWork('');
       setModernProseWork('');
       setGoeoStart(1);
@@ -101,9 +150,10 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
   function handleSave() {
     setAssignmentNotice({
       date,
-      classicWork: classicWork.trim(),
-      modernPoetWork: modernPoetWork.trim(),
-      modernProseWork: modernProseWork.trim(),
+      classicPoetWork: classicPoetWork.trim() || (classicPoetWork === '없음' ? '없음' : ''),
+      classicProseWork: classicProseWork.trim() || (classicProseWork === '없음' ? '없음' : ''),
+      modernPoetWork: modernPoetWork.trim() || (modernPoetWork === '없음' ? '없음' : ''),
+      modernProseWork: modernProseWork.trim() || (modernProseWork === '없음' ? '없음' : ''),
       goeoStart,
       goeoEnd,
       createdAt: new Date().toISOString(),
@@ -163,34 +213,11 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
 
           {/* Works */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-gray-600 mb-1">작품</label>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-16 flex-shrink-0 font-medium">고전</span>
-              <input
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white"
-                placeholder="고전 작품명 입력"
-                value={classicWork}
-                onChange={e => setClassicWork(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-16 flex-shrink-0 font-medium">현대시</span>
-              <input
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white"
-                placeholder="현대시 작품명 입력"
-                value={modernPoetWork}
-                onChange={e => setModernPoetWork(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-16 flex-shrink-0 font-medium">현대산문</span>
-              <input
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white"
-                placeholder="현대산문 작품명 입력"
-                value={modernProseWork}
-                onChange={e => setModernProseWork(e.target.value)}
-              />
-            </div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">작품 <span className="font-normal text-gray-400">(과제 없으면 '없음' 선택)</span></label>
+            <WorkRow label="고전 시가" value={classicPoetWork} onChange={setClassicPoetWork} placeholder="고전 시가 작품명 입력" />
+            <WorkRow label="고전 산문" value={classicProseWork} onChange={setClassicProseWork} placeholder="고전 산문 작품명 입력" />
+            <WorkRow label="현대시" value={modernPoetWork} onChange={setModernPoetWork} placeholder="현대시 작품명 입력" />
+            <WorkRow label="현대산문" value={modernProseWork} onChange={setModernProseWork} placeholder="현대산문 작품명 입력" />
           </div>
 
           {/* Goeo range */}
@@ -249,15 +276,17 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
           <div className="bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3">
             <p className="text-sm font-bold text-primary-800 mb-2">{formatDate(notice.date)}</p>
             <div className="space-y-1">
-              {notice.classicWork && (
+              {/* New fields: classicPoetWork / classicProseWork */}
+              {(notice.classicPoetWork || notice.classicProseWork) ? (
+                <>
+                  <WorkDisplay label="고전 시가" value={notice.classicPoetWork} />
+                  <WorkDisplay label="고전 산문" value={notice.classicProseWork} />
+                </>
+              ) : notice.classicWork ? (
                 <p className="text-sm text-primary-700"><span className="font-semibold">고전</span> · {notice.classicWork}</p>
-              )}
-              {notice.modernPoetWork && (
-                <p className="text-sm text-primary-700"><span className="font-semibold">현대시</span> · {notice.modernPoetWork}</p>
-              )}
-              {notice.modernProseWork && (
-                <p className="text-sm text-primary-700"><span className="font-semibold">현대산문</span> · {notice.modernProseWork}</p>
-              )}
+              ) : null}
+              <WorkDisplay label="현대시" value={notice.modernPoetWork} />
+              <WorkDisplay label="현대산문" value={notice.modernProseWork} />
             </div>
             <p className="text-[10px] text-primary-400 mt-2"><NameWithCrown name={notice.createdByName} /> 등록</p>
           </div>
@@ -292,6 +321,8 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
           <button
             onClick={() => shareAssignmentNotice({
               date: notice.date,
+              classicPoetWork: notice.classicPoetWork ?? '',
+              classicProseWork: notice.classicProseWork ?? '',
               classicWork: notice.classicWork,
               modernPoetWork: notice.modernPoetWork,
               modernProseWork: notice.modernProseWork,

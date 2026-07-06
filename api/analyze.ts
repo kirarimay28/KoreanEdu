@@ -24,9 +24,15 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const noticeStr = notice
-    ? `이번 주 과제 — 고전: ${notice.classicWork || '미정'}, 현대시: ${notice.modernPoetWork || '미정'}, 현대산문: ${notice.modernProseWork || '미정'}`
-    : '';
+  let noticeStr = '';
+  if (notice) {
+    const classicParts: string[] = [];
+    if (notice.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(`고전 시가: ${notice.classicPoetWork}`);
+    if (notice.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(`고전 산문: ${notice.classicProseWork}`);
+    const modernPoet  = notice.modernPoetWork  !== '없음' ? (notice.modernPoetWork  || '미정') : '없음';
+    const modernProse = notice.modernProseWork !== '없음' ? (notice.modernProseWork || '미정') : '없음';
+    noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
+  }
 
   const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 내용입니다.${noticeStr ? '\n' + noticeStr : ''}
 

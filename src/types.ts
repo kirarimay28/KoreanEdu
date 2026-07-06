@@ -228,9 +228,11 @@ export interface LocationNotice {
 export interface AssignmentNotice {
   id: string;              // weekKey (YYYY-MM-DD, Monday)
   date: string;            // YYYY-MM-DD
-  classicWork: string;     // 고전 작품명
-  modernPoetWork: string;  // 현대시 작품명
-  modernProseWork: string; // 현대산문 작품명
+  classicWork?: string;    // deprecated — kept for backward compat
+  classicPoetWork: string; // 고전 시가 작품명 ('없음' = 과제 없음)
+  classicProseWork: string;// 고전 산문 작품명 ('없음' = 과제 없음)
+  modernPoetWork: string;  // 현대시 작품명 ('없음' = 과제 없음)
+  modernProseWork: string; // 현대산문 작품명 ('없음' = 과제 없음)
   goeoStart: number;       // 고어 시작 번호 1-100
   goeoEnd: number;         // 고어 끝 번호 1-100
   createdAt: string;

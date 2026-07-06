@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
 import {
   getUsers,
@@ -20,6 +20,22 @@ function getWeekMonday(dateStr: string): string {
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
   return d.toISOString().slice(0, 10);
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function getWeekLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  const month = d.getMonth() + 1;
+  const dayOfMonth = d.getDate();
+  const firstDayJS = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  const firstDayISO = firstDayJS === 0 ? 7 : firstDayJS;
+  const weekNum = Math.ceil((dayOfMonth + firstDayISO - 1) / 7);
+  return `${month}월 ${weekNum}주차`;
 }
 
 interface NoteFields {
@@ -89,18 +105,25 @@ function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnTyp
   const hasWork = fields.classicAnalysis || fields.classicDifficulty || fields.modernPoetAnalysis || fields.modernPoetDifficulty || fields.modernProseAnalysis || fields.modernProseDifficulty;
   const hasExam = fields.wrongAnswerAnalysis || fields.examTypeAnalysis;
   const hasReflection = fields.studyGroupLearnings || fields.selfFeedback;
+
+  // Build classic label from new fields, falling back to old classicWork
+  const classicParts: string[] = [];
+  if (notice?.classicPoetWork && notice.classicPoetWork !== '없음') classicParts.push(notice.classicPoetWork);
+  if (notice?.classicProseWork && notice.classicProseWork !== '없음') classicParts.push(notice.classicProseWork);
+  const classicLabel = classicParts.length > 0 ? classicParts.join(' / ') : (notice?.classicWork || '고전');
+
   return (
     <div className="space-y-4 pt-3">
       {hasWork && (
         <div className="space-y-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">① 작품 분석</p>
           <div className="space-y-2.5">
-            <NoteSection label={`${notice?.classicWork || '고전'} — 분석`}        value={fields.classicAnalysis}       color="text-amber-600" />
-            <NoteSection label={`${notice?.classicWork || '고전'} — 어려웠던 점`} value={fields.classicDifficulty}     color="text-amber-500" />
-            <NoteSection label={`${notice?.modernPoetWork || '현대시'} — 분석`}        value={fields.modernPoetAnalysis}    color="text-sky-600" />
-            <NoteSection label={`${notice?.modernPoetWork || '현대시'} — 어려웠던 점`} value={fields.modernPoetDifficulty} color="text-sky-500" />
-            <NoteSection label={`${notice?.modernProseWork || '현대산문'} — 분석`}        value={fields.modernProseAnalysis}   color="text-violet-600" />
-            <NoteSection label={`${notice?.modernProseWork || '현대산문'} — 어려웠던 점`} value={fields.modernProseDifficulty} color="text-violet-500" />
+            <NoteSection label={`${classicLabel} — 분석`}        value={fields.classicAnalysis}       color="text-amber-600" />
+            <NoteSection label={`${classicLabel} — 어려웠던 점`} value={fields.classicDifficulty}     color="text-amber-500" />
+            <NoteSection label={`${notice?.modernPoetWork && notice.modernPoetWork !== '없음' ? notice.modernPoetWork : '현대시'} — 분석`}        value={fields.modernPoetAnalysis}    color="text-sky-600" />
+            <NoteSection label={`${notice?.modernPoetWork && notice.modernPoetWork !== '없음' ? notice.modernPoetWork : '현대시'} — 어려웠던 점`} value={fields.modernPoetDifficulty} color="text-sky-500" />
+            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 분석`}        value={fields.modernProseAnalysis}   color="text-violet-600" />
+            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 어려웠던 점`} value={fields.modernProseDifficulty} color="text-violet-500" />
           </div>
         </div>
       )}
@@ -175,7 +198,12 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         body: JSON.stringify({
           pdfText,
           notice: notice
-            ? { classicWork: notice.classicWork, modernPoetWork: notice.modernPoetWork, modernProseWork: notice.modernProseWork }
+            ? {
+                classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
+                classicProseWork: notice.classicProseWork ?? '',
+                modernPoetWork: notice.modernPoetWork,
+                modernProseWork: notice.modernProseWork,
+              }
             : null,
         }),
       });
@@ -219,28 +247,63 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   }
 
   const completedCount = allNotes.length;
+  const today = new Date().toISOString().slice(0, 10);
+  const canGoForward = addDays(logDate, 7) <= today;
 
   return (
     <div className="space-y-4" key={tick}>
-      {/* 날짜 */}
-      <div className="card flex items-center gap-3 py-3">
-        <span className="text-xs font-bold text-gray-500 flex-shrink-0">날짜</span>
-        <input
-          type="date"
-          className="flex-1 text-sm font-semibold text-gray-800 bg-transparent outline-none cursor-pointer"
-          value={logDate}
-          max={new Date().toISOString().slice(0, 10)}
-          onChange={e => { if (e.target.value) { setLogDate(e.target.value); setExpandedId(currentUser.id); } }}
-        />
-        <span className="text-xs text-gray-400 flex-shrink-0">{completedCount}/{users.length}명 완료</span>
+      {/* 주차 네비게이터 */}
+      <div className="card flex items-center gap-2 py-3">
+        <button
+          onClick={() => { setLogDate(addDays(logDate, -7)); setExpandedId(currentUser.id); }}
+          className="p-1 rounded-lg hover:bg-gray-100 transition text-gray-400"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <span className="flex-1 text-sm font-bold text-gray-700 text-center">{getWeekLabel(logDate)}</span>
+        <button
+          onClick={() => { setLogDate(addDays(logDate, 7)); setExpandedId(currentUser.id); }}
+          disabled={!canGoForward}
+          className="p-1 rounded-lg hover:bg-gray-100 transition text-gray-400 disabled:opacity-30"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+        <span className="text-xs text-gray-400 flex-shrink-0 ml-1">{completedCount}/{users.length}명 완료</span>
       </div>
 
       {/* 과제 정보 */}
       {notice && (
         <div className="bg-primary-50 border border-primary-100 rounded-xl px-3 py-2 flex flex-wrap gap-x-4 gap-y-0.5">
-          {notice.classicWork     && <span className="text-[10px] text-primary-600"><span className="font-bold">고전 </span>{notice.classicWork}</span>}
-          {notice.modernPoetWork  && <span className="text-[10px] text-primary-600"><span className="font-bold">현대시 </span>{notice.modernPoetWork}</span>}
-          {notice.modernProseWork && <span className="text-[10px] text-primary-600"><span className="font-bold">현대산문 </span>{notice.modernProseWork}</span>}
+          {(notice.classicPoetWork || notice.classicProseWork) ? (
+            <>
+              {notice.classicPoetWork && (
+                <span className="text-[10px] text-primary-600">
+                  <span className="font-bold">고전 시가 </span>
+                  {notice.classicPoetWork === '없음' ? <span className="text-primary-300">없음</span> : notice.classicPoetWork}
+                </span>
+              )}
+              {notice.classicProseWork && (
+                <span className="text-[10px] text-primary-600">
+                  <span className="font-bold">고전 산문 </span>
+                  {notice.classicProseWork === '없음' ? <span className="text-primary-300">없음</span> : notice.classicProseWork}
+                </span>
+              )}
+            </>
+          ) : notice.classicWork ? (
+            <span className="text-[10px] text-primary-600"><span className="font-bold">고전 </span>{notice.classicWork}</span>
+          ) : null}
+          {notice.modernPoetWork && (
+            <span className="text-[10px] text-primary-600">
+              <span className="font-bold">현대시 </span>
+              {notice.modernPoetWork === '없음' ? <span className="text-primary-300">없음</span> : notice.modernPoetWork}
+            </span>
+          )}
+          {notice.modernProseWork && (
+            <span className="text-[10px] text-primary-600">
+              <span className="font-bold">현대산문 </span>
+              {notice.modernProseWork === '없음' ? <span className="text-primary-300">없음</span> : notice.modernProseWork}
+            </span>
+          )}
         </div>
       )}
 
