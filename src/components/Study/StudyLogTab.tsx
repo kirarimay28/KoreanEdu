@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, Sparkles, X, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User, StudyLog, StudySessionNote } from '../../types';
-import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
@@ -92,18 +91,16 @@ function NoteSection({ label, value, color }: { label: string; value?: string; c
   );
 }
 
-async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((item: any) => item.str ?? '').join(' '));
-  }
-  return pages.join('\n');
+async function readPdfAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnType<typeof getAssignmentNoticeForWeek> }) {
@@ -190,18 +187,21 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       setAnalyzeError('PDF 파일만 업로드 가능합니다.');
       return;
     }
+    if (pdfFile.size > 3 * 1024 * 1024) {
+      setAnalyzeError('PDF 파일이 너무 큽니다. 3MB 이하 파일을 사용해주세요.');
+      return;
+    }
     setAnalyzing(true);
     setAnalyzeStep('extract');
     setAnalyzeError('');
     try {
-      const pdfText = await extractPdfText(pdfFile);
-      if (!pdfText.trim()) throw new Error('PDF에서 텍스트를 추출할 수 없습니다.');
+      const pdfBase64 = await readPdfAsBase64(pdfFile);
       setAnalyzeStep('ai');
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pdfText,
+          pdfBase64,
           notice: notice
             ? {
                 classicPoetWork: notice.classicPoetWork ?? notice.classicWork ?? '',
