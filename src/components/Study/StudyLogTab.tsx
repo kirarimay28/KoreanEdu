@@ -203,24 +203,30 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
       const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 PDF입니다.${noticeStr ? '\n' + noticeStr : ''}
 
-위 PDF 내용을 바탕으로 다음 JSON 형식으로 스터디 내용을 정리해주세요.
+【핵심 원칙】
+- PDF에 명시적으로 기재된 내용만 정리하세요.
+- PDF에 없는 내용은 절대 추가하거나 추측하지 마세요.
+- 풀지 않은 문제를 오답으로 처리하거나, 언급되지 않은 약점을 임의로 추가하지 마세요.
+- 해당 항목의 내용이 PDF에 없으면 반드시 빈 문자열("")로 남기세요.
+
 각 필드는 **단권화 스타일**로 작성해주세요:
 - 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
 - 각 항목은 줄바꿈으로 구분
 - 줄글 대신 간결한 불릿(•) 형식
-없는 내용은 빈 문자열("")로 남겨두세요. JSON만 반환하세요.
+
+JSON만 반환하세요.
 
 {
-  "classicAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
-  "classicDifficulty": "• 어려웠던 부분 요점",
-  "modernPoetAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
-  "modernPoetDifficulty": "• 어려웠던 부분 요점",
-  "modernProseAnalysis": "• **핵심어**: 설명\\n• **핵심어**: 설명",
-  "modernProseDifficulty": "• 어려웠던 부분 요점",
-  "wrongAnswerAnalysis": "• 오답 원인 요점",
-  "examTypeAnalysis": "• 기출 유형 요점",
-  "studyGroupLearnings": "• 배운 점 요점",
-  "selfFeedback": "• 피드백 및 계획 요점"
+  "classicAnalysis": "PDF에 있는 고전 작품 분석 내용만. 없으면 \"\"",
+  "classicDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "modernPoetAnalysis": "PDF에 있는 현대시 분석 내용만. 없으면 \"\"",
+  "modernPoetDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "modernProseAnalysis": "PDF에 있는 현대산문 분석 내용만. 없으면 \"\"",
+  "modernProseDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "wrongAnswerAnalysis": "PDF에 실제로 기재된 오답 분석만. 문제를 풀지 않았거나 언급이 없으면 반드시 \"\"",
+  "examTypeAnalysis": "PDF에 있는 기출 유형 분석만. 없으면 \"\"",
+  "studyGroupLearnings": "PDF에 기재된 스터디에서 배운 점만. 없으면 \"\"",
+  "selfFeedback": "PDF에 실제로 작성된 자기 피드백과 계획만. 없는 내용을 임의로 추가하지 말 것. 없으면 \"\""
 }`;
 
       // Gemini에 직접 요청 (generateContent는 CORS 허용, 파일 크기 제한 없음)
