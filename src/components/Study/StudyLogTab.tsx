@@ -131,7 +131,7 @@ function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnTyp
 }
 
 export default function StudyLogTab({ date, currentUser }: Props) {
-  const [logDate, setLogDate] = useState(date);
+  const [logDate, setLogDate] = useState(() => getWeekMonday(date));
   const [tick, setTick] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(currentUser.id);
 

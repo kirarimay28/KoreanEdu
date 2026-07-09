@@ -45,10 +45,10 @@ export default function StudyTab({ date, currentUser }: Props) {
         ))}
       </div>
 
-      {subTab === 'vocab'    && <VocabTestTab    date={date} currentUser={currentUser} />}
-      {subTab === 'exam'     && <VocabExamTab    currentUser={currentUser} />}
-      {subTab === 'feedback' && <PeerFeedbackTab date={date} currentUser={currentUser} />}
-      {subTab === 'journal'  && <StudyLogTab     date={date} currentUser={currentUser} />}
+      <div className={subTab === 'vocab'    ? '' : 'hidden'}><VocabTestTab    date={date} currentUser={currentUser} /></div>
+      <div className={subTab === 'exam'     ? '' : 'hidden'}><VocabExamTab    currentUser={currentUser} /></div>
+      <div className={subTab === 'feedback' ? '' : 'hidden'}><PeerFeedbackTab date={date} currentUser={currentUser} /></div>
+      <div className={subTab === 'journal'  ? '' : 'hidden'}><StudyLogTab     date={date} currentUser={currentUser} /></div>
     </div>
   );
 }
