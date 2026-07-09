@@ -266,13 +266,15 @@ JSON만 반환하세요.
       if (!analysisData) throw new Error(firstError || 'AI 분석 실패');
 
       const noteId = `${targetUser.id}_${logDate}`;
+      const now = new Date().toISOString();
       const newNote: StudySessionNote = {
         id: noteId,
         date: logDate,
         userId: targetUser.id,
         username: targetUser.username,
         content: JSON.stringify(analysisData),
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
         createdById: currentUser.id,
         createdByName: currentUser.username,
       };

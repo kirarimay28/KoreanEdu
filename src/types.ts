@@ -247,6 +247,7 @@ export interface StudySessionNote {
   username: string;
   content: string;  // JSON string of AI analysis fields
   createdAt: string;
+  updatedAt: string;
   createdById: string;
   createdByName: string;
 }
