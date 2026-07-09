@@ -389,7 +389,7 @@ export default function App() {
               })}
             </div>
 
-            <div key={refreshKey}>
+            <div>
               <div className={activeTab === 'study'       ? '' : 'hidden'}><StudyTab date={date} currentUser={currentUser} /></div>
               <div className={activeTab === 'personal'    ? '' : 'hidden'}><PersonalStudyTab date={date} currentUser={currentUser} /></div>
               <div className={activeTab === 'fine'        ? '' : 'hidden'}><FineTab currentUser={currentUser} /></div>

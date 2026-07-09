@@ -117,7 +117,7 @@ async function fetchFromFirestore(): Promise<void> {
     remote.forEach(r => map.set(r.id, r));
     local.forEach(l => {
       const r = map.get(l.id);
-      if (!r || (l.updatedAt && r.updatedAt && l.updatedAt > r.updatedAt)) map.set(l.id, l);
+      if (!r || (l.updatedAt && (!r.updatedAt || l.updatedAt > r.updatedAt))) map.set(l.id, l);
     });
     return Array.from(map.values());
   }
