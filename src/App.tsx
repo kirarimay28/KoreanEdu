@@ -390,13 +390,13 @@ export default function App() {
             </div>
 
             <div>
-              <div className={activeTab === 'study'       ? '' : 'hidden'}><StudyTab date={date} currentUser={currentUser} /></div>
-              <div className={activeTab === 'personal'    ? '' : 'hidden'}><PersonalStudyTab date={date} currentUser={currentUser} /></div>
-              <div className={activeTab === 'fine'        ? '' : 'hidden'}><FineTab currentUser={currentUser} /></div>
-              <div className={activeTab === 'qna'         ? '' : 'hidden'}><QnATab currentUser={currentUser} /></div>
-              <div className={activeTab === 'calendar'    ? '' : 'hidden'}><CalendarTab currentUser={currentUser} /></div>
-              <div className={activeTab === 'assignment'  ? '' : 'hidden'}><AssignmentTab currentUser={currentUser} /></div>
-              <div className={activeTab === 'vocab_study' ? '' : 'hidden'}><VocabStudyTab /></div>
+              {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'personal'    && <PersonalStudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'fine'        && <FineTab currentUser={currentUser} />}
+              {activeTab === 'qna'         && <QnATab currentUser={currentUser} />}
+              {activeTab === 'calendar'    && <CalendarTab currentUser={currentUser} />}
+              {activeTab === 'assignment'  && <AssignmentTab currentUser={currentUser} />}
+              {activeTab === 'vocab_study' && <VocabStudyTab />}
             </div>
           </>
         )}
