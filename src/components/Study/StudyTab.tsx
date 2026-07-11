@@ -48,7 +48,7 @@ export default function StudyTab({ date, currentUser }: Props) {
       {subTab === 'vocab'    && <VocabTestTab    date={date} currentUser={currentUser} />}
       {subTab === 'exam'     && <VocabExamTab    currentUser={currentUser} />}
       {subTab === 'feedback' && <PeerFeedbackTab date={date} currentUser={currentUser} />}
-      <div className={subTab === 'journal' ? '' : 'hidden'}><StudyLogTab date={date} currentUser={currentUser} /></div>
+      {subTab === 'journal'  && <StudyLogTab     date={date} currentUser={currentUser} />}
     </div>
   );
 }
