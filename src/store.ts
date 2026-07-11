@@ -67,12 +67,22 @@ function saveCache(): void {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(mem)); } catch {}
 }
 
+const TEST_USERNAMES = ['1111'];
+
 function bootstrapAdmin(): void {
   const adminUser = mem.users.find(u => u.username === ADMIN_USERNAME);
   if (adminUser && adminUser.role !== 'admin') {
     adminUser.role = 'admin';
     persist('users', adminUser.id, adminUser);
     saveCache();
+  }
+  // 테스트 계정은 자동으로 일지 제출 면제 처리
+  for (const user of mem.users) {
+    if (TEST_USERNAMES.includes(user.username) && !user.restrictions?.noStudyLogRequired) {
+      user.restrictions = { ...(user.restrictions ?? {}), noStudyLogRequired: true };
+      persist('users', user.id, user);
+      saveCache();
+    }
   }
 }
 
@@ -753,6 +763,16 @@ export function getStudyLog(userId: string, date: string): StudyLog | undefined 
 
 export function getStudyLogsForDate(date: string): StudyLog[] {
   return mem.studyLogs.filter(l => l.date === date);
+}
+
+export function getStudyLogsForWeek(weekKey: string): StudyLog[] {
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekKey + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+  return mem.studyLogs.filter(l => dates.includes(l.date));
 }
 
 export function upsertStudyLog(log: StudyLog): void {

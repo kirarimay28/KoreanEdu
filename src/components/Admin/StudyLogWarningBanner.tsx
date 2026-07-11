@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
-import { getUsers, getStudySessionNotesForWeek } from '../../store';
+import { getUsers, getStudySessionNotesForWeek, getStudyLogsForWeek } from '../../store';
 
 function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -25,8 +25,9 @@ export default function StudyLogWarningBanner() {
   const weekKey = getThisWeekMonday();
   const allUsers = getUsers();
   const weekNotes = getStudySessionNotesForWeek(weekKey);
-  const uploadedIds = new Set(weekNotes.map(n => n.userId));
-  const missingUsers = allUsers.filter(u => !uploadedIds.has(u.id));
+  const weekLogs  = getStudyLogsForWeek(weekKey);
+  const uploadedIds = new Set([...weekNotes.map(n => n.userId), ...weekLogs.map(l => l.userId)]);
+  const missingUsers = allUsers.filter(u => !uploadedIds.has(u.id) && !u.restrictions?.noStudyLogRequired);
 
   if (missingUsers.length === 0) return null;
 

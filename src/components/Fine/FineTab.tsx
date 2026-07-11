@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Check, Trash2, X, Wallet } from 'lucid
 import type { User, FineType } from '../../types';
 import {
   getUsers, getFinesForWeek, addFine, markFinePaid, deleteFine,
-  getStudySessionNotesForWeek,
+  getStudySessionNotesForWeek, getStudyLogsForWeek,
 } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
 
@@ -72,10 +72,12 @@ export default function FineTab({ currentUser }: Props) {
   const fines    = getFinesForWeek(weekKey);
   const canGoForward = addDays(weekKey, 7) <= today;
 
-  // 일지 미업로드 멤버
-  const weekNotes      = getStudySessionNotesForWeek(weekKey);
-  const uploadedIds    = new Set(weekNotes.map(n => n.userId));
-  const missingLogUsers = allUsers.filter(u => !uploadedIds.has(u.id) && !u.restrictions?.noStudyLogRequired);
+  // 일지 미업로드 멤버 — studySessionNotes 또는 studyLogs 둘 중 하나라도 있으면 제출된 것으로 간주
+  const weekNotes   = getStudySessionNotesForWeek(weekKey);
+  const weekLogs    = getStudyLogsForWeek(weekKey);
+  const uploadedIds = new Set([...weekNotes.map(n => n.userId), ...weekLogs.map(l => l.userId)]);
+  const logEligibleUsers = allUsers.filter(u => !u.restrictions?.noStudyLogRequired);
+  const missingLogUsers  = logEligibleUsers.filter(u => !uploadedIds.has(u.id));
 
   // 총액 per member
   const totalByUser: Record<string, { name: string; total: number; unpaid: number }> = {};
@@ -280,7 +282,7 @@ export default function FineTab({ currentUser }: Props) {
                   미업로드 멤버 선택 <span className="font-normal text-gray-400">(복수 선택 가능)</span>
                 </label>
                 <div className="space-y-1.5">
-                  {allUsers.map(u => {
+                  {logEligibleUsers.map(u => {
                     const isMissing = !uploadedIds.has(u.id);
                     const selected = logTargets.includes(u.id);
                     return (
