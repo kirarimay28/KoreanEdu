@@ -4,7 +4,7 @@ import type { User, StudyLog, StudySessionNote } from '../../types';
 import {
   getUsers,
   upsertStudyLog, removeStudyLog,
-  getStudySessionNote, getStudySessionNotesForDate,
+  getStudySessionNoteForWeek, getStudySessionNotesForWeek,
   saveStudySessionNote, deleteStudySessionNote,
   getAssignmentNoticeForWeek,
 } from '../../store';
@@ -145,10 +145,10 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   const [analyzeError, setAnalyzeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const users   = getUsers();
+  const users   = getUsers().filter(u => !u.restrictions?.noStudyLogRequired);
   const isAdmin = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const weekMonday = getWeekMonday(logDate);
-  const allNotes = getStudySessionNotesForDate(weekMonday);
+  const allNotes = getStudySessionNotesForWeek(weekMonday).filter(n => users.some(u => u.id === n.userId));
 
   const prevMonday = getWeekMonday(addDays(weekMonday, -7));
   const notice = getAssignmentNoticeForWeek(prevMonday);
@@ -163,7 +163,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     deleteStudySessionNote(noteId);
     // also remove study log check
     const note = allNotes.find(n => n.id === noteId);
-    if (note) removeStudyLog(note.userId, logDate);
+    if (note) removeStudyLog(note.userId, note.date);
     setTick(t => t + 1);
   }
 
@@ -367,7 +367,7 @@ JSON만 반환하세요.
       {/* 멤버별 분석 */}
       <div className="space-y-2">
         {users.map(user => {
-          const note      = getStudySessionNote(user.id, weekMonday);
+          const note      = getStudySessionNoteForWeek(user.id, weekMonday) ?? null;
           const fields    = note ? parseNote(note) : null;
           const isSelf    = user.id === currentUser.id;
           const canUpload = isSelf || isAdmin;

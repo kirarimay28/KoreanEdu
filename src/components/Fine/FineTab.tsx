@@ -75,7 +75,7 @@ export default function FineTab({ currentUser }: Props) {
   // 일지 미업로드 멤버
   const weekNotes      = getStudySessionNotesForWeek(weekKey);
   const uploadedIds    = new Set(weekNotes.map(n => n.userId));
-  const missingLogUsers = allUsers.filter(u => !uploadedIds.has(u.id));
+  const missingLogUsers = allUsers.filter(u => !uploadedIds.has(u.id) && !u.restrictions?.noStudyLogRequired);
 
   // 총액 per member
   const totalByUser: Record<string, { name: string; total: number; unpaid: number }> = {};

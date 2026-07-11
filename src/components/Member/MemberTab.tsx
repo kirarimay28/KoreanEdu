@@ -234,10 +234,11 @@ function MemberCard({ user, rank, currentUser, onAction }: {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {([
-                  ['noStudyView',       '스터디 탭 열람'],
-                  ['noLibraryDownload', '도서관 다운로드'],
-                  ['noVacationRequest', '휴가 신청'],
-                  ['noResourceRequest', '자료 요청'],
+                  ['noStudyView',         '스터디 탭 열람'],
+                  ['noLibraryDownload',   '도서관 다운로드'],
+                  ['noVacationRequest',   '휴가 신청'],
+                  ['noResourceRequest',   '자료 요청'],
+                  ['noStudyLogRequired',  '일지 제출 면제'],
                 ] as [keyof UserRestrictions, string][]).map(([key, label]) => {
                   const active = !!(user.restrictions?.[key]);
                   return (

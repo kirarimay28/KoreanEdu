@@ -5,6 +5,7 @@ export interface UserRestrictions {
   noLibraryDownload?: boolean;
   noVacationRequest?: boolean;
   noResourceRequest?: boolean;
+  noStudyLogRequired?: boolean;
 }
 
 export interface User {

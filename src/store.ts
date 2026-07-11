@@ -775,6 +775,10 @@ export function getStudySessionNote(userId: string, date: string): StudySessionN
   return mem.studySessionNotes.find(n => n.userId === userId && n.date === date);
 }
 
+export function getStudySessionNoteForWeek(userId: string, weekKey: string): StudySessionNote | undefined {
+  return getStudySessionNotesForWeek(weekKey).find(n => n.userId === userId);
+}
+
 export function getStudySessionNotesForDate(date: string): StudySessionNote[] {
   return mem.studySessionNotes.filter(n => n.date === date);
 }
