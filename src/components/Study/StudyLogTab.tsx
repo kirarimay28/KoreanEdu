@@ -15,17 +15,21 @@ interface Props {
   currentUser: User;
 }
 
+function localStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function getWeekMonday(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-  return d.toISOString().slice(0, 10);
+  return localStr(d);
 }
 
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localStr(d);
 }
 
 function getWeekLabel(dateStr: string): string {
@@ -131,7 +135,7 @@ function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnTyp
 }
 
 export default function StudyLogTab({ date, currentUser }: Props) {
-  const [logDate, setLogDate] = useState(() => getWeekMonday(date));
+  const [logDate, setLogDate] = useState(date);
   const [tick, setTick] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(currentUser.id);
 
@@ -143,12 +147,11 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   const users   = getUsers();
   const isAdmin = currentUser.role === 'admin' || currentUser.role === 'subadmin';
-  const allNotes = getStudySessionNotesForDate(logDate);
+  const weekMonday = getWeekMonday(logDate);
+  const allNotes = getStudySessionNotesForDate(weekMonday);
 
-  const thisWeekMonday = getWeekMonday(logDate);
-  const prevD = new Date(thisWeekMonday + 'T00:00:00');
-  prevD.setDate(prevD.getDate() - 7);
-  const notice = getAssignmentNoticeForWeek(prevD.toISOString().slice(0, 10));
+  const prevMonday = getWeekMonday(addDays(weekMonday, -7));
+  const notice = getAssignmentNoticeForWeek(prevMonday);
 
   function toggleExpand(userId: string) {
     setExpandedId(prev => prev === userId ? null : userId);
@@ -265,11 +268,11 @@ JSON만 반환하세요.
       }
       if (!analysisData) throw new Error(firstError || 'AI 분석 실패');
 
-      const noteId = `${targetUser.id}_${logDate}`;
+      const noteId = `${targetUser.id}_${weekMonday}`;
       const now = new Date().toISOString();
       const newNote: StudySessionNote = {
         id: noteId,
-        date: logDate,
+        date: weekMonday,
         userId: targetUser.id,
         username: targetUser.username,
         content: JSON.stringify(analysisData),
@@ -280,10 +283,10 @@ JSON만 반환하세요.
       };
       saveStudySessionNote(newNote);
       const log: StudyLog = {
-        id: `${targetUser.id}_${logDate}`,
+        id: `${targetUser.id}_${weekMonday}`,
         userId: targetUser.id,
         username: targetUser.username,
-        date: logDate,
+        date: weekMonday,
         workName: '',
         difficulties: '',
         selfFeedback: '',
@@ -364,7 +367,7 @@ JSON만 반환하세요.
       {/* 멤버별 분석 */}
       <div className="space-y-2">
         {users.map(user => {
-          const note      = getStudySessionNote(user.id, logDate);
+          const note      = getStudySessionNote(user.id, weekMonday);
           const fields    = note ? parseNote(note) : null;
           const isSelf    = user.id === currentUser.id;
           const canUpload = isSelf || isAdmin;
