@@ -11,8 +11,8 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #f8f9fd;
-  color: #1a1a2e;
+  background-color: #f3f8f5;
+  color: #1a2419;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -53,17 +53,17 @@ body {
 .auth-logo-shimmer {
   background: linear-gradient(
     120deg,
-    #303284 0%,
-    #4f52e8 25%,
-    #8196f8 50%,
-    #4f52e8 75%,
-    #303284 100%
+    #113824 0%,
+    #27704f 25%,
+    #77be9b 50%,
+    #27704f 75%,
+    #113824 100%
   );
   background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 3px 14px rgba(79, 82, 232, 0.4));
+  filter: drop-shadow(0 3px 14px rgba(39, 112, 79, 0.35));
   animation: auth-shimmer 3s ease-in-out infinite alternate;
 }
 

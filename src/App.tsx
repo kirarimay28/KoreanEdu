@@ -61,7 +61,7 @@ interface MenuTabDef {
 
 const MENU_TABS: MenuTabDef[] = [
   { id: 'qna',        label: '질의응답', icon: HelpCircle,   iconBg: 'bg-blue-50',    iconColor: 'text-blue-500' },
-  { id: 'calendar',   label: '캘린더',   icon: CalendarDays, iconBg: 'bg-indigo-50',  iconColor: 'text-indigo-500' },
+  { id: 'calendar',   label: '캘린더',   icon: CalendarDays, iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'attendance', label: '출석',     icon: CalendarCheck, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
   { id: 'member',     label: '멤버',     icon: Users,         iconBg: 'bg-pink-50',    iconColor: 'text-pink-500' },
   { id: 'resource',   label: '자료요청', icon: Inbox,         iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
@@ -134,7 +134,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 gap-4">
         <div className="w-10 h-10 border-4 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
         <p className="text-gray-500 text-sm">데이터를 불러오는 중...</p>
       </div>
@@ -143,7 +143,7 @@ export default function App() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-indigo-100 gap-4 p-8 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 gap-4 p-8 text-center">
         <p className="text-red-500 font-semibold">서버 연결에 실패했습니다.</p>
         <p className="text-gray-500 text-sm">네트워크를 확인하고 다시 시도해 주세요.</p>
         <button
@@ -165,7 +165,7 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-primary-50/40">
 
       {/* ── Side Panel Overlay ── */}
       {sideOpen && (
@@ -187,13 +187,13 @@ export default function App() {
               <X className="w-4 h-4" />
             </button>
 
-            {/* Profile header — auth-page gradient */}
+            {/* Profile header — sage green gradient */}
             <div
               className="px-6 pt-10 pb-6 flex-shrink-0"
               style={{
                 background: `
-                  radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.65) 0%, rgba(197,210,255,0.35) 42%, transparent 65%),
-                  linear-gradient(145deg, #c7d7fe 0%, #a5bbfc 50%, #b0a8f0 100%)
+                  radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.65) 0%, rgba(169,217,190,0.35) 42%, transparent 65%),
+                  linear-gradient(145deg, #c8e6d4 0%, #a9d9be 50%, #8ecba6 100%)
                 `,
               }}
             >
@@ -203,8 +203,8 @@ export default function App() {
                   <BookOpen className="w-6 h-6 text-primary-600" />
                 </div>
                 <div>
-                  <div className="text-indigo-900 font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
-                  <div className="text-indigo-500 text-[11px] mt-0.5">국어 임용 스터디</div>
+                  <div className="text-primary-900 font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
+                  <div className="text-primary-600 text-[11px] mt-0.5">국어 임용 스터디</div>
                 </div>
               </div>
 
@@ -215,12 +215,12 @@ export default function App() {
                     <span className="text-lg font-black text-primary-700">{currentUser.username[0]}</span>
                   </div>
                   <div className="min-w-0">
-                    <NameWithCrown name={currentUser.username} className="text-sm font-bold text-indigo-900" />
-                    <span className="text-[11px] text-indigo-500">{roleLabel}</span>
+                    <NameWithCrown name={currentUser.username} className="text-sm font-bold text-primary-900" />
+                    <span className="text-[11px] text-primary-600">{roleLabel}</span>
                   </div>
                 </div>
                 {currentUser.resolution && (
-                  <p className="text-[11px] text-indigo-600 leading-relaxed italic border-t border-indigo-100 pt-2.5">
+                  <p className="text-[11px] text-primary-700 leading-relaxed italic border-t border-primary-100 pt-2.5">
                     "{currentUser.resolution}"
                   </p>
                 )}

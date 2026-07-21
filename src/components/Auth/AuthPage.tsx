@@ -52,21 +52,46 @@ export default function AuthPage({ onLogin }: Props) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-4"
+      className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden"
       style={{
         background: `
-          radial-gradient(ellipse at 38% 32%, rgba(255,255,255,0.62) 0%, rgba(197,210,255,0.28) 42%, transparent 65%),
-          linear-gradient(145deg, #c7d7fe 0%, #a5bbfc 50%, #b0a8f0 100%)
+          radial-gradient(ellipse at 38% 32%, rgba(255,255,255,0.62) 0%, rgba(169,217,190,0.28) 42%, transparent 65%),
+          linear-gradient(145deg, #c8e6d4 0%, #a9d9be 50%, #8ecba6 100%)
         `
       }}
     >
-      <div className="w-full max-w-sm">
+      {/* Botanical decorations */}
+      <svg className="absolute top-0 right-0 w-52 h-52 opacity-[0.18] pointer-events-none" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M160 10 C140 40 120 60 100 100" stroke="#1e5a3f" strokeWidth="1.5" strokeLinecap="round"/>
+        <ellipse cx="130" cy="48" rx="22" ry="12" transform="rotate(-40 130 48)" fill="#27704f"/>
+        <ellipse cx="115" cy="68" rx="19" ry="10" transform="rotate(-30 115 68)" fill="#358a63"/>
+        <ellipse cx="107" cy="88" rx="16" ry="9" transform="rotate(-20 107 88)" fill="#4ea37c"/>
+        <path d="M170 40 C155 55 148 70 143 90" stroke="#1e5a3f" strokeWidth="1" strokeLinecap="round"/>
+        <ellipse cx="158" cy="58" rx="14" ry="7" transform="rotate(-50 158 58)" fill="#358a63"/>
+        <ellipse cx="150" cy="74" rx="12" ry="6" transform="rotate(-38 150 74)" fill="#4ea37c"/>
+      </svg>
+      <svg className="absolute bottom-0 left-0 w-44 h-44 opacity-[0.15] pointer-events-none" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 170 C40 140 60 110 80 80" stroke="#1e5a3f" strokeWidth="1.5" strokeLinecap="round"/>
+        <ellipse cx="48" cy="130" rx="20" ry="11" transform="rotate(40 48 130)" fill="#27704f"/>
+        <ellipse cx="62" cy="110" rx="18" ry="9" transform="rotate(30 62 110)" fill="#358a63"/>
+        <ellipse cx="73" cy="92" rx="15" ry="8" transform="rotate(20 73 92)" fill="#4ea37c"/>
+        <circle cx="30" cy="160" r="3" fill="#77be9b"/>
+        <circle cx="16" cy="155" r="2" fill="#77be9b"/>
+      </svg>
+      <svg className="absolute top-1/3 left-4 w-16 h-28 opacity-[0.12] pointer-events-none" viewBox="0 0 60 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30 100 C30 70 20 40 30 10" stroke="#27704f" strokeWidth="1.2" strokeLinecap="round"/>
+        <ellipse cx="20" cy="75" rx="14" ry="7" transform="rotate(20 20 75)" fill="#4ea37c"/>
+        <ellipse cx="38" cy="55" rx="14" ry="7" transform="rotate(-15 38 55)" fill="#358a63"/>
+        <ellipse cx="22" cy="38" rx="12" ry="6" transform="rotate(25 22 38)" fill="#27704f"/>
+      </svg>
+
+      <div className="w-full max-w-sm relative">
 
         {/* Hero */}
         <div className="text-center mb-10">
           <div
             className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl mb-5 mx-auto"
-            style={{ background: 'linear-gradient(145deg, #6370f3, #3535a7)' }}
+            style={{ background: 'linear-gradient(145deg, #27704f, #1e5a3f)' }}
           >
             <BookOpen className="w-10 h-10 text-white" />
           </div>
@@ -205,3 +230,4 @@ export default function AuthPage({ onLogin }: Props) {
     </div>
   );
 }
+
