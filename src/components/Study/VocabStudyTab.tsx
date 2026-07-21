@@ -73,10 +73,10 @@ export default function VocabStudyTab() {
             <div className="flex-1 text-center">
               <p className="text-[10px] text-gray-400 font-bold mb-1.5">시작</p>
               <input
-                type="number" min={1} max={60}
+                type="number" min={1} max={100}
                 value={startNum}
                 onChange={e => {
-                  const v = Math.max(1, Math.min(60, Number(e.target.value) || 1));
+                  const v = Math.max(1, Math.min(100, Number(e.target.value) || 1));
                   setStartNum(v);
                   if (v > endNum) setEndNum(v);
                 }}
@@ -87,10 +87,10 @@ export default function VocabStudyTab() {
             <div className="flex-1 text-center">
               <p className="text-[10px] text-gray-400 font-bold mb-1.5">끝</p>
               <input
-                type="number" min={1} max={60}
+                type="number" min={1} max={100}
                 value={endNum}
                 onChange={e => {
-                  const v = Math.max(1, Math.min(60, Number(e.target.value) || 1));
+                  const v = Math.max(1, Math.min(100, Number(e.target.value) || 1));
                   setEndNum(v);
                   if (v < startNum) setStartNum(v);
                 }}
@@ -106,7 +106,7 @@ export default function VocabStudyTab() {
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">이월 번호 입력</p>
           <p className="text-[11px] text-gray-400 mb-3">범위 외에 추가 학습할 번호를 선택하세요</p>
           {outsideRange.length === 0 ? (
-            <p className="text-xs text-gray-300 text-center py-2">전체 범위(1~60)가 선택됨</p>
+            <p className="text-xs text-gray-300 text-center py-2">전체 범위(1~100)가 선택됨</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {outsideRange.map(v => {
@@ -239,17 +239,17 @@ export default function VocabStudyTab() {
         >
           {/* Front — 고어 */}
           <div
-            className="absolute inset-0 bg-white rounded-3xl border-2 border-indigo-100 shadow-md flex flex-col items-center justify-center p-8"
+            className="absolute inset-0 bg-white rounded-3xl border-2 border-primary-100 shadow-md flex flex-col items-center justify-center p-8"
             style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           >
-            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-6">고어</p>
+            <p className="text-[10px] font-bold text-primary-400 uppercase tracking-widest mb-6">고어</p>
             <p className="text-3xl font-black text-gray-800 text-center leading-relaxed">{card.vocab}</p>
             <p className="text-[11px] text-gray-300 font-medium mt-8">터치하면 뒷면으로</p>
           </div>
 
           {/* Back — 현대어 */}
           <div
-            className="absolute inset-0 rounded-3xl border-2 border-violet-200 shadow-md flex flex-col items-center justify-center p-8"
+            className="absolute inset-0 rounded-3xl border-2 border-primary-200 shadow-md flex flex-col items-center justify-center p-8"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',

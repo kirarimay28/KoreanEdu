@@ -41,7 +41,7 @@ const CATEGORIES = ['회독', '단권화', '문제풀이', '오답정리', '강�
 const SUBJECT_COLORS: Record<string, { border: string; bg: string; badge: string; bar: string; text: string; sector: string }> = {
   '국교론':  { border:'border-l-blue-400',   bg:'bg-blue-50',    badge:'bg-blue-100 text-blue-700',       bar:'bg-blue-500',   text:'text-blue-700',   sector:'#3b82f6' },
   '교육학':  { border:'border-l-emerald-400', bg:'bg-emerald-50', badge:'bg-emerald-100 text-emerald-700', bar:'bg-emerald-500', text:'text-emerald-700', sector:'#10b981' },
-  '중세문법': { border:'border-l-violet-400',  bg:'bg-violet-50',  badge:'bg-violet-100 text-violet-700',   bar:'bg-violet-500',  text:'text-violet-700',  sector:'#8b5cf6' },
+  '중세문법': { border:'border-l-primary-400',  bg:'bg-primary-50',  badge:'bg-primary-100 text-primary-700',   bar:'bg-primary-500',  text:'text-primary-700',  sector:'#61b5a7' },
   '현대문법': { border:'border-l-orange-400',  bg:'bg-orange-50',  badge:'bg-orange-100 text-orange-700',   bar:'bg-orange-500',  text:'text-orange-700',  sector:'#f97316' },
   '한능검':  { border:'border-l-teal-400',   bg:'bg-teal-50',    badge:'bg-teal-100 text-teal-700',       bar:'bg-teal-500',   text:'text-teal-700',   sector:'#14b8a6' },
 };
@@ -52,7 +52,7 @@ const CUSTOM_PALETTES = [
   { border:'border-l-sky-400',     bg:'bg-sky-50',     badge:'bg-sky-100 text-sky-700',         bar:'bg-sky-500',     text:'text-sky-700',     sector:'#0ea5e9' },
   { border:'border-l-lime-400',    bg:'bg-lime-50',    badge:'bg-lime-100 text-lime-700',       bar:'bg-lime-500',    text:'text-lime-700',    sector:'#84cc16' },
   { border:'border-l-amber-400',   bg:'bg-amber-50',   badge:'bg-amber-100 text-amber-700',     bar:'bg-amber-500',   text:'text-amber-700',   sector:'#f59e0b' },
-  { border:'border-l-indigo-400',  bg:'bg-indigo-50',  badge:'bg-indigo-100 text-indigo-700',   bar:'bg-indigo-500',  text:'text-indigo-700',  sector:'#6366f1' },
+  { border:'border-l-primary-400',  bg:'bg-primary-50',  badge:'bg-primary-100 text-primary-700',   bar:'bg-primary-500',  text:'text-primary-700',  sector:'#3a7d73' },
 ];
 
 function getColor(subject: string, customSubject?: string) {
@@ -274,7 +274,7 @@ function AnalysisModal({ analysis, date, onClose }: { analysis: StudyAnalysis; d
       <div className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl overflow-hidden"
         style={{ maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 z-10 px-5 pt-5 pb-4"
-          style={{ background: 'linear-gradient(135deg,#6366f1 0%,#8b5cf6 60%,#a78bfa 100%)' }}>
+          style={{ background: 'linear-gradient(135deg,#2b6460 0%,#52988c 55%,#79b3a8 100%)' }}>
           <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -359,11 +359,11 @@ function AnalysisModal({ analysis, date, onClose }: { analysis: StudyAnalysis; d
             ))}</div>
           </div>
           <div className="pb-2">
-            <div className="flex items-center gap-2 mb-2"><Target className="w-3.5 h-3.5 text-indigo-500" /><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">내일 권장</p></div>
+            <div className="flex items-center gap-2 mb-2"><Target className="w-3.5 h-3.5 text-primary-500" /><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">내일 권장</p></div>
             <div className="space-y-1.5">{analysis.tomorrowRecs.map((s,i) => (
-              <div key={i} className="flex items-start gap-2 bg-indigo-50 rounded-xl px-3 py-2.5">
-                <span className="text-indigo-500 text-xs font-black mt-0.5">→</span>
-                <p className="text-xs text-indigo-800 font-medium">{s}</p>
+              <div key={i} className="flex items-start gap-2 bg-primary-50 rounded-xl px-3 py-2.5">
+                <span className="text-primary-500 text-xs font-black mt-0.5">→</span>
+                <p className="text-xs text-primary-800 font-medium">{s}</p>
               </div>
             ))}</div>
           </div>
@@ -523,7 +523,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     return (
       <>
       <div className="space-y-4">
-        <div className="rounded-2xl p-5 text-white" style={{ background:'linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)' }}>
+        <div className="rounded-2xl p-5 text-white" style={{ background:'linear-gradient(135deg,#2b6460 0%,#52988c 100%)' }}>
           <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">학습 계획</p>
           <p className="text-base font-bold">{formatKoreanDate(date)}</p>
           <p className="text-xs opacity-60 mt-1">오늘 공부할 목록을 미리 작성하세요. 학습 시작 후 목록은 잠금됩니다.</p>
@@ -661,7 +661,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     <div className="space-y-4">
 
       {/* Header */}
-      <div className="rounded-2xl px-5 py-4 text-white" style={{ background:'linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)' }}>
+      <div className="rounded-2xl px-5 py-4 text-white" style={{ background:'linear-gradient(135deg,#2b6460 0%,#52988c 100%)' }}>
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Study Planner</p>

@@ -50,7 +50,7 @@ function formatWon(amount: number): string {
 const TYPE_STYLE: Record<FineType, { bg: string; text: string; label: string }> = {
   '지각': { bg: 'bg-orange-100', text: 'text-orange-700', label: '지각' },
   '과제': { bg: 'bg-blue-100',   text: 'text-blue-700',   label: '과제' },
-  '일지': { bg: 'bg-violet-100', text: 'text-violet-700', label: '일지' },
+  '일지': { bg: 'bg-primary-100', text: 'text-primary-700', label: '일지' },
 };
 
 export default function FineTab({ currentUser }: Props) {
@@ -292,11 +292,11 @@ export default function FineTab({ currentUser }: Props) {
                           prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id]
                         )}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition ${
-                          selected ? 'bg-violet-50 border-violet-200' : 'border-gray-100 hover:bg-gray-50'
+                          selected ? 'bg-primary-50 border-primary-200' : 'border-gray-100 hover:bg-gray-50'
                         }`}
                       >
                         <div className={`w-4 h-4 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
-                          selected ? 'bg-violet-500 border-violet-500' : 'border-gray-300'
+                          selected ? 'bg-primary-500 border-primary-500' : 'border-gray-300'
                         }`}>
                           {selected && <Check className="w-2.5 h-2.5 text-white" />}
                         </div>
@@ -310,7 +310,7 @@ export default function FineTab({ currentUser }: Props) {
                 </div>
               </div>
               {logTargets.length > 0 && (
-                <div className="text-center py-2 rounded-xl font-bold text-sm bg-violet-50 text-violet-600">
+                <div className="text-center py-2 rounded-xl font-bold text-sm bg-primary-50 text-primary-600">
                   일지 벌금: {formatWon(logTargets.length * 10000)} ({logTargets.length}명 × 10,000원)
                 </div>
               )}
@@ -394,16 +394,16 @@ export default function FineTab({ currentUser }: Props) {
 
       {/* 일지 벌금 안내 */}
       {isPriv && missingLogUsers.length > 0 && (
-        <div className="bg-violet-50 border border-violet-100 rounded-xl px-3 py-2.5">
-          <p className="text-[11px] font-bold text-violet-700 mb-1">이번 주 일지 미업로드</p>
+        <div className="bg-primary-50 border border-primary-100 rounded-xl px-3 py-2.5">
+          <p className="text-[11px] font-bold text-primary-700 mb-1">이번 주 일지 미업로드</p>
           <div className="flex flex-wrap gap-1">
             {missingLogUsers.map(u => (
-              <span key={u.id} className="text-[10px] bg-violet-100 text-violet-600 px-2 py-0.5 rounded-full font-semibold">
+              <span key={u.id} className="text-[10px] bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full font-semibold">
                 {u.username}
               </span>
             ))}
           </div>
-          <p className="text-[10px] text-violet-400 mt-1.5">위 멤버에게 일지 벌금(10,000원)을 부과하려면 '벌금 부과' 버튼을 이용하세요.</p>
+          <p className="text-[10px] text-primary-400 mt-1.5">위 멤버에게 일지 벌금(10,000원)을 부과하려면 '벌금 부과' 버튼을 이용하세요.</p>
         </div>
       )}
     </div>

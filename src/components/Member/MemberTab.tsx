@@ -18,7 +18,7 @@ function formatDate(iso: string): string {
 
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') return (
-    <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+    <span className="text-[10px] font-bold bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-0.5">
       <ShieldCheck className="w-2.5 h-2.5" />방장
     </span>
   );

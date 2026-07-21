@@ -60,11 +60,11 @@ export default function EducationAnswerPage({ mode, onBack, currentUser }: Props
         로비로 돌아가기
       </button>
 
-      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
-        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide mb-1.5">
+      <div className="bg-primary-50 border border-primary-200 rounded-2xl px-4 py-3">
+        <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wide mb-1.5">
           📚 이번 주 교육관 형성 질문
         </p>
-        <p className="text-sm text-indigo-800 leading-relaxed">{question}</p>
+        <p className="text-sm text-primary-800 leading-relaxed">{question}</p>
       </div>
 
       {mode === 'write' ? (

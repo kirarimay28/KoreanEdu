@@ -64,7 +64,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'calendar',   label: '캘린더',   icon: CalendarDays, iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'attendance', label: '출석',     icon: CalendarCheck, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
   { id: 'member',     label: '멤버',     icon: Users,         iconBg: 'bg-pink-50',    iconColor: 'text-pink-500' },
-  { id: 'resource',   label: '자료요청', icon: Inbox,         iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
+  { id: 'resource',   label: '자료요청', icon: Inbox,         iconBg: 'bg-primary-50',  iconColor: 'text-primary-500' },
   { id: 'vacation',   label: '휴가신청', icon: Plane,         iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
   { id: 'vaclist',    label: '휴가명단', icon: ListChecks,    iconBg: 'bg-orange-50',  iconColor: 'text-orange-500' },
   { id: 'messages',   label: '쪽지',     icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
@@ -187,9 +187,9 @@ export default function App() {
               <X className="w-4 h-4" />
             </button>
 
-            {/* Profile header — celadon glaze */}
+            {/* Profile header — celadon glaze with crane */}
             <div
-              className="px-6 pt-10 pb-6 flex-shrink-0"
+              className="relative px-6 pt-10 pb-6 flex-shrink-0 overflow-hidden"
               style={{
                 background: `
                   radial-gradient(ellipse at 22% 20%, rgba(255,255,255,0.82) 0%, rgba(224,242,238,0.4) 30%, transparent 54%),
@@ -198,19 +198,36 @@ export default function App() {
                 `,
               }}
             >
+              {/* Subtle crane motif */}
+              <svg className="absolute right-2 top-3 w-24 h-20 pointer-events-none" viewBox="0 0 100 84" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.2 }}>
+                <ellipse cx="52" cy="50" rx="20" ry="7" transform="rotate(-10 52 50)" fill="rgba(255,255,255,1)"/>
+                <path d="M33 52 C38 34 53 28 67 46" fill="rgba(255,255,255,0.8)"/>
+                <path d="M33 52 C38 34 55 26 67 46" stroke="rgba(255,255,255,0.9)" strokeWidth="0.8" fill="none"/>
+                <path d="M67 46 C70 38 72 30 74 23" stroke="rgba(255,255,255,1)" strokeWidth="3" strokeLinecap="round"/>
+                <ellipse cx="75" cy="19" rx="5.5" ry="4.5" fill="rgba(255,255,255,1)"/>
+                <ellipse cx="76" cy="14.5" rx="3" ry="1.8" fill="rgba(220,80,70,0.75)"/>
+                <circle cx="77.5" cy="19.5" r="1.5" fill="rgba(30,80,76,0.7)"/>
+                <path d="M80 18 L90 15" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M33 55 C24 59 15 63 8 70" stroke="rgba(255,255,255,0.8)" strokeWidth="2.2" strokeLinecap="round"/>
+                <path d="M34 58 C26 61 18 62 11 64" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M33 52 C40 64 54 66 66 56" fill="rgba(255,255,255,0.4)"/>
+                <path d="M46 57 L44 72 M55 58 L53 73" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M44 72 L39 76 M44 72 L44 78 M44 72 L49 76" stroke="rgba(255,255,255,0.6)" strokeWidth="1" strokeLinecap="round"/>
+              </svg>
+
               {/* App identity */}
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-12 h-12 rounded-2xl bg-white/60 shadow-sm flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-6 h-6 text-primary-600" />
+                  <BookOpen className="w-6 h-6 text-primary-700" />
                 </div>
                 <div>
                   <div className="text-primary-900 font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
-                  <div className="text-primary-600 text-[11px] mt-0.5">국어 임용 스터디</div>
+                  <div className="text-primary-700 text-[11px] mt-0.5">국어 임용 스터디</div>
                 </div>
               </div>
 
               {/* User card */}
-              <div className="bg-white/50 rounded-2xl px-4 py-3.5 space-y-2.5 shadow-sm">
+              <div className="bg-white/50 rounded-2xl px-4 py-3.5 space-y-2.5 shadow-sm" style={{ border: '1px solid rgba(255,255,255,0.6)' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-lg font-black text-primary-700">{currentUser.username[0]}</span>
@@ -238,16 +255,22 @@ export default function App() {
                   <button
                     key={tab.id}
                     onClick={() => handleMenuNav(tab.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition ${
-                      isActive
-                        ? 'bg-white/70 text-primary-700 shadow-sm'
-                        : 'text-gray-600 hover:bg-white/50'
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
+                      isActive ? 'text-primary-800 shadow-sm' : 'text-gray-600 hover:bg-white/45'
                     }`}
+                    style={isActive ? {
+                      background: 'rgba(255,255,255,0.72)',
+                      border: '1px solid rgba(121,179,168,0.22)',
+                      boxShadow: '0 1px 6px rgba(43,100,96,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+                    } : {}}
                   >
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition ${
-                      isActive ? 'bg-primary-100' : 'bg-white/60'
-                    }`}>
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-primary-600' : tab.iconColor}`} />
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all`}
+                      style={isActive ? {
+                        background: 'linear-gradient(135deg, #aacfc5 0%, #79b3a8 100%)',
+                        boxShadow: '0 2px 6px rgba(43,100,96,0.2)',
+                      } : { background: 'rgba(255,255,255,0.55)' }}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.iconColor}`} />
                     </div>
                     <span className={`flex-1 text-left text-sm ${isActive ? 'font-semibold' : 'font-medium'}`}>
                       {tab.label}
@@ -284,7 +307,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(238,244,242,0.82)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(121,179,168,0.18)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(238,244,242,0.84)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(121,179,168,0.22)', boxShadow: '0 1px 10px rgba(43,100,96,0.06)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
@@ -329,7 +352,8 @@ export default function App() {
           <>
             <button
               onClick={() => handleMainNav('study')}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition font-medium mb-4"
+              className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium mb-4 px-3 py-1.5 rounded-xl"
+              style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(121,179,168,0.20)' }}
             >
               <ChevronLeft className="w-4 h-4" />
               로비로 돌아가기

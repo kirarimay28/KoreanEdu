@@ -15,7 +15,7 @@ interface Props {
 const CATEGORIES: PeerFeedbackCategory[] = ['분석 방향성', '근거 부족/오류', '어휘 부족', '공부법'];
 
 const CAT_COLOR: Record<PeerFeedbackCategory, string> = {
-  '분석 방향성':   'bg-indigo-50 text-indigo-600',
+  '분석 방향성':   'bg-primary-50 text-primary-600',
   '근거 부족/오류': 'bg-rose-50 text-rose-600',
   '어휘 부족':     'bg-amber-50 text-amber-600',
   '공부법':        'bg-emerald-50 text-emerald-600',

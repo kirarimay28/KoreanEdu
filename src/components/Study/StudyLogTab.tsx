@@ -111,8 +111,8 @@ function NoteContent({ fields, notice }: { fields: NoteFields; notice: ReturnTyp
             <NoteSection label={`${classicLabel} — 어려웠던 점`} value={fields.classicDifficulty}     color="text-amber-500" />
             <NoteSection label={`${notice?.modernPoetWork && notice.modernPoetWork !== '없음' ? notice.modernPoetWork : '현대시'} — 분석`}        value={fields.modernPoetAnalysis}    color="text-sky-600" />
             <NoteSection label={`${notice?.modernPoetWork && notice.modernPoetWork !== '없음' ? notice.modernPoetWork : '현대시'} — 어려웠던 점`} value={fields.modernPoetDifficulty} color="text-sky-500" />
-            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 분석`}        value={fields.modernProseAnalysis}   color="text-violet-600" />
-            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 어려웠던 점`} value={fields.modernProseDifficulty} color="text-violet-500" />
+            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 분석`}        value={fields.modernProseAnalysis}   color="text-primary-600" />
+            <NoteSection label={`${notice?.modernProseWork && notice.modernProseWork !== '없음' ? notice.modernProseWork : '현대산문'} — 어려웠던 점`} value={fields.modernProseDifficulty} color="text-primary-500" />
           </div>
         </div>
       )}
@@ -382,14 +382,14 @@ JSON만 반환하세요.
                 className="w-full flex items-center gap-3 px-4 py-3 text-left"
                 onClick={() => toggleExpand(user.id)}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${hasNote ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${hasNote ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>
                   {user.username[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <NameWithCrown name={user.username} className="text-sm font-semibold text-gray-800" />
                   {isSelf && <span className="text-[10px] text-gray-400 ml-1">나</span>}
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${hasNote ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'}`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${hasNote ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>
                   {hasNote ? '분석 완료' : '미등록'}
                 </span>
                 {expanded ? <ChevronUp className="w-4 h-4 text-gray-300 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-300 flex-shrink-0" />}
@@ -402,7 +402,7 @@ JSON만 반환하세요.
                     <div>
                       <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-violet-400" />
+                          <Sparkles className="w-3 h-3 text-primary-400" />
                           <span className="text-[10px] text-gray-400">{note!.createdByName} 업로드 · {new Date(note!.createdAt).toLocaleDateString('ko-KR')}</span>
                         </div>
                         {canDelete && (
@@ -417,15 +417,15 @@ JSON만 반환하세요.
                           <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf" className="hidden"
                             onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
                           <button
-                            className="text-[10px] text-gray-400 hover:text-violet-500 transition flex items-center gap-1"
+                            className="text-[10px] text-gray-400 hover:text-primary-500 transition flex items-center gap-1"
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <Upload className="w-3 h-3" /> 다시 분석
                           </button>
                           {pdfFile && (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 rounded-xl">
-                              <span className="text-xs font-medium text-violet-700 flex-1 truncate">{pdfFile.name}</span>
-                              <button className="text-violet-400 hover:text-violet-600 flex-shrink-0"
+                            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
+                              <span className="text-xs font-medium text-primary-700 flex-1 truncate">{pdfFile.name}</span>
+                              <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
                                 onClick={() => { setPdfFile(null); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -434,7 +434,7 @@ JSON만 반환하세요.
                           {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
                           {pdfFile && (
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
-                              className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
+                              className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
                                 ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
@@ -448,16 +448,16 @@ JSON만 반환하세요.
                       <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf" className="hidden"
                         onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
                       {pdfFile ? (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-violet-50 rounded-xl">
-                          <span className="text-xs font-medium text-violet-700 flex-1 truncate">{pdfFile.name}</span>
-                          <button className="text-violet-400 hover:text-violet-600 flex-shrink-0"
+                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
+                          <span className="text-xs font-medium text-primary-700 flex-1 truncate">{pdfFile.name}</span>
+                          <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
                             onClick={() => { setPdfFile(null); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <button
-                          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-violet-300 hover:text-violet-500 transition"
+                          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-primary-300 hover:text-primary-500 transition"
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <Upload className="w-4 h-4" /> PDF 파일 선택
@@ -467,7 +467,7 @@ JSON만 반환하세요.
                       <button
                         disabled={!pdfFile || analyzing}
                         onClick={() => handleAnalyze(user)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-violet-600 hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
                           ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>

@@ -11,7 +11,7 @@ interface Props {
 const TAG_OPTIONS = ['작품 목록', '어휘', '학습지', '기출 문제', '문법', '기타'];
 
 const TAG_COLOR: Record<string, string> = {
-  '작품 목록': 'bg-indigo-50 text-indigo-600',
+  '작품 목록': 'bg-primary-50 text-primary-600',
   '어휘':      'bg-emerald-50 text-emerald-600',
   '학습지':    'bg-amber-50 text-amber-600',
   '기출 문제': 'bg-rose-50 text-rose-600',

@@ -46,7 +46,7 @@ export default function FeedbackSection({ feedbacks, currentUser, entryOwnerId, 
 
       <div className="space-y-2">
         {feedbacks.map(fb => (
-          <div key={fb.id} className="bg-indigo-50 rounded-xl px-4 py-3 border border-indigo-100">
+          <div key={fb.id} className="bg-primary-50 rounded-xl px-4 py-3 border border-primary-100">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-primary-700">{fb.authorName}</span>
               <div className="flex items-center gap-1">

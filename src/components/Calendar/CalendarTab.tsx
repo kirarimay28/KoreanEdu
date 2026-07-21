@@ -23,7 +23,7 @@ const COLOR_OPTIONS: { value: EventColor; bg: string; dot: string; pill: string 
   { value: 'green',  bg: 'bg-green-500',  dot: 'bg-green-500',  pill: 'bg-green-100 text-green-700' },
   { value: 'red',    bg: 'bg-red-400',    dot: 'bg-red-400',    pill: 'bg-red-100 text-red-600' },
   { value: 'orange', bg: 'bg-orange-400', dot: 'bg-orange-400', pill: 'bg-orange-100 text-orange-700' },
-  { value: 'purple', bg: 'bg-purple-500', dot: 'bg-purple-500', pill: 'bg-purple-100 text-purple-700' },
+  { value: 'purple', bg: 'bg-primary-500', dot: 'bg-primary-500', pill: 'bg-primary-100 text-primary-700' },
 ];
 
 function colorPill(color: EventColor) {

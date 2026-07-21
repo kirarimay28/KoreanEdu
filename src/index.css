@@ -27,7 +27,9 @@ body {
 
 @layer components {
   .tab-active {
-    @apply bg-primary-600 text-white font-semibold shadow-sm;
+    @apply text-white font-semibold;
+    background: linear-gradient(135deg, #2b6460 0%, #52988c 100%);
+    box-shadow: 0 2px 8px rgba(43,100,96,0.22), 0 0 0 1px rgba(255,255,255,0.15) inset;
   }
   .tab-inactive {
     @apply text-gray-500 font-medium;
@@ -37,10 +39,14 @@ body {
     background: rgba(255, 255, 255, 0.88);
   }
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition bg-white text-gray-800 placeholder-gray-400 text-sm;
+    @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm;
+    background: rgba(255, 255, 255, 0.80);
+    border: 1px solid rgba(121, 179, 168, 0.28);
   }
   .textarea-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition bg-white text-gray-800 placeholder-gray-400 text-sm resize-none;
+    @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm resize-none;
+    background: rgba(255, 255, 255, 0.80);
+    border: 1px solid rgba(121, 179, 168, 0.28);
   }
   .card {
     @apply rounded-2xl p-5;
@@ -56,7 +62,12 @@ body {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md;
   }
   .btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-6 py-3 rounded-xl transition-all duration-200;
+    @apply text-primary-700 font-medium px-6 py-3 rounded-xl transition-all duration-200;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(121, 179, 168, 0.25);
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.88);
   }
   .section-title {
     @apply text-sm font-semibold text-primary-700 uppercase tracking-wide mb-2;

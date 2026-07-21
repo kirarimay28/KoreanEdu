@@ -130,8 +130,8 @@ export default function ResourceTab({ currentUser }: Props) {
                       onClick={() => setSelectedRecipientId(user.id)}
                       className={`px-3 py-1.5 text-sm rounded-full font-medium transition-all border ${
                         selectedRecipientId === user.id
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                          ? 'bg-primary-600 text-white border-primary-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:text-primary-600'
                       }`}
                     >
                       {user.username}
@@ -175,7 +175,7 @@ export default function ResourceTab({ currentUser }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <span className="text-sm font-medium text-gray-700">{req.recipientName}</span>
-                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
                           {req.category}
                         </span>
                       </div>
@@ -209,7 +209,7 @@ export default function ResourceTab({ currentUser }: Props) {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-gray-800">{req.requesterName}</span>
-                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">
                         {req.category}
                       </span>
                     </div>
