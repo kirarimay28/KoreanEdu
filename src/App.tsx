@@ -177,7 +177,7 @@ export default function App() {
           />
 
           {/* Panel — celadon frosted glass */}
-          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(238,244,242,0.82)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(232,242,238,0.68)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}>
 
             {/* Close */}
             <button
@@ -307,7 +307,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(238,244,242,0.84)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(121,179,168,0.22)', boxShadow: '0 1px 10px rgba(43,100,96,0.06)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(228,240,236,0.76)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(121,179,168,0.20)', boxShadow: '0 1px 12px rgba(43,100,96,0.07)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
@@ -358,7 +358,7 @@ export default function App() {
               <ChevronLeft className="w-4 h-4" />
               로비로 돌아가기
             </button>
-            <div key={refreshKey}>
+            <div key={refreshKey} className="jade-enter">
               {activeTab === 'qna'        && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar'   && <CalendarTab currentUser={currentUser} />}
               {activeTab === 'attendance' && <AttendanceTab />}
@@ -414,7 +414,7 @@ export default function App() {
               })}
             </div>
 
-            <div>
+            <div key={activeTab} className="jade-enter">
               {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'personal'    && <PersonalStudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'fine'        && <FineTab currentUser={currentUser} />}

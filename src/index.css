@@ -11,11 +11,12 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #eef4f2;
+  background-color: #e4f0ec;
   background-image:
-    radial-gradient(ellipse at 12% 0%, rgba(170,207,197,0.30) 0%, transparent 52%),
-    radial-gradient(ellipse at 88% 100%, rgba(121,179,168,0.22) 0%, transparent 52%),
-    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.10) 0%, transparent 70%);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M24 2L46 24L24 46L2 24Z' stroke='%2379b3a8' stroke-opacity='.10' stroke-width='.55' fill='none'/%3E%3Ccircle cx='24' cy='24' r='1.2' fill='%2379b3a8' fill-opacity='.06'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 88% 58% at 16% 6%, rgba(150,193,183,0.42) 0%, transparent 54%),
+    radial-gradient(ellipse 72% 55% at 84% 94%, rgba(82,152,140,0.30) 0%, transparent 54%),
+    radial-gradient(ellipse 50% 42% at 50% 50%, rgba(255,255,255,0.14) 0%, transparent 65%);
   background-attachment: fixed;
   color: #1a2e2a;
   -webkit-font-smoothing: antialiased;
@@ -33,30 +34,36 @@ body {
   }
   .tab-inactive {
     @apply text-gray-500 font-medium;
-    background: rgba(255, 255, 255, 0.62);
+    background: rgba(255, 255, 255, 0.45);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .tab-inactive:hover {
-    background: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.72);
+    color: #2b6460;
   }
   .input-field {
     @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm;
-    background: rgba(255, 255, 255, 0.80);
-    border: 1px solid rgba(121, 179, 168, 0.28);
+    background: rgba(255, 255, 255, 0.60);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(121, 179, 168, 0.30);
   }
   .textarea-field {
     @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm resize-none;
-    background: rgba(255, 255, 255, 0.80);
-    border: 1px solid rgba(121, 179, 168, 0.28);
+    background: rgba(255, 255, 255, 0.60);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(121, 179, 168, 0.30);
   }
   .card {
     @apply rounded-2xl p-5;
-    background: rgba(255, 255, 255, 0.70);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: rgba(255, 255, 255, 0.48);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
     box-shadow:
-      0 2px 16px rgba(43, 100, 96, 0.07),
-      0 0 0 1px rgba(255, 255, 255, 0.52) inset;
+      0 2px 20px rgba(43, 100, 96, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.45) inset;
   }
   .btn-primary {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md;
@@ -99,6 +106,36 @@ body {
 @keyframes auth-shimmer {
   0%   { background-position: 0% center; }
   100% { background-position: 100% center; }
+}
+
+@keyframes jade-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.jade-enter {
+  animation: jade-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+.logo-float {
+  animation: logo-float 5s ease-in-out infinite;
+}
+
+@keyframes tab-glow-in {
+  from { opacity: 0.6; transform: scale(0.97); }
+  to   { opacity: 1;   transform: scale(1); }
+}
+.tab-active {
+  animation: tab-glow-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 textarea {

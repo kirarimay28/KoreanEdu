@@ -134,15 +134,16 @@ export default function AuthPage({ onLogin }: Props) {
         {/* Hero */}
         <div className="text-center mb-10">
           <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl mb-5 mx-auto"
+            className="logo-float w-20 h-20 rounded-3xl flex items-center justify-center mb-5 mx-auto"
             style={{
-              background: 'linear-gradient(145deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
-              border: '1px solid rgba(255,255,255,0.55)',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 8px 32px rgba(43,100,96,0.25), 0 0 0 1px rgba(255,255,255,0.4) inset',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.12) 100%)',
+              border: '1px solid rgba(255,255,255,0.60)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              boxShadow: '0 10px 40px rgba(43,100,96,0.22), 0 0 0 1px rgba(255,255,255,0.45) inset',
             }}
           >
-            <BookOpen className="w-10 h-10" style={{ color: '#0f2826', opacity: 0.85 }} />
+            <BookOpen className="w-10 h-10" style={{ color: '#0f2826', opacity: 0.80 }} />
           </div>
           <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
             나랏말ᄊᆞ미
