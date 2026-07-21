@@ -132,9 +132,20 @@ export default function App() {
     setEducationMode(null);
   }
 
+  const jadeBg = {
+    background: `
+      repeating-linear-gradient(45deg,  rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+      repeating-linear-gradient(-45deg, rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+      radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
+      radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
+      linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
+    `,
+    backgroundSize: '28px 28px, 28px 28px, 100% 100%, 100% 100%, 100% 100%',
+  } as React.CSSProperties;
+
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={jadeBg}>
         <div className="w-10 h-10 border-4 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
         <p className="text-gray-500 text-sm">데이터를 불러오는 중...</p>
       </div>
@@ -143,7 +154,7 @@ export default function App() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 gap-4 p-8 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center" style={jadeBg}>
         <p className="text-red-500 font-semibold">서버 연결에 실패했습니다.</p>
         <p className="text-gray-500 text-sm">네트워크를 확인하고 다시 시도해 주세요.</p>
         <button
@@ -165,7 +176,20 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen">
+    <div
+      className="min-h-screen"
+      style={{
+        background: `
+          repeating-linear-gradient(45deg,  rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+          repeating-linear-gradient(-45deg, rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+          radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
+          radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
+          radial-gradient(ellipse 55% 45% at 50% 45%, rgba(255,255,255,0.22) 0%, transparent 60%),
+          linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
+        `,
+        backgroundSize: '28px 28px, 28px 28px, 100% 100%, 100% 100%, 100% 100%, 100% 100%',
+      }}
+    >
 
       {/* ── Side Panel Overlay ── */}
       {sideOpen && (

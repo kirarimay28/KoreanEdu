@@ -11,13 +11,7 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #e4f0ec;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M24 2L46 24L24 46L2 24Z' stroke='%2379b3a8' stroke-opacity='.10' stroke-width='.55' fill='none'/%3E%3Ccircle cx='24' cy='24' r='1.2' fill='%2379b3a8' fill-opacity='.06'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse 88% 58% at 16% 6%, rgba(150,193,183,0.42) 0%, transparent 54%),
-    radial-gradient(ellipse 72% 55% at 84% 94%, rgba(82,152,140,0.30) 0%, transparent 54%),
-    radial-gradient(ellipse 50% 42% at 50% 50%, rgba(255,255,255,0.14) 0%, transparent 65%);
-  background-attachment: fixed;
+  background-color: #aecfc7;
   color: #1a2e2a;
   -webkit-font-smoothing: antialiased;
 }
