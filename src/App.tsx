@@ -134,13 +134,14 @@ export default function App() {
 
   const jadeBg = {
     background: `
-      repeating-linear-gradient(45deg,  rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
-      repeating-linear-gradient(-45deg, rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
+      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
       radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
       radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
       linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
     `,
-    backgroundSize: '28px 28px, 28px 28px, 100% 100%, 100% 100%, 100% 100%',
+    backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%',
+    backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0',
   } as React.CSSProperties;
 
   if (loading) {
@@ -180,16 +181,81 @@ export default function App() {
       className="min-h-screen"
       style={{
         background: `
-          repeating-linear-gradient(45deg,  rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
-          repeating-linear-gradient(-45deg, rgba(43,100,96,0.07) 0, rgba(43,100,96,0.07) 0.8px, transparent 0, transparent 28px),
+          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
+          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
           radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
           radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
           radial-gradient(ellipse 55% 45% at 50% 45%, rgba(255,255,255,0.22) 0%, transparent 60%),
           linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
         `,
-        backgroundSize: '28px 28px, 28px 28px, 100% 100%, 100% 100%, 100% 100%, 100% 100%',
+        backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%',
+        backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0, 0 0',
       }}
     >
+
+      {/* ─── 곤룡포 decorative overlay (cloud scrolls · dragon medallion · waves) ─── */}
+      <svg
+        aria-hidden="true"
+        style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        {/* Top-left cloud scroll (구름문) */}
+        <g opacity="0.13" fill="#1f4c49">
+          <circle cx="4" cy="10" r="4.5"/>
+          <circle cx="11" cy="6" r="5.5"/>
+          <circle cx="20" cy="5" r="5"/>
+          <circle cx="28" cy="7.5" r="4.5"/>
+          <circle cx="34" cy="12" r="3.8"/>
+          <path d="M0 11 Q11 1 20 5 Q29 1 35 13 L35 19 Q22 16 10 16.5 Q2 16.5 0 13Z"/>
+          <path d="M0 13 Q-4 20 3 26 Q9 31 16 25 Q19 19 11 16.5" stroke="#1f4c49" strokeWidth="2" fill="none" strokeLinecap="round" strokeOpacity="0.65"/>
+        </g>
+        {/* Top-right cloud scroll (mirrored) */}
+        <g opacity="0.13" fill="#1f4c49" transform="translate(100,0) scale(-1,1)">
+          <circle cx="4" cy="10" r="4.5"/>
+          <circle cx="11" cy="6" r="5.5"/>
+          <circle cx="20" cy="5" r="5"/>
+          <circle cx="28" cy="7.5" r="4.5"/>
+          <circle cx="34" cy="12" r="3.8"/>
+          <path d="M0 11 Q11 1 20 5 Q29 1 35 13 L35 19 Q22 16 10 16.5 Q2 16.5 0 13Z"/>
+          <path d="M0 13 Q-4 20 3 26 Q9 31 16 25 Q19 19 11 16.5" stroke="#1f4c49" strokeWidth="2" fill="none" strokeLinecap="round" strokeOpacity="0.65"/>
+        </g>
+        {/* Dragon medallion — 원형 용문 */}
+        <g opacity="0.10" transform="translate(50,44)">
+          <circle r="13.5" fill="none" stroke="#1f4c49" strokeWidth="0.7"/>
+          <circle r="12" fill="none" stroke="#1f4c49" strokeWidth="0.3"/>
+          {/* Serpentine body */}
+          <path d="M-7 -6 C-4 -10 3 -9 5 -4 C7 1 2 6 5 10 C8 13 11 9 9 4"
+            stroke="#1f4c49" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9 4 C8 0 10 -3 8 -6" stroke="#1f4c49" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+          {/* Head */}
+          <ellipse cx="-7" cy="-6" rx="3" ry="2.2" fill="#1f4c49"/>
+          <path d="M-9 -5 L-12.5 -3.5 M-10 -7 L-13 -6" stroke="#1f4c49" strokeWidth="1.1" strokeLinecap="round"/>
+          {/* Horns */}
+          <path d="M-7 -8.2 L-9.5 -12 M-5 -8 L-4 -12" stroke="#1f4c49" strokeWidth="0.8" strokeLinecap="round"/>
+          {/* Claws */}
+          <path d="M-1 -6 L-2 -9 M-1 -6 L0.5 -9.5 M-1 -6 L1.5 -9" stroke="#1f4c49" strokeWidth="0.7" strokeLinecap="round"/>
+          <path d="M3 3 L2 6.5 M3 3 L4.5 6 M3 3 L5.5 4.5" stroke="#1f4c49" strokeWidth="0.7" strokeLinecap="round"/>
+          {/* Pearl (여의주) */}
+          <circle cx="10.5" cy="-5" r="2.2" fill="none" stroke="#1f4c49" strokeWidth="0.6"/>
+          <circle cx="10.5" cy="-5" r="0.9" fill="#1f4c49"/>
+          <path d="M9 -7.2 L10.5 -9.5 L12 -7.2" stroke="#1f4c49" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
+          {/* Cloud puffs (구름) */}
+          <circle cx="-2" cy="2" r="1.5" fill="#1f4c49"/>
+          <circle cx="2" cy="0" r="1.3" fill="#1f4c49"/>
+          <circle cx="-4" cy="-1" r="1.2" fill="#1f4c49"/>
+          <circle cx="3" cy="-2" r="1.1" fill="#1f4c49"/>
+          <circle cx="7" cy="2" r="1.1" fill="#1f4c49"/>
+        </g>
+        {/* Bottom wave bands — 파도문 */}
+        <g opacity="0.12">
+          <path d="M0 83 Q6.25 79 12.5 83 Q18.75 87 25 83 Q31.25 79 37.5 83 Q43.75 87 50 83 Q56.25 79 62.5 83 Q68.75 87 75 83 Q81.25 79 87.5 83 Q93.75 87 100 83 L100 90 Q93.75 94 87.5 90 Q81.25 86 75 90 Q68.75 94 62.5 90 Q56.25 86 50 90 Q43.75 94 37.5 90 Q31.25 86 25 90 Q18.75 94 12.5 90 Q6.25 86 0 90Z" fill="#1f4c49" fillOpacity="0.22"/>
+          <path d="M0 88 Q6.25 84 12.5 88 Q18.75 92 25 88 Q31.25 84 37.5 88 Q43.75 92 50 88 Q56.25 84 62.5 88 Q68.75 92 75 88 Q81.25 84 87.5 88 Q93.75 92 100 88 L100 95 Q93.75 99 87.5 95 Q81.25 91 75 95 Q68.75 99 62.5 95 Q56.25 91 50 95 Q43.75 99 37.5 95 Q31.25 91 25 95 Q18.75 99 12.5 95 Q6.25 91 0 95Z" fill="#1f4c49" fillOpacity="0.38"/>
+          <path d="M0 93 Q6.25 89 12.5 93 Q18.75 97 25 93 Q31.25 89 37.5 93 Q43.75 97 50 93 Q56.25 89 62.5 93 Q68.75 97 75 93 Q81.25 89 87.5 93 Q93.75 97 100 93 L100 100 L0 100Z" fill="#1f4c49" fillOpacity="0.55"/>
+          <path d="M0 88 Q6.25 84 12.5 88 Q18.75 92 25 88 Q31.25 84 37.5 88 Q43.75 92 50 88 Q56.25 84 62.5 88 Q68.75 92 75 88 Q81.25 84 87.5 88 Q93.75 92 100 88" stroke="white" strokeOpacity="0.22" strokeWidth="0.4" fill="none"/>
+          <path d="M0 83 Q6.25 79 12.5 83 Q18.75 87 25 83 Q31.25 79 37.5 83 Q43.75 87 50 83 Q56.25 79 62.5 83 Q68.75 87 75 83 Q81.25 79 87.5 83 Q93.75 87 100 83" stroke="white" strokeOpacity="0.16" strokeWidth="0.35" fill="none"/>
+        </g>
+      </svg>
 
       {/* ── Side Panel Overlay ── */}
       {sideOpen && (
@@ -361,7 +427,7 @@ export default function App() {
       </header>
 
       {/* ── Main content ── */}
-      <main className="max-w-2xl mx-auto px-4 py-4">
+      <main className="max-w-2xl mx-auto px-4 py-4" style={{ position: 'relative', zIndex: 1 }}>
 
         {/* Education answer page */}
         {educationMode ? (
