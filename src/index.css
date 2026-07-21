@@ -11,8 +11,13 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #f3f8f5;
-  color: #1a2419;
+  background-color: #eef4f2;
+  background-image:
+    radial-gradient(ellipse at 12% 0%, rgba(170,207,197,0.30) 0%, transparent 52%),
+    radial-gradient(ellipse at 88% 100%, rgba(121,179,168,0.22) 0%, transparent 52%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.10) 0%, transparent 70%);
+  background-attachment: fixed;
+  color: #1a2e2a;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -25,7 +30,11 @@ body {
     @apply bg-primary-600 text-white font-semibold shadow-sm;
   }
   .tab-inactive {
-    @apply bg-white text-gray-500 hover:bg-gray-50 font-medium;
+    @apply text-gray-500 font-medium;
+    background: rgba(255, 255, 255, 0.62);
+  }
+  .tab-inactive:hover {
+    background: rgba(255, 255, 255, 0.88);
   }
   .input-field {
     @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition bg-white text-gray-800 placeholder-gray-400 text-sm;
@@ -34,7 +43,14 @@ body {
     @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition bg-white text-gray-800 placeholder-gray-400 text-sm resize-none;
   }
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-5;
+    @apply rounded-2xl p-5;
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    box-shadow:
+      0 2px 16px rgba(43, 100, 96, 0.07),
+      0 0 0 1px rgba(255, 255, 255, 0.52) inset;
   }
   .btn-primary {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md;
@@ -53,18 +69,20 @@ body {
 .auth-logo-shimmer {
   background: linear-gradient(
     120deg,
-    #113824 0%,
-    #27704f 25%,
-    #77be9b 50%,
-    #27704f 75%,
-    #113824 100%
+    #0f2826 0%,
+    #2b6460 18%,
+    #79b3a8 40%,
+    #e2f0ec 52%,
+    #79b3a8 64%,
+    #2b6460 82%,
+    #0f2826 100%
   );
-  background-size: 220% auto;
+  background-size: 260% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 3px 14px rgba(39, 112, 79, 0.35));
-  animation: auth-shimmer 3s ease-in-out infinite alternate;
+  filter: drop-shadow(0 3px 16px rgba(43, 100, 96, 0.28));
+  animation: auth-shimmer 4s ease-in-out infinite alternate;
 }
 
 @keyframes auth-shimmer {

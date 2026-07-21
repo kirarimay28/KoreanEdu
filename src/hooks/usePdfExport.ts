@@ -15,7 +15,7 @@ export function usePdfExport(filename: string) {
 
       const canvas = await html2canvas(contentRef.current, {
         scale: 2,
-        backgroundColor: '#f8f9fd',
+        backgroundColor: '#eef4f2',
         useCORS: true,
         logging: false,
       });

@@ -254,13 +254,13 @@ export default function VocabStudyTab() {
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+              background: 'linear-gradient(135deg, #d4e8e2 0%, #aacfc5 100%)',
             }}
           >
-            <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-4">현대어</p>
+            <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-4">현대어</p>
             <p className="text-xl font-black text-gray-800 text-center leading-relaxed">{card.answer}</p>
-            <div className="mt-6 pt-4 border-t border-violet-200 w-full text-center">
-              <p className="text-xs text-violet-500 font-semibold">{card.vocab}</p>
+            <div className="mt-6 pt-4 border-t border-primary-200 w-full text-center">
+              <p className="text-xs text-primary-600 font-semibold">{card.vocab}</p>
             </div>
           </div>
         </div>

@@ -165,7 +165,7 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen bg-primary-50/40">
+    <div className="min-h-screen">
 
       {/* ── Side Panel Overlay ── */}
       {sideOpen && (
@@ -176,8 +176,8 @@ export default function App() {
             onClick={() => setSideOpen(false)}
           />
 
-          {/* Panel — frosted glass */}
-          <div className="relative w-[82%] max-w-[320px] bg-white/75 backdrop-blur-2xl h-full shadow-2xl flex flex-col z-10 overflow-hidden">
+          {/* Panel — celadon frosted glass */}
+          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(238,244,242,0.82)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
 
             {/* Close */}
             <button
@@ -187,13 +187,14 @@ export default function App() {
               <X className="w-4 h-4" />
             </button>
 
-            {/* Profile header — sage green gradient */}
+            {/* Profile header — celadon glaze */}
             <div
               className="px-6 pt-10 pb-6 flex-shrink-0"
               style={{
                 background: `
-                  radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.65) 0%, rgba(169,217,190,0.35) 42%, transparent 65%),
-                  linear-gradient(145deg, #c8e6d4 0%, #a9d9be 50%, #8ecba6 100%)
+                  radial-gradient(ellipse at 22% 20%, rgba(255,255,255,0.82) 0%, rgba(224,242,238,0.4) 30%, transparent 54%),
+                  radial-gradient(ellipse at 76% 82%, rgba(121,179,168,0.28) 0%, transparent 50%),
+                  linear-gradient(148deg, #bdd9d3 0%, #96c1b7 30%, #79b3a8 62%, #8cbdb4 100%)
                 `,
               }}
             >
@@ -283,7 +284,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(238,244,242,0.82)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(121,179,168,0.18)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
@@ -371,7 +372,7 @@ export default function App() {
             )}
 
             {/* Main tab bar */}
-            <div className="flex gap-0.5 mb-4 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+            <div className="flex gap-0.5 mb-4 p-1 rounded-xl overflow-x-auto" style={{ background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.55)' }}>
               {MAIN_TABS.map(tab => {
                 const Icon = tab.icon;
                 return (

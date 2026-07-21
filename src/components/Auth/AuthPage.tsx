@@ -55,34 +55,78 @@ export default function AuthPage({ onLogin }: Props) {
       className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden"
       style={{
         background: `
-          radial-gradient(ellipse at 38% 32%, rgba(255,255,255,0.62) 0%, rgba(169,217,190,0.28) 42%, transparent 65%),
-          linear-gradient(145deg, #c8e6d4 0%, #a9d9be 50%, #8ecba6 100%)
+          radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.88) 0%, rgba(224,242,238,0.5) 32%, transparent 56%),
+          radial-gradient(ellipse at 78% 84%, rgba(121,179,168,0.32) 0%, rgba(82,152,140,0.18) 36%, transparent 60%),
+          radial-gradient(ellipse at 60% 38%, rgba(255,255,255,0.16) 0%, transparent 30%),
+          radial-gradient(ellipse at 38% 68%, rgba(170,207,197,0.14) 0%, transparent 40%),
+          linear-gradient(152deg, #bdd9d3 0%, #96c1b7 28%, #79b3a8 58%, #8cbdB4 82%, #a6c8c0 100%)
         `
       }}
     >
-      {/* Botanical decorations */}
-      <svg className="absolute top-0 right-0 w-52 h-52 opacity-[0.18] pointer-events-none" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M160 10 C140 40 120 60 100 100" stroke="#1e5a3f" strokeWidth="1.5" strokeLinecap="round"/>
-        <ellipse cx="130" cy="48" rx="22" ry="12" transform="rotate(-40 130 48)" fill="#27704f"/>
-        <ellipse cx="115" cy="68" rx="19" ry="10" transform="rotate(-30 115 68)" fill="#358a63"/>
-        <ellipse cx="107" cy="88" rx="16" ry="9" transform="rotate(-20 107 88)" fill="#4ea37c"/>
-        <path d="M170 40 C155 55 148 70 143 90" stroke="#1e5a3f" strokeWidth="1" strokeLinecap="round"/>
-        <ellipse cx="158" cy="58" rx="14" ry="7" transform="rotate(-50 158 58)" fill="#358a63"/>
-        <ellipse cx="150" cy="74" rx="12" ry="6" transform="rotate(-38 150 74)" fill="#4ea37c"/>
+      {/* Crane motif — top-right */}
+      <svg
+        className="absolute top-0 right-0 w-72 h-64 pointer-events-none"
+        viewBox="0 0 300 260" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ opacity: 0.17 }}
+      >
+        {/* Body */}
+        <ellipse cx="155" cy="140" rx="48" ry="15" transform="rotate(-8 155 140)" fill="rgba(43,100,96,0.9)"/>
+        {/* Tail feathers */}
+        <path d="M110 148 C88 156 68 164 50 174" stroke="rgba(43,100,96,1)" strokeWidth="3.5" strokeLinecap="round"/>
+        <path d="M113 153 C92 157 72 160 56 163" stroke="rgba(43,100,96,0.8)" strokeWidth="3" strokeLinecap="round"/>
+        <path d="M116 157 C98 159 80 157 66 154" stroke="rgba(43,100,96,0.65)" strokeWidth="2.5" strokeLinecap="round"/>
+        {/* Neck */}
+        <path d="M196 128 C202 110 206 92 208 76" stroke="rgba(43,100,96,1)" strokeWidth="5.5" strokeLinecap="round"/>
+        {/* Head */}
+        <ellipse cx="210" cy="69" rx="11" ry="9" fill="rgba(43,100,96,0.95)"/>
+        {/* Red crown */}
+        <ellipse cx="211" cy="61" rx="5.5" ry="3.2" fill="rgba(155,55,48,0.85)"/>
+        {/* Eye */}
+        <circle cx="215" cy="70" r="2.2" fill="rgba(43,100,96,1)"/>
+        {/* Beak */}
+        <path d="M219 68 L236 63" stroke="rgba(43,100,96,1)" strokeWidth="2.5" strokeLinecap="round"/>
+        {/* Upper wing */}
+        <path d="M112 145 C122 105 150 80 196 128" fill="rgba(43,100,96,0.55)"/>
+        {/* Wing primary feather lines */}
+        <path d="M118 120 L108 102 M133 106 L128 88 M150 96 L148 77 M168 91 L169 72 M184 91 L188 73"
+          stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round"/>
+        {/* Upper wing edge */}
+        <path d="M112 145 C124 102 152 78 196 128" stroke="rgba(43,100,96,1)" strokeWidth="1.2" fill="none"/>
+        {/* Lower wing */}
+        <path d="M112 148 C130 172 164 174 196 152" fill="rgba(43,100,96,0.35)"/>
+        <path d="M112 148 C132 174 166 176 196 152" stroke="rgba(43,100,96,0.8)" strokeWidth="1" fill="none"/>
+        {/* Legs */}
+        <path d="M148 157 L142 192" stroke="rgba(43,100,96,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M163 159 L158 194" stroke="rgba(43,100,96,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
+        {/* Feet */}
+        <path d="M142 192 L134 198 M142 192 L142 200 M142 192 L150 198"
+          stroke="rgba(43,100,96,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M158 194 L150 200 M158 194 L158 202 M158 194 L166 200"
+          stroke="rgba(43,100,96,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
-      <svg className="absolute bottom-0 left-0 w-44 h-44 opacity-[0.15] pointer-events-none" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 170 C40 140 60 110 80 80" stroke="#1e5a3f" strokeWidth="1.5" strokeLinecap="round"/>
-        <ellipse cx="48" cy="130" rx="20" ry="11" transform="rotate(40 48 130)" fill="#27704f"/>
-        <ellipse cx="62" cy="110" rx="18" ry="9" transform="rotate(30 62 110)" fill="#358a63"/>
-        <ellipse cx="73" cy="92" rx="15" ry="8" transform="rotate(20 73 92)" fill="#4ea37c"/>
-        <circle cx="30" cy="160" r="3" fill="#77be9b"/>
-        <circle cx="16" cy="155" r="2" fill="#77be9b"/>
+
+      {/* Cloud motifs — bottom-left */}
+      <svg
+        className="absolute bottom-10 left-0 w-64 pointer-events-none"
+        viewBox="0 0 260 90" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ opacity: 0.16 }}
+      >
+        <path d="M22 72 Q32 48 52 54 Q56 32 80 34 Q104 28 108 50 Q126 40 138 56 Q156 48 162 66 L22 66Z"
+          fill="rgba(43,100,96,0.9)" stroke="rgba(43,100,96,1)" strokeWidth="1"/>
+        <path d="M14 80 Q28 60 46 64 Q50 50 66 52 Q80 48 84 62 Q96 58 102 70 L14 70Z"
+          fill="rgba(43,100,96,0.55)" stroke="rgba(43,100,96,0.8)" strokeWidth="0.8"/>
+        <path d="M150 76 Q160 62 172 66 Q174 56 186 58 Q196 54 198 66 L150 68Z"
+          fill="rgba(43,100,96,0.4)" stroke="rgba(43,100,96,0.65)" strokeWidth="0.7"/>
       </svg>
-      <svg className="absolute top-1/3 left-4 w-16 h-28 opacity-[0.12] pointer-events-none" viewBox="0 0 60 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M30 100 C30 70 20 40 30 10" stroke="#27704f" strokeWidth="1.2" strokeLinecap="round"/>
-        <ellipse cx="20" cy="75" rx="14" ry="7" transform="rotate(20 20 75)" fill="#4ea37c"/>
-        <ellipse cx="38" cy="55" rx="14" ry="7" transform="rotate(-15 38 55)" fill="#358a63"/>
-        <ellipse cx="22" cy="38" rx="12" ry="6" transform="rotate(25 22 38)" fill="#27704f"/>
+
+      {/* Small cloud — top-left */}
+      <svg
+        className="absolute top-16 left-8 w-32 pointer-events-none"
+        viewBox="0 0 130 60" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ opacity: 0.12 }}
+      >
+        <path d="M12 44 Q20 26 36 30 Q38 14 56 16 Q72 12 76 28 Q90 22 96 36 L12 38Z"
+          fill="rgba(43,100,96,0.9)" stroke="rgba(43,100,96,1)" strokeWidth="0.8"/>
       </svg>
 
       <div className="w-full max-w-sm relative">
@@ -91,9 +135,14 @@ export default function AuthPage({ onLogin }: Props) {
         <div className="text-center mb-10">
           <div
             className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl mb-5 mx-auto"
-            style={{ background: 'linear-gradient(145deg, #27704f, #1e5a3f)' }}
+            style={{
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%)',
+              border: '1px solid rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 8px 32px rgba(43,100,96,0.25), 0 0 0 1px rgba(255,255,255,0.4) inset',
+            }}
           >
-            <BookOpen className="w-10 h-10 text-white" />
+            <BookOpen className="w-10 h-10" style={{ color: '#0f2826', opacity: 0.85 }} />
           </div>
           <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
             나랏말ᄊᆞ미
@@ -107,7 +156,7 @@ export default function AuthPage({ onLogin }: Props) {
         </div>
 
         {mode === 'select' && (
-          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <p className="text-center text-[13px] text-gray-400 mb-6 leading-relaxed">
               스터디 구성원만 이용할 수 있습니다.
             </p>
@@ -129,7 +178,7 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'login' && (
-          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <div className="flex items-center gap-2 mb-6">
               <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
@@ -172,7 +221,7 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'signup' && (
-          <div className="bg-white rounded-3xl shadow-md border border-gray-100 p-7">
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <div className="flex items-center gap-2 mb-6">
               <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
