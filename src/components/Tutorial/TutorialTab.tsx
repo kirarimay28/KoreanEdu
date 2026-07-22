@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
-  BookOpen, GraduationCap, ClipboardList, HelpCircle, CalendarDays,
+  BookOpen, GraduationCap, HelpCircle, CalendarDays,
   Megaphone, CalendarCheck, Mail, Plane, Inbox, Users,
   Map, BookMarked, TableProperties, ChevronDown, ChevronUp,
+  Clock, Receipt, Languages,
 } from 'lucide-react';
 
 interface Tip { emoji: string; text: string; }
@@ -31,9 +32,9 @@ const SECTIONS: Section[] = [
     title: '앱 전체 구조',
     summary: '나랏말의 화면 구성과 기본 사용법',
     tips: [
-      { emoji: '📱', text: '하단 탭 바로 6개 화면(스터디 · 개인공부 · 반성 · 질의응답 · 캘린더 · 과제)을 이동해요.' },
-      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관에 접근해요.' },
-      { emoji: '👑', text: '방장 이름 옆엔 보라색 왕관, 부방장 이름 옆엔 파란색 왕관이 표시돼요.' },
+      { emoji: '📱', text: '하단 탭으로 5개 화면(스터디 · 타이머 · 벌금 · 과제 · 고어)을 이동해요.' },
+      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 질의응답 · 캘린더 · 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관 · 커리큘럼에 접근해요.' },
+      { emoji: '👑', text: '방장 이름 옆엔 금빛 왕관, 부방장 이름 옆엔 파란색 왕관이 표시돼요.' },
       { emoji: '🔄', text: '새로고침(↻) 버튼을 누르면 다른 멤버가 올린 최신 데이터를 불러와요.' },
       { emoji: '🔐', text: '로그아웃 후 재접속해도 모든 기록은 서버에 저장돼 그대로 유지돼요.' },
     ],
@@ -46,14 +47,14 @@ const SECTIONS: Section[] = [
     borderColor: 'border-primary-100',
     badge: '로비',
     title: '메인 화면',
-    summary: '공지사항 · 스터디 장소 · 오늘의 단어 · 교육관 형성 질문',
+    summary: '공지사항 · 스터디 장소 · 오늘의 단어',
     subs: [
       {
         heading: '📢 공지사항',
         tips: [
           { emoji: '📌', text: '핀 고정 공지는 항상 맨 위에 표시돼요.' },
           { emoji: '👆', text: '제목을 탭하면 상세 내용이 펼쳐지고, 카카오톡으로 공유할 수 있어요.' },
-          { emoji: '✏️', text: '방장·부방장이 공지를 작성하고 삭제할 수 있어요.' },
+          { emoji: '✏️', text: '방장·부방장이 공지를 작성하고 수정·삭제할 수 있어요.' },
         ],
       },
       {
@@ -69,14 +70,6 @@ const SECTIONS: Section[] = [
           { emoji: '🔤', text: '매일 고전 어휘 단어 하나가 표시돼요. 짧게 확인하는 습관을 들여보세요!' },
         ],
       },
-      {
-        heading: '💡 교육관 형성 질문',
-        tips: [
-          { emoji: '✍️', text: '[내 답변 작성]을 눌러 이번 주 교육 철학 질문에 내 생각을 작성해요.' },
-          { emoji: '👥', text: '[다른 답변 보러 가기]로 스터디원들의 생각을 읽어볼 수 있어요.' },
-          { emoji: '👍', text: '마음에 드는 답변에 좋아요 / 싫어요 반응을 남길 수 있어요.' },
-        ],
-      },
     ],
   },
   {
@@ -87,26 +80,8 @@ const SECTIONS: Section[] = [
     borderColor: 'border-blue-100',
     badge: '스터디',
     title: '스터디 탭',
-    summary: '고어 시험 · 시험 응시 · 상호 피드백 · 스터디 일지',
+    summary: '상호 피드백 · 스터디 일지',
     subs: [
-      {
-        heading: '📝 고어 시험 — 점수 입력',
-        tips: [
-          { emoji: '🔢', text: '오늘 진행한 고전 어휘 시험 점수(1~20점)를 직접 입력해요.' },
-          { emoji: '📊', text: '멤버 전체의 점수 현황을 한눈에 볼 수 있어요.' },
-          { emoji: '🗑️', text: '방장·부방장은 잘못 입력된 점수 기록을 삭제할 수 있어요.' },
-        ],
-      },
-      {
-        heading: '🖊️ 시험 응시 — 직접 풀기',
-        tips: [
-          { emoji: '🎯', text: '시작·끝 번호를 설정하고, 추가 복습할 단어(이월 문항)를 선택해 시험 범위를 정해요.' },
-          { emoji: '⏱️', text: '응시 시작과 동시에 10분 타이머가 작동해요. 시간이 끝나면 자동으로 채점돼요.' },
-          { emoji: '✅', text: '띄어쓰기는 무시하고, 정확한 글자 일치로 채점해요.' },
-          { emoji: '📈', text: '[기록하기]를 누르면 고어 시험 탭의 오늘 점수에 자동으로 반영돼요.' },
-          { emoji: '🚫', text: '오늘 이미 응시했다면 재응시가 불가해요. 방장이 기록을 삭제해야 다시 응시할 수 있어요.' },
-        ],
-      },
       {
         heading: '💬 상호 피드백',
         tips: [
@@ -125,13 +100,13 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'personal',
-    icon: GraduationCap,
+    id: 'timer',
+    icon: Clock,
     iconBg: 'bg-green-100',
     iconColor: 'text-green-600',
     borderColor: 'border-green-100',
-    badge: '개인공부',
-    title: '개인공부 탭',
+    badge: '타이머',
+    title: '타이머 탭',
     summary: '과목별 공부 기록 · 타이머 · 피드백 메모',
     tips: [
       { emoji: '➕', text: '[+ 과목 추가]를 눌러 오늘 공부한 과목 카드를 만들어요.' },
@@ -144,34 +119,19 @@ const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'reflection',
-    icon: ClipboardList,
-    iconBg: 'bg-primary-100',
-    iconColor: 'text-primary-600',
-    borderColor: 'border-primary-100',
-    badge: '반성',
-    title: '반성 탭',
-    summary: '오늘 부족했던 점과 내일의 개선 방향 기록',
+    id: 'fine',
+    icon: Receipt,
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-600',
+    borderColor: 'border-red-100',
+    badge: '벌금',
+    title: '벌금 탭',
+    summary: '지각 · 과제 · 일지 미수행 벌금 내역 확인',
     tips: [
-      { emoji: '🪞', text: '오늘 공부에서 부족했던 부분을 솔직하게 기록해요.' },
-      { emoji: '🎯', text: '내일의 개선 방향을 구체적으로 설정하면 꾸준한 성장에 도움이 돼요.' },
-      { emoji: '📅', text: '날짜를 선택해 과거 반성 기록도 다시 확인할 수 있어요.' },
-    ],
-  },
-  {
-    id: 'qna',
-    icon: HelpCircle,
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
-    borderColor: 'border-orange-100',
-    badge: '질의응답',
-    title: '질의응답 탭',
-    summary: '스터디 관련 질문 등록과 멤버 간 답변',
-    tips: [
-      { emoji: '✏️', text: '[글쓰기] 버튼으로 제목과 내용을 입력해 질문을 등록해요.' },
-      { emoji: '👆', text: '게시글을 탭하면 내용과 댓글이 펼쳐져요.' },
-      { emoji: '⌨️', text: '댓글 입력 후 Enter 키를 누르면 빠르게 전송돼요.' },
-      { emoji: '🗑️', text: '본인 글·댓글은 직접 삭제할 수 있고, 방장·부방장은 모든 글을 삭제할 수 있어요.' },
+      { emoji: '💸', text: '지각, 과제 미수행, 일지 미작성 등으로 부과된 벌금 내역을 확인해요.' },
+      { emoji: '📊', text: '멤버별 벌금 합계를 한눈에 비교할 수 있어요.' },
+      { emoji: '✅', text: '납부 완료 후 방장·부방장이 납부 처리를 해줘요.' },
+      { emoji: '📋', text: '방장·부방장은 벌금을 부과하거나 삭제할 수 있어요.' },
     ],
   },
   {
@@ -202,6 +162,53 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'vocab',
+    icon: Languages,
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    borderColor: 'border-amber-100',
+    badge: '고어',
+    title: '고어 탭',
+    summary: '고전 어휘 시험 점수 입력 · 직접 응시',
+    subs: [
+      {
+        heading: '📝 고어 시험 — 점수 입력',
+        tips: [
+          { emoji: '🔢', text: '오늘 진행한 고전 어휘 시험 점수(1~20점)를 직접 입력해요.' },
+          { emoji: '📊', text: '멤버 전체의 점수 현황을 한눈에 볼 수 있어요.' },
+          { emoji: '🗑️', text: '방장·부방장은 잘못 입력된 점수 기록을 삭제할 수 있어요.' },
+        ],
+      },
+      {
+        heading: '🖊️ 시험 응시 — 직접 풀기',
+        tips: [
+          { emoji: '📖', text: '100개의 고전 어휘 단어 목록으로 자체 시험을 볼 수 있어요.' },
+          { emoji: '🎯', text: '시작·끝 번호를 설정하고, 추가 복습할 단어(이월 문항)를 선택해 시험 범위를 정해요.' },
+          { emoji: '⏱️', text: '응시 시작과 동시에 10분 타이머가 작동해요. 시간이 끝나면 자동으로 채점돼요.' },
+          { emoji: '✅', text: '띄어쓰기는 무시하고, 정확한 글자 일치로 채점해요.' },
+          { emoji: '📈', text: '[기록하기]를 누르면 고어 점수 탭의 오늘 점수에 자동으로 반영돼요.' },
+          { emoji: '🚫', text: '오늘 이미 응시했다면 재응시가 불가해요. 방장이 기록을 삭제해야 다시 응시할 수 있어요.' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'qna',
+    icon: HelpCircle,
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-600',
+    borderColor: 'border-orange-100',
+    badge: '질의응답',
+    title: '질의응답 탭',
+    summary: '스터디 관련 질문 등록과 멤버 간 답변',
+    tips: [
+      { emoji: '✏️', text: '[글쓰기] 버튼으로 제목과 내용을 입력해 질문을 등록해요.' },
+      { emoji: '👆', text: '게시글을 탭하면 내용과 댓글이 펼쳐져요.' },
+      { emoji: '⌨️', text: '댓글 입력 후 Enter 키를 누르면 빠르게 전송돼요.' },
+      { emoji: '🗑️', text: '본인 글·댓글은 직접 삭제할 수 있고, 방장·부방장은 모든 글을 삭제할 수 있어요.' },
+    ],
+  },
+  {
     id: 'calendar',
     icon: CalendarDays,
     iconBg: 'bg-teal-100',
@@ -217,6 +224,21 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'curriculum',
+    icon: GraduationCap,
+    iconBg: 'bg-primary-100',
+    iconColor: 'text-primary-600',
+    borderColor: 'border-primary-100',
+    badge: '커리큘럼',
+    title: '커리큘럼 탭',
+    summary: '과목별 진행 방식과 교재 안내',
+    tips: [
+      { emoji: '📚', text: '국어교과교육론 · 문학 · 문법 3개 과목의 스터디 진행 방식을 안내해요.' },
+      { emoji: '👆', text: '각 과목을 탭하면 단계별 진행 방식과 교재 정보가 펼쳐져요.' },
+      { emoji: '🔒', text: '문학 교재는 방장·부방장이 공개/비공개를 직접 전환할 수 있어요.' },
+    ],
+  },
+  {
     id: 'attendance',
     icon: CalendarCheck,
     iconBg: 'bg-emerald-100',
@@ -228,7 +250,7 @@ const SECTIONS: Section[] = [
     tips: [
       { emoji: '📅', text: '멤버별 이번 달 출석 달력을 확인할 수 있어요.' },
       { emoji: '📊', text: '출석률(%)이 색상으로 표시돼요: 초록(80% 이상) · 노랑(50~79%) · 빨강(50% 미만)' },
-      { emoji: '💡', text: '출석 체크는 개인공부 탭 하단의 [출석 체크] 버튼으로 할 수 있어요.' },
+      { emoji: '💡', text: '출석 체크는 타이머 탭 하단의 [출석 체크] 버튼으로 할 수 있어요.' },
     ],
   },
   {
@@ -242,7 +264,7 @@ const SECTIONS: Section[] = [
     summary: '스터디원 랭킹 · 왕관 아이콘 · 관리자 권한',
     tips: [
       { emoji: '🏆', text: '누적 출석 횟수 순으로 멤버가 정렬되고, 1·2·3위는 금·은·동 메달로 표시돼요.' },
-      { emoji: '👑', text: '방장 이름 옆 보라색 왕관, 부방장 이름 옆 파란색 왕관이 표시돼요.' },
+      { emoji: '👑', text: '방장 이름 옆 금빛 왕관, 부방장 이름 옆 파란색 왕관이 표시돼요.' },
       { emoji: '⚠️', text: '경고를 받은 멤버는 경고 배지가, 기능 제한을 받은 멤버는 제한됨 배지가 표시돼요.' },
       { emoji: '🛡️', text: '방장은 멤버를 부방장으로 지정하거나 해제할 수 있어요.' },
       { emoji: '📋', text: '방장·부방장은 멤버에게 경고를 부여하거나 삭제할 수 있어요.' },
@@ -288,6 +310,8 @@ const SECTIONS: Section[] = [
         heading: '📋 휴가 명단',
         tips: [
           { emoji: '✅', text: '승인된 모든 멤버의 휴가 내역(날짜 · 사유 · 보충일 · 승인자)을 확인할 수 있어요.' },
+          { emoji: '🔍', text: '멤버 칩을 선택해 특정 멤버의 휴가 내역만 필터링할 수 있어요.' },
+          { emoji: '📲', text: '멤버를 선택하면 [휴가 일정 공유] 버튼이 나타나요. 누르면 카카오톡 등으로 공유할 수 있어요.' },
         ],
       },
     ],
