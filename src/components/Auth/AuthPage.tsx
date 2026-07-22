@@ -145,8 +145,8 @@ export default function AuthPage({ onLogin }: Props) {
           >
             <BookOpen className="w-10 h-10" style={{ color: '#0f2826', opacity: 0.80 }} />
           </div>
-          <h1 className="auth-logo-shimmer text-6xl font-black tracking-tight mb-4">
-            나랏말ᄊᆞ미
+          <h1 className="auth-logo-shimmer logo-serif text-6xl mb-4">
+            나랏말
           </h1>
           <div className="flex items-center justify-center gap-2 mb-3">
             <div className="h-px w-10 bg-primary-200 rounded-full" />

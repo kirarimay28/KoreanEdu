@@ -29,7 +29,7 @@ const SECTIONS: Section[] = [
     borderColor: 'border-primary-100',
     badge: '시작하기',
     title: '앱 전체 구조',
-    summary: '나랏말쓰미의 화면 구성과 기본 사용법',
+    summary: '나랏말의 화면 구성과 기본 사용법',
     tips: [
       { emoji: '📱', text: '하단 탭 바로 6개 화면(스터디 · 개인공부 · 반성 · 질의응답 · 캘린더 · 과제)을 이동해요.' },
       { emoji: '☰', text: '우측 상단 메뉴(≡)에서 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관에 접근해요.' },

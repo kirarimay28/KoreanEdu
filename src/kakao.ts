@@ -5,7 +5,7 @@ export function shareAnnouncement(params: {
 }): void {
   const { title, content, authorName } = params;
   const lines = [
-    '📢 [나랏말ᄊᆞ미] 공지사항',
+    '📢 [나랏말] 공지사항',
     title,
     ...(content ? [`\n${content}`] : []),
     `\n(by ${authorName})`,
@@ -46,7 +46,7 @@ export function shareAssignmentNotice(params: {
   }
 
   const lines = [
-    '📋 [나랏말ᄊᆞ미] 이번 주 과제',
+    '📋 [나랏말] 이번 주 과제',
     `날짜: ${dateStr}`,
     '',
     ...classicLines,
@@ -105,7 +105,7 @@ export function shareLocationNotice(params: {
 }): void {
   const { spaceName, startTime, endTime, notes, authorName } = params;
   const lines = [
-    '📍 [나랏말ᄊᆞ미] 장소 공지',
+    '📍 [나랏말] 장소 공지',
     `장소: ${spaceName}`,
     `시간: ${startTime} ~ ${endTime}`,
     ...(notes ? [`특이사항: ${notes}`] : []),

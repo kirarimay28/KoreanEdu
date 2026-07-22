@@ -14,7 +14,7 @@ function buildShareText(name: string, vacations: VacationRequest[]): string {
     const reason = v.reason === '기타' ? v.customReason || '기타' : v.reason;
     return `• 휴가일: ${formatDate(v.vacationDate)}\n  사유: ${reason}\n  보강일: ${formatDate(v.makeupDate)}`;
   }).join('\n\n');
-  return `[나랏말ᄊᆞ미] ${name}님 휴가 일정\n\n${lines}`;
+  return `[나랏말] ${name}님 휴가 일정\n\n${lines}`;
 }
 
 export default function VacationListTab() {

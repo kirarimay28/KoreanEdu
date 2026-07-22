@@ -311,7 +311,7 @@ export default function App() {
                   <BookOpen className="w-6 h-6 text-primary-700" />
                 </div>
                 <div>
-                  <div className="text-primary-900 font-black text-base tracking-tight">나랏말ᄊᆞ미</div>
+                  <div className="logo-serif text-primary-900 text-base">나랏말</div>
                   <div className="text-primary-700 text-[11px] mt-0.5">국어 임용 스터디</div>
                 </div>
               </div>
