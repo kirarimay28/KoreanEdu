@@ -336,7 +336,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum';
 export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
 
 export interface VocabExamRecord {

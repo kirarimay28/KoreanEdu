@@ -14,6 +14,7 @@ import CalendarTab from './components/Calendar/CalendarTab';
 import MessagesTab from './components/Messages/MessagesTab';
 import LibraryTab from './components/Library/LibraryTab';
 import TutorialTab from './components/Tutorial/TutorialTab';
+import CurriculumTab from './components/Curriculum/CurriculumTab';
 import AssignmentTab from './components/Assignment/AssignmentTab';
 import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
@@ -21,7 +22,7 @@ import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Receipt, CalendarCheck, CalendarDays, Clock,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
@@ -70,6 +71,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'messages',   label: '쪽지',     icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
   { id: 'library',    label: '도서관',   icon: BookMarked,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
   { id: 'settings',   label: '설정',     icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
+  { id: 'curriculum', label: '커리큘럼', icon: GraduationCap, iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,           iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
 ];
 
@@ -458,6 +460,7 @@ export default function App() {
               {activeTab === 'vaclist'    && <VacationListTab />}
               {activeTab === 'messages'   && <MessagesTab currentUser={currentUser} />}
               {activeTab === 'library'    && <LibraryTab currentUser={currentUser} />}
+              {activeTab === 'curriculum' && <CurriculumTab />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab
