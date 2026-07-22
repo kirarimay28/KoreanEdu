@@ -33,7 +33,6 @@ import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
 import StudyLogWarningBanner from './components/Admin/StudyLogWarningBanner';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
-import EducationAnswerPage from './components/Education/EducationAnswerPage';
 
 function getDailyQuote(): string {
   const today = getKSTToday();
@@ -88,7 +87,6 @@ export default function App() {
   const [date, setDate] = useState<string>(getKSTToday());
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [educationMode, setEducationMode] = useState<'write' | 'read' | null>(null);
   const [sideOpen, setSideOpen] = useState(false);
   const dailyQuote = getDailyQuote();
 
@@ -126,12 +124,10 @@ export default function App() {
   function handleMenuNav(id: MainTab) {
     setActiveTab(id);
     setSideOpen(false);
-    setEducationMode(null);
   }
 
   function handleMainNav(id: MainTab) {
     setActiveTab(id);
-    setEducationMode(null);
   }
 
   const jadeBg = {
@@ -431,16 +427,8 @@ export default function App() {
       {/* ── Main content ── */}
       <main className="max-w-2xl mx-auto px-4 py-4" style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* Education answer page */}
-        {educationMode ? (
-          <EducationAnswerPage
-            mode={educationMode}
-            onBack={() => setEducationMode(null)}
-            currentUser={currentUser}
-          />
-
-        /* Menu tab content */
-        ) : isMenuTab(activeTab) ? (
+        {/* Menu tab content */}
+        {isMenuTab(activeTab) ? (
           <>
             <button
               onClick={() => handleMainNav('study')}
@@ -476,11 +464,7 @@ export default function App() {
         ) : (
           <>
             <VenueReminderBanner currentUser={currentUser} />
-            <AnnouncementBar
-              currentUser={currentUser}
-              onShowWrite={() => setEducationMode('write')}
-              onShowRead={() => setEducationMode('read')}
-            />
+            <AnnouncementBar currentUser={currentUser} />
             <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
             <StudyLogWarningBanner />

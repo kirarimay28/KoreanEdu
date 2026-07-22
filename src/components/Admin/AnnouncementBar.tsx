@@ -4,12 +4,8 @@ import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnounc
 import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check, Share2 } from 'lucide-react';
 import { shareAnnouncement } from '../../kakao';
 import NameWithCrown from '../common/NameWithCrown';
-import { getWeekQuestion } from '../../data/educationQuestions';
-
 interface Props {
   currentUser: User;
-  onShowWrite: () => void;
-  onShowRead: () => void;
 }
 
 function formatDate(iso: string): string {
@@ -17,7 +13,7 @@ function formatDate(iso: string): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
-export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }: Props) {
+export default function AnnouncementBar({ currentUser }: Props) {
   const [announcements, setAnnouncements] = useState<Announcement[]>(getAnnouncements);
   const [expanded, setExpanded] = useState(true);
   const [writing, setWriting] = useState(false);
@@ -254,27 +250,6 @@ export default function AnnouncementBar({ currentUser, onShowWrite, onShowRead }
         </div>
       )}
 
-      {/* 이번 주 교육관 형성 질문 */}
-      <div className="border-t border-primary-100 px-4 py-3 bg-primary-50/50">
-        <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wide mb-1.5">
-          📚 이번 주 교육관 형성 질문
-        </p>
-        <p className="text-sm text-primary-800 leading-relaxed mb-2.5">{getWeekQuestion()}</p>
-        <div className="flex gap-2">
-          <button
-            onClick={onShowWrite}
-            className="text-xs font-semibold text-primary-600 bg-primary-100 hover:bg-primary-200 px-3 py-1.5 rounded-lg transition"
-          >
-            내 답변 작성
-          </button>
-          <button
-            onClick={onShowRead}
-            className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
-          >
-            다른 답변 보러 가기
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
