@@ -37,6 +37,7 @@ const defaultData: AppData = {
   vocabExamRecords: [],
   studySessionNotes: [],
   fines: [],
+  litTextbookVisible: false,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -94,7 +95,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -120,6 +121,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('vocabExamRecords'),
     safeGet('studySessionNotes'),
     safeGet('fines'),
+    safeGet('appSettings'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -158,6 +160,7 @@ async function fetchFromFirestore(): Promise<void> {
     vocabExamRecords:    ver.docs.map(d => d.data() as VocabExamRecord),
     studySessionNotes:   mergeById(sn.docs.map(d => d.data() as StudySessionNote), mem.studySessionNotes),
     fines:               fi.docs.map(d => d.data() as FineRecord),
+    litTextbookVisible:  (cfg.docs[0]?.data() as { litTextbookVisible?: boolean })?.litTextbookVisible ?? mem.litTextbookVisible,
   };
   bootstrapAdmin();
   saveCache();
@@ -564,6 +567,16 @@ export function createVacationRequest(req: VacationRequest): void {
 
 export function getVacationRequests(): VacationRequest[] {
   return mem.vacations;
+}
+
+export function getLitTextbookVisible(): boolean {
+  return mem.litTextbookVisible;
+}
+
+export function setLitTextbookVisible(visible: boolean): void {
+  mem.litTextbookVisible = visible;
+  persist('appSettings', 'curriculum', { litTextbookVisible: visible });
+  saveCache();
 }
 
 export function getApprovedVacations(): VacationRequest[] {

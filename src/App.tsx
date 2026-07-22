@@ -460,7 +460,7 @@ export default function App() {
               {activeTab === 'vaclist'    && <VacationListTab />}
               {activeTab === 'messages'   && <MessagesTab currentUser={currentUser} />}
               {activeTab === 'library'    && <LibraryTab currentUser={currentUser} />}
-              {activeTab === 'curriculum' && <CurriculumTab />}
+              {activeTab === 'curriculum' && <CurriculumTab currentUser={currentUser} />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab

@@ -296,6 +296,7 @@ export interface AppData {
   vocabExamRecords: VocabExamRecord[];
   studySessionNotes: StudySessionNote[];
   fines: FineRecord[];
+  litTextbookVisible: boolean;
 }
 
 export interface LibraryItem {
