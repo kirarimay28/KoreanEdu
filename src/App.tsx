@@ -45,7 +45,7 @@ const SESSION_KEY = 'korean_edu_session';
 
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study',       label: '스터디', icon: BookOpen },
-  { id: 'personal',    label: '타이머', icon: Clock },
+  { id: 'personal',    label: '공부',   icon: Clock },
   { id: 'fine',        label: '벌금',   icon: Receipt },
   { id: 'assignment',  label: '과제',   icon: TableProperties },
   { id: 'vocab_study', label: '고어',   icon: Languages },
@@ -467,6 +467,16 @@ export default function App() {
             <AnnouncementBar currentUser={currentUser} />
             <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
+            <a
+              href="https://kirarimay28.github.io/ForYourGoal/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 mb-4"
+              style={{ background: 'linear-gradient(135deg, #2b6460 0%, #52988c 100%)', boxShadow: '0 2px 12px rgba(43,100,96,0.25)' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+              온라인 스터디룸 입장
+            </a>
             <StudyLogWarningBanner />
             {['study', 'personal'].includes(activeTab) && (
               <DateNavigator date={date} onChange={setDate} />
