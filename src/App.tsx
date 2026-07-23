@@ -45,7 +45,6 @@ const SESSION_KEY = 'korean_edu_session';
 
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study',       label: '스터디', icon: BookOpen },
-  { id: 'personal',    label: '공부',   icon: Clock },
   { id: 'fine',        label: '벌금',   icon: Receipt },
   { id: 'assignment',  label: '과제',   icon: TableProperties },
   { id: 'vocab_study', label: '고어',   icon: Languages },
@@ -478,7 +477,7 @@ export default function App() {
               온라인 스터디룸 입장
             </a>
             <StudyLogWarningBanner />
-            {['study', 'personal'].includes(activeTab) && (
+            {activeTab === 'study' && (
               <DateNavigator date={date} onChange={setDate} />
             )}
 
