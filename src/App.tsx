@@ -20,7 +20,7 @@ import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
-  BookOpen, Receipt, CalendarCheck, CalendarDays, Clock,
+  BookOpen, Receipt, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
   BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap,
 } from 'lucide-react';
