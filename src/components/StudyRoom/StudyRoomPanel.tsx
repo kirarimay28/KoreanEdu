@@ -47,8 +47,13 @@ async function dbPut(path: string, val: unknown): Promise<void> {
   } catch { /* network error — ignore */ }
 }
 
+// Firebase path keys cannot contain . $ # [ ] /
+function toUid(username: string) {
+  return username.replace(/[.#$[\]/]/g, '_');
+}
+
 export default function StudyRoomPanel({ currentUser }: Props) {
-  const uid = currentUser.id;
+  const uid = toUid(currentUser.username);
   const name = currentUser.username;
 
   const [running, setRunning] = useState(false);
@@ -78,13 +83,7 @@ export default function StudyRoomPanel({ currentUser }: Props) {
     });
   }
 
-  // Register KoreanEdu user in ForYourGoal RTDB on mount
   useEffect(() => {
-    dbGet(`app/users/${uid}`).then(existing => {
-      if (!existing) {
-        dbPut(`app/users/${uid}`, { name, pw: '', createdAt: Date.now() });
-      }
-    });
     fetchLive();
     const poll = setInterval(fetchLive, 15000);
     return () => {
@@ -96,8 +95,15 @@ export default function StudyRoomPanel({ currentUser }: Props) {
     };
   }, [uid, name]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleStart() {
+  async function handleStart() {
     if (runningRef.current) return;
+
+    // Register in ForYourGoal on first timer start
+    const existing = await dbGet(`app/users/${uid}`);
+    if (!existing) {
+      await dbPut(`app/users/${uid}`, { name, pw: '', createdAt: Date.now() });
+    }
+
     startRef.current = Date.now();
     runningRef.current = true;
     setRunning(true);
