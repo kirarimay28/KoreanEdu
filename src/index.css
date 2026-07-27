@@ -12,7 +12,7 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #fce4ec;
+  background-color: #fff0f5;
   color: #3d1a2a;
   -webkit-font-smoothing: antialiased;
 }
@@ -24,17 +24,17 @@ body {
 @layer components {
   .tab-active {
     @apply text-white font-semibold;
-    background: linear-gradient(135deg, #f02570 0%, #ff70a8 100%);
-    box-shadow: 0 2px 8px rgba(240,37,112,0.22), 0 0 0 1px rgba(255,255,255,0.15) inset;
+    background: linear-gradient(135deg, #de4e80 0%, #f890bc 100%);
+    box-shadow: 0 2px 8px rgba(222,78,128,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
   }
   .tab-inactive {
-    @apply text-gray-500 font-medium;
-    background: rgba(255, 255, 255, 0.45);
+    @apply text-gray-400 font-medium;
+    background: rgba(255, 255, 255, 0.50);
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .tab-inactive:hover {
-    background: rgba(255, 255, 255, 0.72);
-    color: #f02570;
+    background: rgba(255, 255, 255, 0.80);
+    color: #de4e80;
   }
   .input-field {
     @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm;
@@ -57,7 +57,7 @@ body {
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid rgba(255, 255, 255, 0.55);
     box-shadow:
-      0 2px 20px rgba(240, 37, 112, 0.06),
+      0 2px 20px rgba(222, 78, 128, 0.06),
       0 0 0 1px rgba(255, 255, 255, 0.45) inset;
   }
   .btn-primary {
@@ -88,19 +88,19 @@ body {
 .auth-logo-shimmer {
   background: linear-gradient(
     120deg,
-    #870e3a 0%,
-    #f02570 18%,
-    #ffa3c7 40%,
-    #e2f0ec 52%,
-    #ffa3c7 64%,
-    #f02570 82%,
-    #870e3a 100%
+    #9e1e4c 0%,
+    #de4e80 18%,
+    #ffb3d0 40%,
+    #ffeaf3 52%,
+    #ffb3d0 64%,
+    #de4e80 82%,
+    #9e1e4c 100%
   );
   background-size: 260% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 3px 16px rgba(240, 37, 112, 0.28));
+  filter: drop-shadow(0 3px 16px rgba(222, 78, 128, 0.28));
   animation: auth-shimmer 4s ease-in-out infinite alternate;
 }
 

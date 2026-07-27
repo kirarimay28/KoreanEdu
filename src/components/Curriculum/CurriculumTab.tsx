@@ -33,7 +33,7 @@ const SECTIONS: Section[] = [
   {
     id: 'edu',
     icon: BookOpen,
-    gradient: 'linear-gradient(135deg, #f02570, #ff70a8)',
+    gradient: 'linear-gradient(135deg, #de4e80, #f890bc)',
     badge: '01',
     title: '국어교과교육론',
     textbook: { title: '국어교육의 이해' },
@@ -132,7 +132,7 @@ function TextbookBadge({
               <button
                 onClick={onToggle}
                 className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition"
-                style={{ background: 'rgba(240,37,112,0.10)', color: '#f02570', border: '1px solid rgba(240,37,112,0.22)' }}
+                style={{ background: 'rgba(222,78,128,0.10)', color: '#de4e80', border: '1px solid rgba(222,78,128,0.22)' }}
               >
                 <Lock className="w-2.5 h-2.5" />비공개로 전환
               </button>
@@ -168,7 +168,7 @@ function SectionCard({
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid rgba(255,255,255,0.58)',
-        boxShadow: '0 2px 16px rgba(240,37,112,0.07), 0 0 0 1px rgba(255,255,255,0.42) inset',
+        boxShadow: '0 2px 16px rgba(222,78,128,0.07), 0 0 0 1px rgba(255,255,255,0.42) inset',
       }}
     >
       {/* Header — always visible, tap to toggle */}
@@ -186,7 +186,7 @@ function SectionCard({
           <div className="flex items-center gap-2 mb-0.5">
             <span
               className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded-md"
-              style={{ background: 'rgba(240,37,112,0.10)', color: '#f02570' }}
+              style={{ background: 'rgba(222,78,128,0.10)', color: '#de4e80' }}
             >
               {section.badge}
             </span>
@@ -226,7 +226,7 @@ function SectionCard({
                     {step.note && (
                       <span
                         className="text-[11px] font-medium mt-1 px-2 py-0.5 rounded-md inline-block"
-                        style={{ background: 'rgba(240,37,112,0.08)', color: '#f02570' }}
+                        style={{ background: 'rgba(222,78,128,0.08)', color: '#de4e80' }}
                       >
                         ※ {step.note}
                       </span>
@@ -266,7 +266,7 @@ export default function CurriculumTab({ currentUser }: Props) {
       <div
         className="rounded-2xl px-4 py-4"
         style={{
-          background: 'linear-gradient(135deg, rgba(240,37,112,0.18) 0%, rgba(255,112,168,0.12) 100%)',
+          background: 'linear-gradient(135deg, rgba(222,78,128,0.18) 0%, rgba(255,112,168,0.12) 100%)',
           border: '1px solid rgba(255,163,199,0.28)',
         }}
       >

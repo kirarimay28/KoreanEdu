@@ -52,7 +52,7 @@ const CUSTOM_PALETTES = [
   { border:'border-l-sky-400',     bg:'bg-sky-50',     badge:'bg-sky-100 text-sky-700',         bar:'bg-sky-500',     text:'text-sky-700',     sector:'#0ea5e9' },
   { border:'border-l-lime-400',    bg:'bg-lime-50',    badge:'bg-lime-100 text-lime-700',       bar:'bg-lime-500',    text:'text-lime-700',    sector:'#84cc16' },
   { border:'border-l-amber-400',   bg:'bg-amber-50',   badge:'bg-amber-100 text-amber-700',     bar:'bg-amber-500',   text:'text-amber-700',   sector:'#f59e0b' },
-  { border:'border-l-primary-400',  bg:'bg-primary-50',  badge:'bg-primary-100 text-primary-700',   bar:'bg-primary-500',  text:'text-primary-700',  sector:'#ff4d8c' },
+  { border:'border-l-primary-400',  bg:'bg-primary-50',  badge:'bg-primary-100 text-primary-700',   bar:'bg-primary-500',  text:'text-primary-700',  sector:'#f068a0' },
 ];
 
 function getColor(subject: string, customSubject?: string) {
@@ -274,7 +274,7 @@ function AnalysisModal({ analysis, date, onClose }: { analysis: StudyAnalysis; d
       <div className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl overflow-hidden"
         style={{ maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 z-10 px-5 pt-5 pb-4"
-          style={{ background: 'linear-gradient(135deg,#f02570 0%,#ff70a8 55%,#ffa3c7 100%)' }}>
+          style={{ background: 'linear-gradient(135deg,#de4e80 0%,#f890bc 55%,#ffa3c7 100%)' }}>
           <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -523,7 +523,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     return (
       <>
       <div className="space-y-4">
-        <div className="rounded-2xl p-5 text-white" style={{ background:'linear-gradient(135deg,#f02570 0%,#ff70a8 100%)' }}>
+        <div className="rounded-2xl p-5 text-white" style={{ background:'linear-gradient(135deg,#de4e80 0%,#f890bc 100%)' }}>
           <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">학습 계획</p>
           <p className="text-base font-bold">{formatKoreanDate(date)}</p>
           <p className="text-xs opacity-60 mt-1">오늘 공부할 목록을 미리 작성하세요. 학습 시작 후 목록은 잠금됩니다.</p>
@@ -661,7 +661,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     <div className="space-y-4">
 
       {/* Header */}
-      <div className="rounded-2xl px-5 py-4 text-white" style={{ background:'linear-gradient(135deg,#f02570 0%,#ff70a8 100%)' }}>
+      <div className="rounded-2xl px-5 py-4 text-white" style={{ background:'linear-gradient(135deg,#de4e80 0%,#f890bc 100%)' }}>
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Study Planner</p>

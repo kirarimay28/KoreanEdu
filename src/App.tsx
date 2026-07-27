@@ -130,7 +130,7 @@ export default function App() {
     setActiveTab(id);
   }
 
-  const jadeBg = { background: '#fce4ec' } as React.CSSProperties;
+  const jadeBg = { background: '#fff0f5' } as React.CSSProperties;
 
   if (loading) {
     return (
@@ -165,7 +165,7 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen" style={{ background: '#fce4ec' }}>
+    <div className="min-h-screen" style={{ background: '#fff0f5' }}>
 
       {/* ─── Pink icon decorative overlay ─── */}
       <svg
@@ -190,7 +190,7 @@ export default function App() {
         </defs>
 
         {/* ── Top-left cluster ── */}
-        <g transform="translate(8,13)" opacity="0.22" fill="#f02570">
+        <g transform="translate(8,13)" opacity="0.22" fill="#de4e80">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
@@ -198,7 +198,7 @@ export default function App() {
           <use href="#petal" transform="rotate(288)"/>
           <circle r="1.1" fill="#ffc9e0"/>
         </g>
-        <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="#ff70a8">
+        <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="#f890bc">
           <use href="#petal" transform="rotate(36)"/>
           <use href="#petal" transform="rotate(108)"/>
           <use href="#petal" transform="rotate(180)"/>
@@ -206,7 +206,7 @@ export default function App() {
           <use href="#petal" transform="rotate(324)"/>
           <circle r="1" fill="#ffe4ef"/>
         </g>
-        <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="#f02570">
+        <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="#de4e80">
           <use href="#sparkle"/>
         </g>
         <g transform="translate(14,27) scale(0.45)" opacity="0.14" fill="#ffa3c7">
@@ -217,15 +217,15 @@ export default function App() {
         <g transform="translate(38,5) scale(0.55)" opacity="0.20" fill="#ffa3c7">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="#f02570">
+        <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="#de4e80">
           <use href="#star"/>
         </g>
-        <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="#ff70a8">
+        <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="#f890bc">
           <use href="#sparkle"/>
         </g>
 
         {/* ── Top-right cluster ── */}
-        <g transform="translate(91,11)" opacity="0.22" fill="#f02570">
+        <g transform="translate(91,11)" opacity="0.22" fill="#de4e80">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
@@ -233,7 +233,7 @@ export default function App() {
           <use href="#petal" transform="rotate(306)"/>
           <circle r="1.1" fill="#ffc9e0"/>
         </g>
-        <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="#ff70a8">
+        <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="#f890bc">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
@@ -241,7 +241,7 @@ export default function App() {
           <use href="#petal" transform="rotate(288)"/>
           <circle r="1" fill="#ffe4ef"/>
         </g>
-        <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="#f02570">
+        <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="#de4e80">
           <use href="#sparkle"/>
         </g>
         <g transform="translate(83,27) scale(0.5)" opacity="0.15" fill="#ffa3c7">
@@ -249,10 +249,10 @@ export default function App() {
         </g>
 
         {/* ── Mid-left ── */}
-        <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="#f02570">
+        <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="#de4e80">
           <use href="#heart"/>
         </g>
-        <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="#ff70a8">
+        <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="#f890bc">
           <use href="#star"/>
         </g>
         <g transform="translate(2,72) scale(0.45)" opacity="0.13" fill="#ffa3c7">
@@ -260,10 +260,10 @@ export default function App() {
         </g>
 
         {/* ── Mid-right ── */}
-        <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="#f02570">
+        <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="#de4e80">
           <use href="#heart"/>
         </g>
-        <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="#ff70a8">
+        <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="#f890bc">
           <use href="#sparkle"/>
         </g>
         <g transform="translate(95,70) scale(0.45)" opacity="0.13" fill="#ffa3c7">
@@ -271,7 +271,7 @@ export default function App() {
         </g>
 
         {/* ── Bottom cluster ── */}
-        <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="#f02570">
+        <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="#de4e80">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
@@ -279,7 +279,7 @@ export default function App() {
           <use href="#petal" transform="rotate(306)"/>
           <circle r="1.1" fill="#ffc9e0"/>
         </g>
-        <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="#ff70a8">
+        <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="#f890bc">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
@@ -287,20 +287,20 @@ export default function App() {
           <use href="#petal" transform="rotate(288)"/>
           <circle r="1" fill="#ffe4ef"/>
         </g>
-        <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="#f02570">
+        <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="#de4e80">
           <use href="#sparkle"/>
         </g>
         <g transform="translate(50,90) scale(0.55)" opacity="0.15" fill="#ffa3c7">
           <use href="#heart"/>
         </g>
-        <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="#ff70a8">
+        <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="#f890bc">
           <use href="#star"/>
         </g>
 
         {/* ── Bottom wave bands ── */}
         <g opacity="0.13">
-          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#f02570" fillOpacity="0.22"/>
-          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#f02570" fillOpacity="0.40"/>
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#de4e80" fillOpacity="0.22"/>
+          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#de4e80" fillOpacity="0.40"/>
           <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.25" strokeWidth="0.4" fill="none"/>
         </g>
       </svg>
@@ -399,13 +399,13 @@ export default function App() {
                     style={isActive ? {
                       background: 'rgba(255,255,255,0.72)',
                       border: '1px solid rgba(255,163,199,0.22)',
-                      boxShadow: '0 1px 6px rgba(240,37,112,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+                      boxShadow: '0 1px 6px rgba(222,78,128,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
                     } : {}}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all`}
                       style={isActive ? {
                         background: 'linear-gradient(135deg, #ffc9e0 0%, #ffa3c7 100%)',
-                        boxShadow: '0 2px 6px rgba(240,37,112,0.2)',
+                        boxShadow: '0 2px 6px rgba(222,78,128,0.2)',
                       } : { background: 'rgba(255,255,255,0.55)' }}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.iconColor}`} />
@@ -445,7 +445,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(253,228,238,0.82)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,163,199,0.22)', boxShadow: '0 1px 12px rgba(240,37,112,0.09)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(253,228,238,0.82)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,163,199,0.22)', boxShadow: '0 1px 12px rgba(222,78,128,0.09)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}

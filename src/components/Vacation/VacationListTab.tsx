@@ -88,7 +88,7 @@ export default function VacationListTab() {
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
             style={{
               background: copied
-                ? 'linear-gradient(135deg, #ff70a8, #f02570)'
+                ? 'linear-gradient(135deg, #f890bc, #de4e80)'
                 : 'linear-gradient(135deg, #FEE500, #F9D100)',
               color: copied ? '#fff' : '#1a1a1a',
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',

@@ -181,7 +181,7 @@ export default function StudyRoomPanel({ currentUser }: Props) {
             <button
               onClick={handleStart}
               className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-sm transition active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #f02570, #ff70a8)' }}
+              style={{ background: 'linear-gradient(135deg, #de4e80, #f890bc)' }}
             >
               <Play className="w-4 h-4 ml-0.5" />
             </button>
