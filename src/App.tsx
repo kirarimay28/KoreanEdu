@@ -132,11 +132,11 @@ export default function App() {
 
   const jadeBg = {
     background: `
-      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
-      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
-      radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
-      radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
-      linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
+      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
+      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
+      radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(255,163,199,0.65) 0%, transparent 52%),
+      radial-gradient(ellipse 80% 60% at 88% 92%, rgba(240,37,112,0.48)   0%, transparent 52%),
+      linear-gradient(155deg, #fdd0e3 0%, #fce4ec 35%, #f9b0cc 65%, #fce4ec 100%)
     `,
     backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%',
     backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0',
@@ -179,79 +179,112 @@ export default function App() {
       className="min-h-screen"
       style={{
         background: `
-          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
-          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(31,76,73,0.10) 48%, rgba(31,76,73,0.10) 51%, transparent 52%),
-          radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(121,183,170,0.65) 0%, transparent 52%),
-          radial-gradient(ellipse 80% 60% at 88% 92%, rgba(43,100,96,0.48)   0%, transparent 52%),
+          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
+          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
+          radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(255,163,199,0.65) 0%, transparent 52%),
+          radial-gradient(ellipse 80% 60% at 88% 92%, rgba(240,37,112,0.48)   0%, transparent 52%),
           radial-gradient(ellipse 55% 45% at 50% 45%, rgba(255,255,255,0.22) 0%, transparent 60%),
-          linear-gradient(155deg, #c4dfd8 0%, #aecfc7 35%, #95b9b0 65%, #aecfc7 100%)
+          linear-gradient(155deg, #fdd0e3 0%, #fce4ec 35%, #f9b0cc 65%, #fce4ec 100%)
         `,
         backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%',
         backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0, 0 0',
       }}
     >
 
-      {/* ─── 곤룡포 decorative overlay (cloud scrolls · dragon medallion · waves) ─── */}
+      {/* ─── Cute pink decorative overlay ─── */}
       <svg
         aria-hidden="true"
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
         viewBox="0 0 100 100"
         preserveAspectRatio="xMidYMid slice"
       >
-        {/* Top-left cloud scroll (구름문) */}
-        <g opacity="0.13" fill="#1f4c49">
-          <circle cx="4" cy="10" r="4.5"/>
-          <circle cx="11" cy="6" r="5.5"/>
-          <circle cx="20" cy="5" r="5"/>
-          <circle cx="28" cy="7.5" r="4.5"/>
-          <circle cx="34" cy="12" r="3.8"/>
-          <path d="M0 11 Q11 1 20 5 Q29 1 35 13 L35 19 Q22 16 10 16.5 Q2 16.5 0 13Z"/>
-          <path d="M0 13 Q-4 20 3 26 Q9 31 16 25 Q19 19 11 16.5" stroke="#1f4c49" strokeWidth="2" fill="none" strokeLinecap="round" strokeOpacity="0.65"/>
+        <defs>
+          <path id="petal" d="M0 0 C-1.6 -0.8 -1.8 -3.8 0 -4.8 C1.8 -3.8 1.6 -0.8 0 0Z"/>
+          <path id="sparkle" d="M0 -3.2 L0.45 -0.45 L3.2 0 L0.45 0.45 L0 3.2 L-0.45 0.45 L-3.2 0 L-0.45 -0.45Z"/>
+          <path id="heart" d="M0 2.2 C-0.5 1.2 -3.2 -0.8 -3.2 -2.4 C-3.2 -4 -1.6 -4.6 0 -3 C1.6 -4.6 3.2 -4 3.2 -2.4 C3.2 -0.8 0.5 1.2 0 2.2Z"/>
+        </defs>
+
+        {/* Top-left sakura */}
+        <g transform="translate(9,11)" opacity="0.13" fill="#f02570">
+          <use href="#petal" transform="rotate(0)"/>
+          <use href="#petal" transform="rotate(72)"/>
+          <use href="#petal" transform="rotate(144)"/>
+          <use href="#petal" transform="rotate(216)"/>
+          <use href="#petal" transform="rotate(288)"/>
+          <circle r="1" fill="#ffd6e8"/>
         </g>
-        {/* Top-right cloud scroll (mirrored) */}
-        <g opacity="0.13" fill="#1f4c49" transform="translate(100,0) scale(-1,1)">
-          <circle cx="4" cy="10" r="4.5"/>
-          <circle cx="11" cy="6" r="5.5"/>
-          <circle cx="20" cy="5" r="5"/>
-          <circle cx="28" cy="7.5" r="4.5"/>
-          <circle cx="34" cy="12" r="3.8"/>
-          <path d="M0 11 Q11 1 20 5 Q29 1 35 13 L35 19 Q22 16 10 16.5 Q2 16.5 0 13Z"/>
-          <path d="M0 13 Q-4 20 3 26 Q9 31 16 25 Q19 19 11 16.5" stroke="#1f4c49" strokeWidth="2" fill="none" strokeLinecap="round" strokeOpacity="0.65"/>
+        <g transform="translate(21,4) scale(0.65)" opacity="0.10" fill="#ff70a8">
+          <use href="#petal" transform="rotate(36)"/>
+          <use href="#petal" transform="rotate(108)"/>
+          <use href="#petal" transform="rotate(180)"/>
+          <use href="#petal" transform="rotate(252)"/>
+          <use href="#petal" transform="rotate(324)"/>
+          <circle r="1" fill="#fff0f5"/>
         </g>
-        {/* Dragon medallion — 원형 용문 */}
-        <g opacity="0.10" transform="translate(50,44)">
-          <circle r="13.5" fill="none" stroke="#1f4c49" strokeWidth="0.7"/>
-          <circle r="12" fill="none" stroke="#1f4c49" strokeWidth="0.3"/>
-          {/* Serpentine body */}
-          <path d="M-7 -6 C-4 -10 3 -9 5 -4 C7 1 2 6 5 10 C8 13 11 9 9 4"
-            stroke="#1f4c49" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M9 4 C8 0 10 -3 8 -6" stroke="#1f4c49" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
-          {/* Head */}
-          <ellipse cx="-7" cy="-6" rx="3" ry="2.2" fill="#1f4c49"/>
-          <path d="M-9 -5 L-12.5 -3.5 M-10 -7 L-13 -6" stroke="#1f4c49" strokeWidth="1.1" strokeLinecap="round"/>
-          {/* Horns */}
-          <path d="M-7 -8.2 L-9.5 -12 M-5 -8 L-4 -12" stroke="#1f4c49" strokeWidth="0.8" strokeLinecap="round"/>
-          {/* Claws */}
-          <path d="M-1 -6 L-2 -9 M-1 -6 L0.5 -9.5 M-1 -6 L1.5 -9" stroke="#1f4c49" strokeWidth="0.7" strokeLinecap="round"/>
-          <path d="M3 3 L2 6.5 M3 3 L4.5 6 M3 3 L5.5 4.5" stroke="#1f4c49" strokeWidth="0.7" strokeLinecap="round"/>
-          {/* Pearl (여의주) */}
-          <circle cx="10.5" cy="-5" r="2.2" fill="none" stroke="#1f4c49" strokeWidth="0.6"/>
-          <circle cx="10.5" cy="-5" r="0.9" fill="#1f4c49"/>
-          <path d="M9 -7.2 L10.5 -9.5 L12 -7.2" stroke="#1f4c49" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
-          {/* Cloud puffs (구름) */}
-          <circle cx="-2" cy="2" r="1.5" fill="#1f4c49"/>
-          <circle cx="2" cy="0" r="1.3" fill="#1f4c49"/>
-          <circle cx="-4" cy="-1" r="1.2" fill="#1f4c49"/>
-          <circle cx="3" cy="-2" r="1.1" fill="#1f4c49"/>
-          <circle cx="7" cy="2" r="1.1" fill="#1f4c49"/>
+
+        {/* Top-right sakura */}
+        <g transform="translate(89,8)" opacity="0.13" fill="#f02570">
+          <use href="#petal" transform="rotate(18)"/>
+          <use href="#petal" transform="rotate(90)"/>
+          <use href="#petal" transform="rotate(162)"/>
+          <use href="#petal" transform="rotate(234)"/>
+          <use href="#petal" transform="rotate(306)"/>
+          <circle r="1" fill="#ffd6e8"/>
         </g>
-        {/* Bottom wave bands — 파도문 */}
-        <g opacity="0.12">
-          <path d="M0 83 Q6.25 79 12.5 83 Q18.75 87 25 83 Q31.25 79 37.5 83 Q43.75 87 50 83 Q56.25 79 62.5 83 Q68.75 87 75 83 Q81.25 79 87.5 83 Q93.75 87 100 83 L100 90 Q93.75 94 87.5 90 Q81.25 86 75 90 Q68.75 94 62.5 90 Q56.25 86 50 90 Q43.75 94 37.5 90 Q31.25 86 25 90 Q18.75 94 12.5 90 Q6.25 86 0 90Z" fill="#1f4c49" fillOpacity="0.22"/>
-          <path d="M0 88 Q6.25 84 12.5 88 Q18.75 92 25 88 Q31.25 84 37.5 88 Q43.75 92 50 88 Q56.25 84 62.5 88 Q68.75 92 75 88 Q81.25 84 87.5 88 Q93.75 92 100 88 L100 95 Q93.75 99 87.5 95 Q81.25 91 75 95 Q68.75 99 62.5 95 Q56.25 91 50 95 Q43.75 99 37.5 95 Q31.25 91 25 95 Q18.75 99 12.5 95 Q6.25 91 0 95Z" fill="#1f4c49" fillOpacity="0.38"/>
-          <path d="M0 93 Q6.25 89 12.5 93 Q18.75 97 25 93 Q31.25 89 37.5 93 Q43.75 97 50 93 Q56.25 89 62.5 93 Q68.75 97 75 93 Q81.25 89 87.5 93 Q93.75 97 100 93 L100 100 L0 100Z" fill="#1f4c49" fillOpacity="0.55"/>
-          <path d="M0 88 Q6.25 84 12.5 88 Q18.75 92 25 88 Q31.25 84 37.5 88 Q43.75 92 50 88 Q56.25 84 62.5 88 Q68.75 92 75 88 Q81.25 84 87.5 88 Q93.75 92 100 88" stroke="white" strokeOpacity="0.22" strokeWidth="0.4" fill="none"/>
-          <path d="M0 83 Q6.25 79 12.5 83 Q18.75 87 25 83 Q31.25 79 37.5 83 Q43.75 87 50 83 Q56.25 79 62.5 83 Q68.75 87 75 83 Q81.25 79 87.5 83 Q93.75 87 100 83" stroke="white" strokeOpacity="0.16" strokeWidth="0.35" fill="none"/>
+        <g transform="translate(77,4) scale(0.6)" opacity="0.10" fill="#ff70a8">
+          <use href="#petal" transform="rotate(0)"/>
+          <use href="#petal" transform="rotate(72)"/>
+          <use href="#petal" transform="rotate(144)"/>
+          <use href="#petal" transform="rotate(216)"/>
+          <use href="#petal" transform="rotate(288)"/>
+          <circle r="1" fill="#fff0f5"/>
+        </g>
+
+        {/* Scattered sparkles */}
+        <g transform="translate(33,6) scale(0.5)" opacity="0.16" fill="#ffa3c7">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(56,5) scale(0.42)" opacity="0.13" fill="#f02570">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(67,10) scale(0.38)" opacity="0.14" fill="#ff70a8">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(44,9) scale(0.3)" opacity="0.12" fill="#ffc9e0">
+          <use href="#sparkle"/>
+        </g>
+
+        {/* Side hearts */}
+        <g transform="translate(4,47) scale(0.55)" opacity="0.09" fill="#f02570">
+          <use href="#heart"/>
+        </g>
+        <g transform="translate(96,42) scale(0.5)" opacity="0.09" fill="#f02570">
+          <use href="#heart"/>
+        </g>
+
+        {/* Bottom-right sakura */}
+        <g transform="translate(85,87) scale(0.75)" opacity="0.11" fill="#ff70a8">
+          <use href="#petal" transform="rotate(0)"/>
+          <use href="#petal" transform="rotate(72)"/>
+          <use href="#petal" transform="rotate(144)"/>
+          <use href="#petal" transform="rotate(216)"/>
+          <use href="#petal" transform="rotate(288)"/>
+          <circle r="1" fill="#fff0f5"/>
+        </g>
+        <g transform="translate(13,90) scale(0.6)" opacity="0.10" fill="#f02570">
+          <use href="#petal" transform="rotate(18)"/>
+          <use href="#petal" transform="rotate(90)"/>
+          <use href="#petal" transform="rotate(162)"/>
+          <use href="#petal" transform="rotate(234)"/>
+          <use href="#petal" transform="rotate(306)"/>
+          <circle r="1" fill="#ffd6e8"/>
+        </g>
+
+        {/* Bottom wave bands */}
+        <g opacity="0.11">
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#f02570" fillOpacity="0.20"/>
+          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#f02570" fillOpacity="0.38"/>
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.18" strokeWidth="0.35" fill="none"/>
         </g>
       </svg>
 
@@ -264,8 +297,8 @@ export default function App() {
             onClick={() => setSideOpen(false)}
           />
 
-          {/* Panel — celadon frosted glass */}
-          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(232,242,238,0.68)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}>
+          {/* Panel — pink frosted glass */}
+          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(253,228,240,0.75)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}>
 
             {/* Close */}
             <button
@@ -281,8 +314,8 @@ export default function App() {
               style={{
                 background: `
                   radial-gradient(ellipse at 22% 20%, rgba(255,255,255,0.82) 0%, rgba(224,242,238,0.4) 30%, transparent 54%),
-                  radial-gradient(ellipse at 76% 82%, rgba(121,179,168,0.28) 0%, transparent 50%),
-                  linear-gradient(148deg, #bdd9d3 0%, #96c1b7 30%, #79b3a8 62%, #8cbdb4 100%)
+                  radial-gradient(ellipse at 76% 82%, rgba(255,163,199,0.28) 0%, transparent 50%),
+                  linear-gradient(148deg, #fdd5e8 0%, #f9bcd4 30%, #ffa3c7 62%, #f8bed6 100%)
                 `,
               }}
             >
@@ -348,14 +381,14 @@ export default function App() {
                     }`}
                     style={isActive ? {
                       background: 'rgba(255,255,255,0.72)',
-                      border: '1px solid rgba(121,179,168,0.22)',
-                      boxShadow: '0 1px 6px rgba(43,100,96,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+                      border: '1px solid rgba(255,163,199,0.22)',
+                      boxShadow: '0 1px 6px rgba(240,37,112,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
                     } : {}}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all`}
                       style={isActive ? {
-                        background: 'linear-gradient(135deg, #aacfc5 0%, #79b3a8 100%)',
-                        boxShadow: '0 2px 6px rgba(43,100,96,0.2)',
+                        background: 'linear-gradient(135deg, #ffc9e0 0%, #ffa3c7 100%)',
+                        boxShadow: '0 2px 6px rgba(240,37,112,0.2)',
                       } : { background: 'rgba(255,255,255,0.55)' }}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.iconColor}`} />
@@ -395,7 +428,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(228,240,236,0.76)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(121,179,168,0.20)', boxShadow: '0 1px 12px rgba(43,100,96,0.07)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(253,228,238,0.82)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,163,199,0.22)', boxShadow: '0 1px 12px rgba(240,37,112,0.09)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
@@ -433,7 +466,7 @@ export default function App() {
             <button
               onClick={() => handleMainNav('study')}
               className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium mb-4 px-3 py-1.5 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(121,179,168,0.20)' }}
+              style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}
             >
               <ChevronLeft className="w-4 h-4" />
               로비로 돌아가기

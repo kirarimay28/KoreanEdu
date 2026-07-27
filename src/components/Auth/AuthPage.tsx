@@ -56,10 +56,10 @@ export default function AuthPage({ onLogin }: Props) {
       style={{
         background: `
           radial-gradient(ellipse at 22% 18%, rgba(255,255,255,0.88) 0%, rgba(224,242,238,0.5) 32%, transparent 56%),
-          radial-gradient(ellipse at 78% 84%, rgba(121,179,168,0.32) 0%, rgba(82,152,140,0.18) 36%, transparent 60%),
+          radial-gradient(ellipse at 78% 84%, rgba(255,163,199,0.32) 0%, rgba(255,112,168,0.18) 36%, transparent 60%),
           radial-gradient(ellipse at 60% 38%, rgba(255,255,255,0.16) 0%, transparent 30%),
           radial-gradient(ellipse at 38% 68%, rgba(170,207,197,0.14) 0%, transparent 40%),
-          linear-gradient(152deg, #bdd9d3 0%, #96c1b7 28%, #79b3a8 58%, #8cbdB4 82%, #a6c8c0 100%)
+          linear-gradient(152deg, #fdd5e8 0%, #f9bcd4 28%, #ffa3c7 58%, #f8bed6 82%, #fac8dc 100%)
         `
       }}
     >
@@ -70,39 +70,39 @@ export default function AuthPage({ onLogin }: Props) {
         style={{ opacity: 0.17 }}
       >
         {/* Body */}
-        <ellipse cx="155" cy="140" rx="48" ry="15" transform="rotate(-8 155 140)" fill="rgba(43,100,96,0.9)"/>
+        <ellipse cx="155" cy="140" rx="48" ry="15" transform="rotate(-8 155 140)" fill="rgba(240,37,112,0.9)"/>
         {/* Tail feathers */}
-        <path d="M110 148 C88 156 68 164 50 174" stroke="rgba(43,100,96,1)" strokeWidth="3.5" strokeLinecap="round"/>
-        <path d="M113 153 C92 157 72 160 56 163" stroke="rgba(43,100,96,0.8)" strokeWidth="3" strokeLinecap="round"/>
-        <path d="M116 157 C98 159 80 157 66 154" stroke="rgba(43,100,96,0.65)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M110 148 C88 156 68 164 50 174" stroke="rgba(240,37,112,1)" strokeWidth="3.5" strokeLinecap="round"/>
+        <path d="M113 153 C92 157 72 160 56 163" stroke="rgba(240,37,112,0.8)" strokeWidth="3" strokeLinecap="round"/>
+        <path d="M116 157 C98 159 80 157 66 154" stroke="rgba(240,37,112,0.65)" strokeWidth="2.5" strokeLinecap="round"/>
         {/* Neck */}
-        <path d="M196 128 C202 110 206 92 208 76" stroke="rgba(43,100,96,1)" strokeWidth="5.5" strokeLinecap="round"/>
+        <path d="M196 128 C202 110 206 92 208 76" stroke="rgba(240,37,112,1)" strokeWidth="5.5" strokeLinecap="round"/>
         {/* Head */}
-        <ellipse cx="210" cy="69" rx="11" ry="9" fill="rgba(43,100,96,0.95)"/>
+        <ellipse cx="210" cy="69" rx="11" ry="9" fill="rgba(240,37,112,0.95)"/>
         {/* Red crown */}
         <ellipse cx="211" cy="61" rx="5.5" ry="3.2" fill="rgba(155,55,48,0.85)"/>
         {/* Eye */}
-        <circle cx="215" cy="70" r="2.2" fill="rgba(43,100,96,1)"/>
+        <circle cx="215" cy="70" r="2.2" fill="rgba(240,37,112,1)"/>
         {/* Beak */}
-        <path d="M219 68 L236 63" stroke="rgba(43,100,96,1)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M219 68 L236 63" stroke="rgba(240,37,112,1)" strokeWidth="2.5" strokeLinecap="round"/>
         {/* Upper wing */}
-        <path d="M112 145 C122 105 150 80 196 128" fill="rgba(43,100,96,0.55)"/>
+        <path d="M112 145 C122 105 150 80 196 128" fill="rgba(240,37,112,0.55)"/>
         {/* Wing primary feather lines */}
         <path d="M118 120 L108 102 M133 106 L128 88 M150 96 L148 77 M168 91 L169 72 M184 91 L188 73"
           stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round"/>
         {/* Upper wing edge */}
-        <path d="M112 145 C124 102 152 78 196 128" stroke="rgba(43,100,96,1)" strokeWidth="1.2" fill="none"/>
+        <path d="M112 145 C124 102 152 78 196 128" stroke="rgba(240,37,112,1)" strokeWidth="1.2" fill="none"/>
         {/* Lower wing */}
-        <path d="M112 148 C130 172 164 174 196 152" fill="rgba(43,100,96,0.35)"/>
-        <path d="M112 148 C132 174 166 176 196 152" stroke="rgba(43,100,96,0.8)" strokeWidth="1" fill="none"/>
+        <path d="M112 148 C130 172 164 174 196 152" fill="rgba(240,37,112,0.35)"/>
+        <path d="M112 148 C132 174 166 176 196 152" stroke="rgba(240,37,112,0.8)" strokeWidth="1" fill="none"/>
         {/* Legs */}
-        <path d="M148 157 L142 192" stroke="rgba(43,100,96,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
-        <path d="M163 159 L158 194" stroke="rgba(43,100,96,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M148 157 L142 192" stroke="rgba(240,37,112,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M163 159 L158 194" stroke="rgba(240,37,112,0.9)" strokeWidth="2.5" strokeLinecap="round"/>
         {/* Feet */}
         <path d="M142 192 L134 198 M142 192 L142 200 M142 192 L150 198"
-          stroke="rgba(43,100,96,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
+          stroke="rgba(240,37,112,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M158 194 L150 200 M158 194 L158 202 M158 194 L166 200"
-          stroke="rgba(43,100,96,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
+          stroke="rgba(240,37,112,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
 
       {/* Cloud motifs — bottom-left */}
@@ -112,11 +112,11 @@ export default function AuthPage({ onLogin }: Props) {
         style={{ opacity: 0.16 }}
       >
         <path d="M22 72 Q32 48 52 54 Q56 32 80 34 Q104 28 108 50 Q126 40 138 56 Q156 48 162 66 L22 66Z"
-          fill="rgba(43,100,96,0.9)" stroke="rgba(43,100,96,1)" strokeWidth="1"/>
+          fill="rgba(240,37,112,0.9)" stroke="rgba(240,37,112,1)" strokeWidth="1"/>
         <path d="M14 80 Q28 60 46 64 Q50 50 66 52 Q80 48 84 62 Q96 58 102 70 L14 70Z"
-          fill="rgba(43,100,96,0.55)" stroke="rgba(43,100,96,0.8)" strokeWidth="0.8"/>
+          fill="rgba(240,37,112,0.55)" stroke="rgba(240,37,112,0.8)" strokeWidth="0.8"/>
         <path d="M150 76 Q160 62 172 66 Q174 56 186 58 Q196 54 198 66 L150 68Z"
-          fill="rgba(43,100,96,0.4)" stroke="rgba(43,100,96,0.65)" strokeWidth="0.7"/>
+          fill="rgba(240,37,112,0.4)" stroke="rgba(240,37,112,0.65)" strokeWidth="0.7"/>
       </svg>
 
       {/* Small cloud — top-left */}
@@ -126,7 +126,7 @@ export default function AuthPage({ onLogin }: Props) {
         style={{ opacity: 0.12 }}
       >
         <path d="M12 44 Q20 26 36 30 Q38 14 56 16 Q72 12 76 28 Q90 22 96 36 L12 38Z"
-          fill="rgba(43,100,96,0.9)" stroke="rgba(43,100,96,1)" strokeWidth="0.8"/>
+          fill="rgba(240,37,112,0.9)" stroke="rgba(240,37,112,1)" strokeWidth="0.8"/>
       </svg>
 
       <div className="w-full max-w-sm relative">
@@ -140,10 +140,10 @@ export default function AuthPage({ onLogin }: Props) {
               border: '1px solid rgba(255,255,255,0.60)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              boxShadow: '0 10px 40px rgba(43,100,96,0.22), 0 0 0 1px rgba(255,255,255,0.45) inset',
+              boxShadow: '0 10px 40px rgba(240,37,112,0.22), 0 0 0 1px rgba(255,255,255,0.45) inset',
             }}
           >
-            <BookOpen className="w-10 h-10" style={{ color: '#0f2826', opacity: 0.80 }} />
+            <BookOpen className="w-10 h-10" style={{ color: '#870e3a', opacity: 0.80 }} />
           </div>
           <h1 className="auth-logo-shimmer logo-serif text-6xl mb-4">
             나랏말
@@ -157,7 +157,7 @@ export default function AuthPage({ onLogin }: Props) {
         </div>
 
         {mode === 'select' && (
-          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(240,37,112,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <p className="text-center text-[13px] text-gray-400 mb-6 leading-relaxed">
               스터디 구성원만 이용할 수 있습니다.
             </p>
@@ -179,7 +179,7 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'login' && (
-          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(240,37,112,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <div className="flex items-center gap-2 mb-6">
               <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←
@@ -222,7 +222,7 @@ export default function AuthPage({ onLogin }: Props) {
         )}
 
         {mode === 'signup' && (
-          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(43,100,96,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
+          <div className="rounded-3xl p-7" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 4px 24px rgba(240,37,112,0.10), 0 0 0 1px rgba(255,255,255,0.50) inset' }}>
             <div className="flex items-center gap-2 mb-6">
               <button onClick={reset} className="text-gray-400 hover:text-gray-600 transition text-lg leading-none">
                 ←

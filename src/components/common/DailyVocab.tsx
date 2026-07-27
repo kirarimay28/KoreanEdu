@@ -23,13 +23,13 @@ export default function DailyVocab({ date }: Props) {
         background: 'rgba(255,255,255,0.62)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(121,179,168,0.30)',
-        boxShadow: '0 2px 12px rgba(43,100,96,0.07), 0 0 0 1px rgba(255,255,255,0.55) inset',
+        border: '1px solid rgba(255,163,199,0.30)',
+        boxShadow: '0 2px 12px rgba(240,37,112,0.07), 0 0 0 1px rgba(255,255,255,0.55) inset',
       }}
     >
       <div
         className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black"
-        style={{ background: 'linear-gradient(135deg, #52988c 0%, #2b6460 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #ff70a8 0%, #f02570 100%)' }}
       >
         {idx + 1}
       </div>

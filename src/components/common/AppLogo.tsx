@@ -10,7 +10,7 @@ export default function AppLogo({ className = '' }: Props) {
         fontSize: '1.08rem',
         lineHeight: 1,
         display: 'inline-block',
-        background: 'linear-gradient(95deg, #1f4c49 0%, #2b6460 30%, #52988c 60%, #1f4c49 100%)',
+        background: 'linear-gradient(95deg, #cc1858 0%, #f02570 30%, #ff70a8 60%, #cc1858 100%)',
         WebkitBackgroundClip: 'text',
         backgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
