@@ -130,17 +130,7 @@ export default function App() {
     setActiveTab(id);
   }
 
-  const jadeBg = {
-    background: `
-      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
-      radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
-      radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(255,163,199,0.65) 0%, transparent 52%),
-      radial-gradient(ellipse 80% 60% at 88% 92%, rgba(240,37,112,0.48)   0%, transparent 52%),
-      linear-gradient(155deg, #fdd0e3 0%, #fce4ec 35%, #f9b0cc 65%, #fce4ec 100%)
-    `,
-    backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%',
-    backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0',
-  } as React.CSSProperties;
+  const jadeBg = { background: '#fce4ec' } as React.CSSProperties;
 
   if (loading) {
     return (
@@ -175,23 +165,9 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: `
-          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
-          radial-gradient(ellipse 120% 90% at 50% 0%, transparent 47%, rgba(204,24,88,0.10) 48%, rgba(204,24,88,0.10) 51%, transparent 52%),
-          radial-gradient(ellipse 90% 65% at 12% 8%,  rgba(255,163,199,0.65) 0%, transparent 52%),
-          radial-gradient(ellipse 80% 60% at 88% 92%, rgba(240,37,112,0.48)   0%, transparent 52%),
-          radial-gradient(ellipse 55% 45% at 50% 45%, rgba(255,255,255,0.22) 0%, transparent 60%),
-          linear-gradient(155deg, #fdd0e3 0%, #fce4ec 35%, #f9b0cc 65%, #fce4ec 100%)
-        `,
-        backgroundSize: '36px 24px, 36px 24px, 100% 100%, 100% 100%, 100% 100%, 100% 100%',
-        backgroundPosition: '0 0, 18px 12px, 0 0, 0 0, 0 0, 0 0',
-      }}
-    >
+    <div className="min-h-screen" style={{ background: '#fce4ec' }}>
 
-      {/* ─── Cute pink decorative overlay ─── */}
+      {/* ─── Pink icon decorative overlay ─── */}
       <svg
         aria-hidden="true"
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
@@ -199,92 +175,133 @@ export default function App() {
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
+          {/* Sakura petal */}
           <path id="petal" d="M0 0 C-1.6 -0.8 -1.8 -3.8 0 -4.8 C1.8 -3.8 1.6 -0.8 0 0Z"/>
-          <path id="sparkle" d="M0 -3.2 L0.45 -0.45 L3.2 0 L0.45 0.45 L0 3.2 L-0.45 0.45 L-3.2 0 L-0.45 -0.45Z"/>
-          <path id="heart" d="M0 2.2 C-0.5 1.2 -3.2 -0.8 -3.2 -2.4 C-3.2 -4 -1.6 -4.6 0 -3 C1.6 -4.6 3.2 -4 3.2 -2.4 C3.2 -0.8 0.5 1.2 0 2.2Z"/>
+          {/* 4-pointed sparkle */}
+          <path id="sparkle" d="M0 -3.4 L0.5 -0.5 L3.4 0 L0.5 0.5 L0 3.4 L-0.5 0.5 L-3.4 0 L-0.5 -0.5Z"/>
+          {/* Heart */}
+          <path id="heart" d="M0 2.4 C-0.4 1.4 -3.4 -0.6 -3.4 -2.5 C-3.4 -4.2 -1.7 -4.8 0 -3.1 C1.7 -4.8 3.4 -4.2 3.4 -2.5 C3.4 -0.6 0.4 1.4 0 2.4Z"/>
+          {/* Star (5-pointed) */}
+          <path id="star" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+          {/* Moon crescent */}
+          <path id="moon" d="M2 -4 C-2 -4 -5 -1 -5 2 C-5 5 -2 8 2 8 C0 6 -1 4 -1 2 C-1 -1 0 -3 2 -4Z"/>
+          {/* Ribbon bow */}
+          <path id="bow" d="M0 0 L-4 -2.5 L-4 2.5Z M0 0 L4 -2.5 L4 2.5Z"/>
         </defs>
 
-        {/* Top-left sakura */}
-        <g transform="translate(9,11)" opacity="0.13" fill="#f02570">
+        {/* ── Top-left cluster ── */}
+        <g transform="translate(8,13)" opacity="0.22" fill="#f02570">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
           <use href="#petal" transform="rotate(216)"/>
           <use href="#petal" transform="rotate(288)"/>
-          <circle r="1" fill="#ffd6e8"/>
+          <circle r="1.1" fill="#ffc9e0"/>
         </g>
-        <g transform="translate(21,4) scale(0.65)" opacity="0.10" fill="#ff70a8">
+        <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="#ff70a8">
           <use href="#petal" transform="rotate(36)"/>
           <use href="#petal" transform="rotate(108)"/>
           <use href="#petal" transform="rotate(180)"/>
           <use href="#petal" transform="rotate(252)"/>
           <use href="#petal" transform="rotate(324)"/>
-          <circle r="1" fill="#fff0f5"/>
+          <circle r="1" fill="#ffe4ef"/>
+        </g>
+        <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="#f02570">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(14,27) scale(0.45)" opacity="0.14" fill="#ffa3c7">
+          <use href="#heart"/>
         </g>
 
-        {/* Top-right sakura */}
-        <g transform="translate(89,8)" opacity="0.13" fill="#f02570">
+        {/* ── Top-center scatter ── */}
+        <g transform="translate(38,5) scale(0.55)" opacity="0.20" fill="#ffa3c7">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="#f02570">
+          <use href="#star"/>
+        </g>
+        <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="#ff70a8">
+          <use href="#sparkle"/>
+        </g>
+
+        {/* ── Top-right cluster ── */}
+        <g transform="translate(91,11)" opacity="0.22" fill="#f02570">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
           <use href="#petal" transform="rotate(234)"/>
           <use href="#petal" transform="rotate(306)"/>
-          <circle r="1" fill="#ffd6e8"/>
+          <circle r="1.1" fill="#ffc9e0"/>
         </g>
-        <g transform="translate(77,4) scale(0.6)" opacity="0.10" fill="#ff70a8">
+        <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="#ff70a8">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
           <use href="#petal" transform="rotate(216)"/>
           <use href="#petal" transform="rotate(288)"/>
-          <circle r="1" fill="#fff0f5"/>
+          <circle r="1" fill="#ffe4ef"/>
         </g>
-
-        {/* Scattered sparkles */}
-        <g transform="translate(33,6) scale(0.5)" opacity="0.16" fill="#ffa3c7">
+        <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="#f02570">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(56,5) scale(0.42)" opacity="0.13" fill="#f02570">
-          <use href="#sparkle"/>
-        </g>
-        <g transform="translate(67,10) scale(0.38)" opacity="0.14" fill="#ff70a8">
-          <use href="#sparkle"/>
-        </g>
-        <g transform="translate(44,9) scale(0.3)" opacity="0.12" fill="#ffc9e0">
-          <use href="#sparkle"/>
-        </g>
-
-        {/* Side hearts */}
-        <g transform="translate(4,47) scale(0.55)" opacity="0.09" fill="#f02570">
-          <use href="#heart"/>
-        </g>
-        <g transform="translate(96,42) scale(0.5)" opacity="0.09" fill="#f02570">
+        <g transform="translate(83,27) scale(0.5)" opacity="0.15" fill="#ffa3c7">
           <use href="#heart"/>
         </g>
 
-        {/* Bottom-right sakura */}
-        <g transform="translate(85,87) scale(0.75)" opacity="0.11" fill="#ff70a8">
-          <use href="#petal" transform="rotate(0)"/>
-          <use href="#petal" transform="rotate(72)"/>
-          <use href="#petal" transform="rotate(144)"/>
-          <use href="#petal" transform="rotate(216)"/>
-          <use href="#petal" transform="rotate(288)"/>
-          <circle r="1" fill="#fff0f5"/>
+        {/* ── Mid-left ── */}
+        <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="#f02570">
+          <use href="#heart"/>
         </g>
-        <g transform="translate(13,90) scale(0.6)" opacity="0.10" fill="#f02570">
+        <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="#ff70a8">
+          <use href="#star"/>
+        </g>
+        <g transform="translate(2,72) scale(0.45)" opacity="0.13" fill="#ffa3c7">
+          <use href="#sparkle"/>
+        </g>
+
+        {/* ── Mid-right ── */}
+        <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="#f02570">
+          <use href="#heart"/>
+        </g>
+        <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="#ff70a8">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(95,70) scale(0.45)" opacity="0.13" fill="#ffa3c7">
+          <use href="#star"/>
+        </g>
+
+        {/* ── Bottom cluster ── */}
+        <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="#f02570">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
           <use href="#petal" transform="rotate(234)"/>
           <use href="#petal" transform="rotate(306)"/>
-          <circle r="1" fill="#ffd6e8"/>
+          <circle r="1.1" fill="#ffc9e0"/>
+        </g>
+        <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="#ff70a8">
+          <use href="#petal" transform="rotate(0)"/>
+          <use href="#petal" transform="rotate(72)"/>
+          <use href="#petal" transform="rotate(144)"/>
+          <use href="#petal" transform="rotate(216)"/>
+          <use href="#petal" transform="rotate(288)"/>
+          <circle r="1" fill="#ffe4ef"/>
+        </g>
+        <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="#f02570">
+          <use href="#sparkle"/>
+        </g>
+        <g transform="translate(50,90) scale(0.55)" opacity="0.15" fill="#ffa3c7">
+          <use href="#heart"/>
+        </g>
+        <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="#ff70a8">
+          <use href="#star"/>
         </g>
 
-        {/* Bottom wave bands */}
-        <g opacity="0.11">
-          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#f02570" fillOpacity="0.20"/>
-          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#f02570" fillOpacity="0.38"/>
-          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.18" strokeWidth="0.35" fill="none"/>
+        {/* ── Bottom wave bands ── */}
+        <g opacity="0.13">
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#f02570" fillOpacity="0.22"/>
+          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#f02570" fillOpacity="0.40"/>
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.25" strokeWidth="0.4" fill="none"/>
         </g>
       </svg>
 
