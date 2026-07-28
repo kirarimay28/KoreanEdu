@@ -16,6 +16,7 @@ export interface User {
   createdAt: string;
   role?: UserRole;
   restrictions?: UserRestrictions;
+  avatarUrl?: string;
 }
 
 export type ExamStatus = 'O' | '△' | 'X' | '';

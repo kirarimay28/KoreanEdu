@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { User } from '../../types';
-import { changeUsername, changePassword, deleteAccount } from '../../store';
-import { Settings, UserCircle, Lock, Trash2, ChevronRight, X } from 'lucide-react';
+import { changeUsername, changePassword, deleteAccount, updateAvatar } from '../../store';
+import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
+import Avatar from '../common/Avatar';
 
 interface Props {
   currentUser: User;
@@ -12,6 +13,26 @@ interface Props {
 
 type Section = 'username' | 'password' | 'delete' | null;
 
+async function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const SIZE = 240;
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(SIZE / img.width, SIZE / img.height);
+      canvas.width  = Math.round(img.width  * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Props) {
   const [section, setSection] = useState<Section>(null);
   const [currentPw, setCurrentPw] = useState('');
@@ -19,6 +40,8 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   const [confirmPw, setConfirmPw] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function resetForm() {
     setCurrentPw(''); setNewValue(''); setConfirmPw(''); setError('');
@@ -47,6 +70,27 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
     else setError(res.error ?? '탈퇴에 실패했습니다.');
   }
 
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarLoading(true);
+    try {
+      const dataUrl = await compressImage(file);
+      const res = updateAvatar(currentUser.id, dataUrl);
+      if (res.ok && res.user) { onUserUpdate(res.user); setSuccess('프로필 사진이 변경되었습니다.'); }
+    } catch {
+      setError('이미지 처리 중 오류가 발생했습니다.');
+    } finally {
+      setAvatarLoading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  function handleRemoveAvatar() {
+    const res = updateAvatar(currentUser.id, null);
+    if (res.ok && res.user) { onUserUpdate(res.user); setSuccess('프로필 사진이 삭제되었습니다.'); }
+  }
+
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
@@ -57,15 +101,56 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
       </div>
 
       {/* Profile card */}
-      <div className="card bg-gradient-to-br from-primary-50 to-indigo-50 border-primary-100 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-primary-200 flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl font-black text-primary-700">{currentUser.username[0]}</span>
+      <div className="card bg-gradient-to-br from-primary-50 to-pink-50 border-primary-100">
+        <div className="flex items-center gap-4">
+          {/* Avatar with edit button */}
+          <div className="relative flex-shrink-0">
+            <Avatar user={currentUser} size="lg" />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={avatarLoading}
+              className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-md hover:bg-primary-600 transition active:scale-90"
+            >
+              {avatarLoading
+                ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                : <Camera className="w-3 h-3" />}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <NameWithCrown name={currentUser.username} className="text-base font-bold text-gray-800" />
+            <p className="text-xs text-gray-400 mt-0.5">{roleLabel} · 가입일 {currentUser.createdAt.slice(0, 10)}</p>
+            {currentUser.resolution && (
+              <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">"{currentUser.resolution}"</p>
+            )}
+          </div>
         </div>
-        <div className="min-w-0">
-          <NameWithCrown name={currentUser.username} className="text-base font-bold text-gray-800" />
-          <p className="text-xs text-gray-400 mt-0.5">{roleLabel} · 가입일 {currentUser.createdAt.slice(0, 10)}</p>
-          {currentUser.resolution && (
-            <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">"{currentUser.resolution}"</p>
+
+        {/* Avatar actions */}
+        <div className="flex gap-2 mt-3 pt-3 border-t border-primary-100">
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={avatarLoading}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl bg-primary-500 text-white hover:bg-primary-600 transition active:scale-95"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            사진 변경
+          </button>
+          {currentUser.avatarUrl && (
+            <button
+              onClick={handleRemoveAvatar}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 transition active:scale-95"
+            >
+              <ImageOff className="w-3.5 h-3.5" />
+              삭제
+            </button>
           )}
         </div>
       </div>

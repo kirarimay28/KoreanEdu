@@ -254,6 +254,16 @@ export function deleteUser(userId: string): void {
   saveCache();
 }
 
+export function updateAvatar(userId: string, avatarUrl: string | null): { ok: boolean; user?: User } {
+  const user = mem.users.find(u => u.id === userId);
+  if (!user) return { ok: false };
+  if (avatarUrl === null) delete user.avatarUrl;
+  else user.avatarUrl = avatarUrl;
+  persist('users', userId, user);
+  saveCache();
+  return { ok: true, user: { ...user } };
+}
+
 export function changeUsername(userId: string, currentPassword: string, newUsername: string): { ok: boolean; error?: string; user?: User } {
   const user = mem.users.find(u => u.id === userId);
   if (!user) return { ok: false, error: '사용자를 찾을 수 없습니다.' };

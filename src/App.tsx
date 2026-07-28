@@ -27,6 +27,7 @@ import {
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
 import DailyVocab from './components/common/DailyVocab';
+import Avatar from './components/common/Avatar';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
@@ -367,9 +368,7 @@ export default function App() {
               {/* User card */}
               <div className="bg-white/50 rounded-2xl px-4 py-3.5 space-y-2.5 shadow-sm" style={{ border: '1px solid rgba(255,255,255,0.6)' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-lg font-black text-primary-700">{currentUser.username[0]}</span>
-                  </div>
+                  <Avatar user={currentUser} size="md" />
                   <div className="min-w-0">
                     <NameWithCrown name={currentUser.username} className="text-sm font-bold text-primary-900" />
                     <span className="text-[11px] text-primary-600">{roleLabel}</span>
@@ -467,8 +466,9 @@ export default function App() {
             </p>
           </div>
 
-          {/* Right: username */}
-          <div className="flex-shrink-0">
+          {/* Right: avatar + name */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Avatar user={currentUser} size="sm" />
             <NameWithCrown name={currentUser.username} className="text-sm font-semibold text-gray-700" />
           </div>
         </div>
