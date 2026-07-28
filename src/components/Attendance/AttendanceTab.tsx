@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2, PlusCircle, MinusCircle, Star } from 'lucide-react';
-import { getAttendanceEntries, getUsers, markAttendance, removeAttendance } from '../../store';
+import { getAttendanceEntries, getUsers, markAttendance, removeAttendance, getApprovedVacations } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import NameWithCrown from '../common/NameWithCrown';
 import type { User } from '../../types';
@@ -24,6 +24,8 @@ export default function AttendanceTab({ currentUser }: Props) {
 
   const users = getUsers();
   const allAttendance = getAttendanceEntries();
+  // makeupDate set of approved vacations, keyed by userId
+  const approvedVacations = getApprovedVacations();
 
   const todayYear = parseInt(today.split('-')[0]);
   const todayMonth = parseInt(today.split('-')[1]) - 1;
@@ -45,6 +47,11 @@ export default function AttendanceTab({ currentUser }: Props) {
     else setViewMonth(m => m + 1);
   }
 
+  // Returns the approved vacation whose makeupDate matches this date for this user
+  function getMakeupVacation(userId: string, dateStr: string) {
+    return approvedVacations.find(v => v.requesterId === userId && v.makeupDate === dateStr) ?? null;
+  }
+
   function getEntry(userId: string, day: number) {
     const dateStr = `${monthPrefix}-${pad(day)}`;
     return allAttendance.find(e => e.userId === userId && e.date === dateStr) ?? null;
@@ -64,10 +71,8 @@ export default function AttendanceTab({ currentUser }: Props) {
       const dateStr = `${monthPrefix}-${pad(d)}`;
       if (dateStr > today) break;
       total++;
-      const entry = allAttendance.find(e => e.userId === userId && e.date === dateStr);
-      if (entry) attended++;
+      if (isAttended(userId, d)) attended++;
     }
-    // Count makeup entries (non-Monday)
     for (const e of allAttendance) {
       if (e.userId !== userId) continue;
       if (!e.date.startsWith(monthPrefix)) continue;
@@ -76,14 +81,13 @@ export default function AttendanceTab({ currentUser }: Props) {
     return { total, attended, makeup, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
   }
 
-  function handleToggle(user: User, day: number, col: number) {
+  function handleToggle(user: User, day: number, isMakeupCell: boolean) {
     if (!isPrivileged) return;
     const dateStr = `${monthPrefix}-${pad(day)}`;
     if (isAttended(user.id, day)) {
       removeAttendance(dateStr, user.id);
     } else {
-      const isMonday = col === 1;
-      markAttendance(dateStr, user.id, user.username, isMonday ? 'regular' : 'makeup');
+      markAttendance(dateStr, user.id, user.username, isMakeupCell ? 'makeup' : 'regular');
     }
     setTick(t => t + 1);
   }
@@ -114,7 +118,7 @@ export default function AttendanceTab({ currentUser }: Props) {
       {isPrivileged && (
         <div className="flex flex-col gap-1 px-1">
           <span className="text-[11px] text-primary-400 bg-primary-50 border border-primary-100 rounded-lg px-2.5 py-1">
-            월요일 셀 → 정규 출석 추가·제거 / 다른 날짜 → 보강 출석 처리
+            월요일 → 정규 출석 / ★ 날짜(승인된 휴가 보강일) → 보강 출석
           </span>
         </div>
       )}
@@ -172,34 +176,41 @@ export default function AttendanceTab({ currentUser }: Props) {
                 const isFuture = dateStr > today;
                 const entry = !isFuture ? getEntry(user.id, day) : null;
                 const attended_ = entry !== null;
-                const isMakeup = entry?.type === 'makeup';
+                const isMakeupEntry = entry?.type === 'makeup';
                 const isToday_ = viewYear === todayYear && viewMonth === todayMonth && day === todayDay;
                 const col = idx % 7;
                 const isMonday = col === 1;
-                const isClickable = isPrivileged && !isFuture;
+
+                // Non-Monday: only clickable if there's an approved vacation with this makeupDate
+                const makeupVacation = !isMonday && !isFuture ? getMakeupVacation(user.id, dateStr) : null;
+                const isMakeupDay = makeupVacation !== null;
+                const isClickable = isPrivileged && !isFuture && (isMonday || isMakeupDay);
 
                 return (
                   <div
                     key={day}
-                    onClick={isClickable ? () => handleToggle(user, day, col) : undefined}
+                    onClick={isClickable ? () => handleToggle(user, day, isMakeupDay) : undefined}
                     className={[
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
                       isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
                       attended_
-                        ? (isMakeup
+                        ? (isMakeupEntry
                             ? 'bg-amber-50 hover:bg-amber-100'
                             : 'bg-primary-100 hover:bg-primary-200')
-                        : isToday_
+                        : isMakeupDay
                           ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
-                          : isClickable
-                            ? 'bg-gray-50 hover:bg-primary-50'
-                            : 'bg-transparent',
+                          : isToday_
+                            ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
+                            : isClickable
+                              ? 'bg-gray-50 hover:bg-primary-50'
+                              : 'bg-transparent',
                     ].join(' ')}
+                    title={makeupVacation ? `보강일 (휴가: ${makeupVacation.vacationDate})` : undefined}
                   >
                     {attended_ ? (
                       <>
-                        {isMakeup
+                        {isMakeupEntry
                           ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                           : <CheckCircle2 className="w-4 h-4 text-primary-500" />
                         }
@@ -212,12 +223,17 @@ export default function AttendanceTab({ currentUser }: Props) {
                         <span className={
                           isMonday
                             ? (isFuture ? 'text-gray-300' : isToday_ ? 'text-amber-600 font-bold' : 'text-gray-500')
-                            : 'text-gray-200'
+                            : isMakeupDay
+                              ? 'text-amber-500 font-bold'
+                              : 'text-gray-200'
                         }>
                           {day}
                         </span>
+                        {isMakeupDay && !attended_ && (
+                          <Star className="w-2 h-2 text-amber-400 fill-amber-300 absolute top-0.5 right-0.5" />
+                        )}
                         {isClickable && !isFuture && (
-                          <PlusCircle className={`w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition ${isMonday ? 'text-primary-400' : 'text-amber-400'}`} />
+                          <PlusCircle className={`w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition ${isMakeupDay ? 'text-amber-400' : 'text-primary-400'}`} />
                         )}
                       </>
                     )}
@@ -235,6 +251,10 @@ export default function AttendanceTab({ currentUser }: Props) {
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                 <span className="text-[10px] text-gray-400">보강</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-amber-300 fill-amber-200" />
+                <span className="text-[10px] text-gray-400">보강 예정</span>
               </div>
             </div>
           </div>
