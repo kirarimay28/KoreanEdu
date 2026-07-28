@@ -14,8 +14,9 @@ const NUMS = Array.from({ length: 100 }, (_, i) => i + 1);
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAYS[d.getDay()]})`;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d, 12);
+  return `${m}월 ${d}일 (${DAYS[date.getDay()]})`;
 }
 
 const CLASSIC_METHOD = `1. 수능 기출 풀이
@@ -56,10 +57,15 @@ const MODERN_METHOD = `1. 수능 기출 풀이
 지문/문제/선지 삼단 구조로 꼼꼼히!!`;
 
 function getThisWeekMonday(): string {
-  const d = new Date();
-  const day = d.getDay();
-  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
-  return d.toISOString().slice(0, 10);
+  // Use KST today to avoid UTC offset causing wrong day
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const [y, m, d] = kst.toISOString().split('T')[0].split('-').map(Number);
+  const date = new Date(y, m - 1, d, 12);
+  const day = date.getDay();
+  const delta = day === 0 ? -6 : 1 - day;
+  date.setDate(d + delta);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function WorkRow({
