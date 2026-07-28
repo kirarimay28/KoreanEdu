@@ -134,6 +134,7 @@ export interface AttendanceEntry {
   userId: string;
   username: string;
   markedAt: string;
+  type?: 'regular' | 'makeup';  // undefined treated as 'regular' for backward compat
 }
 
 export interface Announcement {
