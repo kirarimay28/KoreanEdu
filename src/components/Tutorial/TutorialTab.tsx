@@ -3,7 +3,7 @@ import {
   BookOpen, GraduationCap, HelpCircle, CalendarDays,
   Megaphone, CalendarCheck, Mail, Plane, Inbox, Users,
   Map, BookMarked, TableProperties, ChevronDown, ChevronUp,
-  Clock, Receipt, Languages,
+  Receipt, Languages, Settings,
 } from 'lucide-react';
 
 interface Tip { emoji: string; text: string; }
@@ -32,8 +32,9 @@ const SECTIONS: Section[] = [
     title: '앱 전체 구조',
     summary: '나랏말의 화면 구성과 기본 사용법',
     tips: [
-      { emoji: '📱', text: '하단 탭으로 5개 화면(스터디 · 타이머 · 벌금 · 과제 · 고어)을 이동해요.' },
-      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 질의응답 · 캘린더 · 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관 · 커리큘럼에 접근해요.' },
+      { emoji: '📱', text: '하단 탭으로 4개 화면(스터디 · 벌금 · 과제 · 고어)을 이동해요.' },
+      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 질의응답 · 캘린더 · 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관 · 커리큘럼 · 설정에 접근해요.' },
+      { emoji: '👤', text: '이름 옆에 프로필 사진이 함께 표시돼요. 설정 탭에서 사진을 등록할 수 있어요.' },
       { emoji: '👑', text: '방장 이름 옆엔 금빛 왕관, 부방장 이름 옆엔 파란색 왕관이 표시돼요.' },
       { emoji: '🔄', text: '새로고침(↻) 버튼을 누르면 다른 멤버가 올린 최신 데이터를 불러와요.' },
       { emoji: '🔐', text: '로그아웃 후 재접속해도 모든 기록은 서버에 저장돼 그대로 유지돼요.' },
@@ -47,7 +48,7 @@ const SECTIONS: Section[] = [
     borderColor: 'border-primary-100',
     badge: '로비',
     title: '메인 화면',
-    summary: '공지사항 · 스터디 장소 · 오늘의 단어',
+    summary: '공지사항 · 스터디 장소 · 온라인 스터디룸 · 오늘의 단어',
     subs: [
       {
         heading: '📢 공지사항',
@@ -62,6 +63,13 @@ const SECTIONS: Section[] = [
         tips: [
           { emoji: '🗺️', text: '오늘 스터디 장소가 상단 배너로 표시돼요.' },
           { emoji: '✏️', text: '방장·부방장은 언제든지 장소를 수정할 수 있어요.' },
+        ],
+      },
+      {
+        heading: '💻 온라인 스터디룸',
+        tips: [
+          { emoji: '🚀', text: '[온라인 스터디룸] 버튼을 누르면 함께 공부할 수 있는 실시간 스터디룸으로 이동해요.' },
+          { emoji: '⏱️', text: '스터디룸에서 타이머를 이용해 공부 시간을 측정할 수 있어요.' },
         ],
       },
       {
@@ -97,25 +105,6 @@ const SECTIONS: Section[] = [
           { emoji: '👥', text: '다른 멤버들이 작성한 일지도 펼쳐서 확인할 수 있어요.' },
         ],
       },
-    ],
-  },
-  {
-    id: 'timer',
-    icon: Clock,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-    borderColor: 'border-green-100',
-    badge: '타이머',
-    title: '타이머 탭',
-    summary: '과목별 공부 기록 · 타이머 · 피드백 메모',
-    tips: [
-      { emoji: '➕', text: '[+ 과목 추가]를 눌러 오늘 공부한 과목 카드를 만들어요.' },
-      { emoji: '📚', text: '과목: 국교론 · 교육학 · 중세문법 · 현대문법 · 기타' },
-      { emoji: '🗂️', text: '활동 유형: 회독 · 기출풀이 · 기출분석 · 강의수강 · 단권화 · 오답정리 · 기타' },
-      { emoji: '⏱️', text: '내장 타이머로 공부 시간을 측정하거나, 완료 후 시간을 직접 입력할 수 있어요.' },
-      { emoji: '🏷️', text: '피드백 카테고리(집중 부족 · 오답 다수 발생 · 개념 이해 부족 · 키워드 오류)를 선택하고 메모를 남겨요.' },
-      { emoji: '📄', text: 'PDF 내보내기로 오늘 공부 기록을 파일로 저장할 수 있어요.' },
-      { emoji: '☑️', text: '하단 [출석 체크] 버튼으로 오늘 출석을 바로 등록할 수 있어요.' },
     ],
   },
   {
@@ -246,11 +235,13 @@ const SECTIONS: Section[] = [
     borderColor: 'border-emerald-100',
     badge: '출석',
     title: '출석 탭',
-    summary: '멤버별 월간 출석 달력과 출석률 통계',
+    summary: '멤버별 월간 출석 달력 · 방장 출석 관리 · 보강 처리',
     tips: [
       { emoji: '📅', text: '멤버별 이번 달 출석 달력을 확인할 수 있어요.' },
       { emoji: '📊', text: '출석률(%)이 색상으로 표시돼요: 초록(80% 이상) · 노랑(50~79%) · 빨강(50% 미만)' },
-      { emoji: '💡', text: '출석 체크는 타이머 탭 하단의 [출석 체크] 버튼으로 할 수 있어요.' },
+      { emoji: '👑', text: '방장·부방장은 월요일 셀을 탭해서 정규 출석을 추가하거나 제거할 수 있어요.' },
+      { emoji: '⭐', text: '승인된 휴가의 보강일은 ★로 표시돼요. 탭하면 보강 출석으로 처리할 수 있어요.' },
+      { emoji: '✓★', text: '정규 출석은 분홍 체크(✓), 보강 출석은 주황 별(★)로 구분돼요.' },
     ],
   },
   {
@@ -282,8 +273,8 @@ const SECTIONS: Section[] = [
     title: '쪽지 탭',
     summary: '스터디원에게 개인 메시지 보내고 받기',
     tips: [
-      { emoji: '📩', text: '[쪽지 쓰기] → 받는 사람 선택 → 내용 입력 → 보내기' },
-      { emoji: '🔴', text: '받은쪽지 탭의 빨간 숫자 = 아직 읽지 않은 쪽지 수예요.' },
+      { emoji: '📩', text: '[새 쪽지] → 받는 사람 선택 → 내용 입력 → 보내기' },
+      { emoji: '🔴', text: '받은 쪽지 목록의 빨간 숫자 = 아직 읽지 않은 쪽지 수예요.' },
       { emoji: '👁️', text: '쪽지를 열면 자동으로 읽음 처리되고, 보낸 쪽지 목록에 [읽음] 표시가 떠요.' },
       { emoji: '🗑️', text: '읽은 쪽지는 삭제해서 깔끔하게 정리할 수 있어요.' },
     ],
@@ -301,15 +292,16 @@ const SECTIONS: Section[] = [
       {
         heading: '✈️ 휴가 신청',
         tips: [
-          { emoji: '📋', text: '휴가 날짜, 사유(질병 · 여행 · 기타 등), 보충 날짜를 입력해 신청해요.' },
+          { emoji: '📋', text: '휴가 날짜, 사유(질병 · 여행 · 기타 등), 보강 날짜를 입력해 신청해요.' },
           { emoji: '⏳', text: '신청 후 방장·부방장의 승인을 기다려요. 승인되면 캘린더에 자동으로 표시돼요.' },
+          { emoji: '⭐', text: '승인된 휴가의 보강 날짜는 출석 탭에서 ★로 표시돼 보강 출석 처리가 가능해요.' },
           { emoji: '❌', text: '거절된 경우 사유와 함께 알림이 표시돼요.' },
         ],
       },
       {
         heading: '📋 휴가 명단',
         tips: [
-          { emoji: '✅', text: '승인된 모든 멤버의 휴가 내역(날짜 · 사유 · 보충일 · 승인자)을 확인할 수 있어요.' },
+          { emoji: '✅', text: '승인된 모든 멤버의 휴가 내역(날짜 · 사유 · 보강일 · 승인자)을 확인할 수 있어요.' },
           { emoji: '🔍', text: '멤버 칩을 선택해 특정 멤버의 휴가 내역만 필터링할 수 있어요.' },
           { emoji: '📲', text: '멤버를 선택하면 [휴가 일정 공유] 버튼이 나타나요. 누르면 카카오톡 등으로 공유할 수 있어요.' },
         ],
@@ -346,6 +338,22 @@ const SECTIONS: Section[] = [
       { emoji: '🏷️', text: '태그(작품 목록 · 어휘 · 학습지 · 기출 문제 · 문법 · 기타)로 자료를 분류해 볼 수 있어요.' },
       { emoji: '➕', text: '방장·부방장은 새 자료를 업로드하고 삭제할 수 있어요.' },
       { emoji: '🔒', text: '방장이 도서관 다운로드 권한을 제한한 멤버는 다운로드할 수 없어요.' },
+    ],
+  },
+  {
+    id: 'settings',
+    icon: Settings,
+    iconBg: 'bg-gray-100',
+    iconColor: 'text-gray-600',
+    borderColor: 'border-gray-200',
+    badge: '설정',
+    title: '설정 탭',
+    summary: '프로필 사진 · 비밀번호 변경',
+    tips: [
+      { emoji: '📷', text: '카메라 아이콘을 눌러 갤러리에서 프로필 사진을 선택할 수 있어요.' },
+      { emoji: '✂️', text: '업로드된 사진은 자동으로 압축·최적화돼요. 용량은 걱정하지 않아도 돼요.' },
+      { emoji: '🗑️', text: '등록한 사진을 삭제하면 이니셜 아이콘으로 돌아가요.' },
+      { emoji: '🔑', text: '비밀번호 변경도 설정 탭에서 할 수 있어요.' },
     ],
   },
 ];
@@ -411,14 +419,12 @@ export default function TutorialTab() {
             {/* Expanded content */}
             {isOpen && (
               <div className={`border-t px-4 py-4 space-y-3 ${section.borderColor}`}>
-                {/* Plain tips */}
                 {section.tips && (
                   <div className="space-y-2.5">
                     {section.tips.map((tip, i) => <TipRow key={i} {...tip} />)}
                   </div>
                 )}
 
-                {/* Sub-sections */}
                 {section.subs && section.subs.map((sub, si) => (
                   <div key={si} className="bg-gray-50 rounded-xl px-3.5 py-3 space-y-2">
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">
