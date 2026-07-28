@@ -315,7 +315,7 @@ export default function App() {
           />
 
           {/* Panel — pink frosted glass */}
-          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(253,228,240,0.75)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}>
+          <div className="relative w-[82%] max-w-[320px] h-full shadow-2xl flex flex-col z-10 overflow-hidden" style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)' }}>
 
             {/* Close */}
             <button
@@ -445,7 +445,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(253,228,238,0.82)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,163,199,0.22)', boxShadow: '0 1px 12px rgba(222,78,128,0.09)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(248,144,188,0.18)', boxShadow: '0 1px 16px rgba(222,78,128,0.08)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
