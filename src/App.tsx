@@ -521,7 +521,7 @@ export default function App() {
               href="https://drive.google.com/drive/folders/1vLHj2XRxWT6-C5cJvz99w0dZvxRNXSVI?usp=drive_link"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition w-full"
+              className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition w-full mb-3"
             >
               <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
                 <span className="text-base">📂</span>
