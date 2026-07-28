@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle2, PlusCircle, MinusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, PlusCircle, MinusCircle, Star } from 'lucide-react';
 import { getAttendanceEntries, getUsers, markAttendance, removeAttendance } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import NameWithCrown from '../common/NameWithCrown';
@@ -45,32 +45,45 @@ export default function AttendanceTab({ currentUser }: Props) {
     else setViewMonth(m => m + 1);
   }
 
-  function isAttended(userId: string, day: number) {
+  function getEntry(userId: string, day: number) {
     const dateStr = `${monthPrefix}-${pad(day)}`;
-    return allAttendance.some(e => e.userId === userId && e.date === dateStr);
+    return allAttendance.find(e => e.userId === userId && e.date === dateStr) ?? null;
+  }
+
+  function isAttended(userId: string, day: number) {
+    return getEntry(userId, day) !== null;
   }
 
   function getMonthStats(userId: string) {
     let total = 0;
     let attended = 0;
+    let makeup = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
       if (date.getDay() !== 1) continue;
       const dateStr = `${monthPrefix}-${pad(d)}`;
       if (dateStr > today) break;
       total++;
-      if (isAttended(userId, d)) attended++;
+      const entry = allAttendance.find(e => e.userId === userId && e.date === dateStr);
+      if (entry) attended++;
     }
-    return { total, attended, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
+    // Count makeup entries (non-Monday)
+    for (const e of allAttendance) {
+      if (e.userId !== userId) continue;
+      if (!e.date.startsWith(monthPrefix)) continue;
+      if (e.type === 'makeup') makeup++;
+    }
+    return { total, attended, makeup, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
   }
 
-  function handleToggle(user: User, day: number) {
+  function handleToggle(user: User, day: number, col: number) {
     if (!isPrivileged) return;
     const dateStr = `${monthPrefix}-${pad(day)}`;
     if (isAttended(user.id, day)) {
       removeAttendance(dateStr, user.id);
     } else {
-      markAttendance(dateStr, user.id, user.username);
+      const isMonday = col === 1;
+      markAttendance(dateStr, user.id, user.username, isMonday ? 'regular' : 'makeup');
     }
     setTick(t => t + 1);
   }
@@ -99,9 +112,9 @@ export default function AttendanceTab({ currentUser }: Props) {
 
       {/* Admin hint */}
       {isPrivileged && (
-        <div className="flex items-center gap-2 px-1">
+        <div className="flex flex-col gap-1 px-1">
           <span className="text-[11px] text-primary-400 bg-primary-50 border border-primary-100 rounded-lg px-2.5 py-1">
-            월요일 셀을 탭해서 출석을 추가·제거할 수 있습니다
+            월요일 셀 → 정규 출석 추가·제거 / 다른 날짜 → 보강 출석 처리
           </span>
         </div>
       )}
@@ -113,7 +126,7 @@ export default function AttendanceTab({ currentUser }: Props) {
       )}
 
       {users.map(user => {
-        const { total, attended, rate } = getMonthStats(user.id);
+        const { total, attended, makeup, rate } = getMonthStats(user.id);
 
         return (
           <div key={user.id} className="card">
@@ -121,7 +134,10 @@ export default function AttendanceTab({ currentUser }: Props) {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
-                <p className="text-xs text-gray-400 mt-0.5">{attended}/{total}주 출석</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {attended}/{total}주 출석
+                  {makeup > 0 && <span className="ml-1 text-amber-500">· 보강 {makeup}회</span>}
+                </p>
               </div>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${
                 rate >= 80 ? 'bg-green-100 text-green-700' :
@@ -154,35 +170,39 @@ export default function AttendanceTab({ currentUser }: Props) {
                 if (day === null) return <div key={`e-${idx}`} />;
                 const dateStr = `${monthPrefix}-${pad(day)}`;
                 const isFuture = dateStr > today;
-                const attended_ = !isFuture && isAttended(user.id, day);
+                const entry = !isFuture ? getEntry(user.id, day) : null;
+                const attended_ = entry !== null;
+                const isMakeup = entry?.type === 'makeup';
                 const isToday_ = viewYear === todayYear && viewMonth === todayMonth && day === todayDay;
                 const col = idx % 7;
                 const isMonday = col === 1;
-                const showAttended = isMonday && attended_;
-                const isClickable = isPrivileged && isMonday && !isFuture;
+                const isClickable = isPrivileged && !isFuture;
 
-                const cell = (
+                return (
                   <div
                     key={day}
-                    onClick={isClickable ? () => handleToggle(user, day) : undefined}
+                    onClick={isClickable ? () => handleToggle(user, day, col) : undefined}
                     className={[
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
                       isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
-                      isMonday
-                        ? (showAttended
-                            ? 'bg-primary-100 hover:bg-primary-200'
-                            : isToday_
-                              ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
-                              : isClickable
-                                ? 'bg-gray-50 hover:bg-primary-50'
-                                : 'bg-gray-50')
-                        : 'bg-transparent',
+                      attended_
+                        ? (isMakeup
+                            ? 'bg-amber-50 hover:bg-amber-100'
+                            : 'bg-primary-100 hover:bg-primary-200')
+                        : isToday_
+                          ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
+                          : isClickable
+                            ? 'bg-gray-50 hover:bg-primary-50'
+                            : 'bg-transparent',
                     ].join(' ')}
                   >
-                    {showAttended ? (
+                    {attended_ ? (
                       <>
-                        <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                        {isMakeup
+                          ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                          : <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                        }
                         {isClickable && (
                           <MinusCircle className="w-4 h-4 text-red-400 absolute opacity-0 group-hover:opacity-100 transition" />
                         )}
@@ -190,23 +210,32 @@ export default function AttendanceTab({ currentUser }: Props) {
                     ) : (
                       <>
                         <span className={
-                          !isMonday ? 'text-gray-200' :
-                          isFuture ? 'text-gray-300' :
-                          isToday_ ? 'text-amber-600 font-bold' :
-                          'text-gray-500'
+                          isMonday
+                            ? (isFuture ? 'text-gray-300' : isToday_ ? 'text-amber-600 font-bold' : 'text-gray-500')
+                            : 'text-gray-200'
                         }>
                           {day}
                         </span>
                         {isClickable && !isFuture && (
-                          <PlusCircle className="w-4 h-4 text-primary-400 absolute opacity-0 group-hover:opacity-100 transition" />
+                          <PlusCircle className={`w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition ${isMonday ? 'text-primary-400' : 'text-amber-400'}`} />
                         )}
                       </>
                     )}
                   </div>
                 );
-
-                return cell;
               })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-50">
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-primary-400" />
+                <span className="text-[10px] text-gray-400">정규</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                <span className="text-[10px] text-gray-400">보강</span>
+              </div>
             </div>
           </div>
         );

@@ -406,7 +406,7 @@ export function deleteReflectionEntry(id: string): void {
 }
 
 // ── Attendance ───────────────────────────────────────────
-export function markAttendance(date: string, userId: string, username: string): void {
+export function markAttendance(date: string, userId: string, username: string, type: 'regular' | 'makeup' = 'regular'): void {
   const exists = mem.attendanceEntries.find(e => e.date === date && e.userId === userId);
   if (!exists) {
     const entry: AttendanceEntry = {
@@ -415,9 +415,11 @@ export function markAttendance(date: string, userId: string, username: string): 
       userId,
       username,
       markedAt: new Date().toISOString(),
+      type,
     };
     mem.attendanceEntries.push(entry);
     persist('attendanceEntries', entry.id, entry);
+    saveCache();
   }
 }
 
