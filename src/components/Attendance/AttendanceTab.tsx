@@ -47,28 +47,23 @@ export default function AttendanceTab({ currentUser }: Props) {
     else setViewMonth(m => m + 1);
   }
 
-  // Returns the approved vacation whose makeupDate matches this date for this user.
-  // Requires: requesterId === userId AND makeupDate === dateStr AND vacationDate is non-empty.
-  function getMakeupVacation(userId: string, dateStr: string) {
-    return approvedVacations.find(
-      v => v.requesterId === userId && v.makeupDate === dateStr && !!v.makeupDate && !!v.vacationDate
-    ) ?? null;
-  }
-
   function getEntry(userId: string, dateStr: string) {
     return allAttendance.find(e => e.userId === userId && e.date === dateStr) ?? null;
   }
 
-  // Monday-only regular attendance lookup
-  function isRegularAttended(userId: string, dateStr: string) {
-    const e = getEntry(userId, dateStr);
-    return e !== null && e.type !== 'makeup';
+  // Returns the approved vacation whose makeupDate is dateStr for this user.
+  // Works for both Monday and non-Monday makeupDates.
+  function getMakeupVacation(userId: string, dateStr: string) {
+    return approvedVacations.find(
+      v => v.requesterId === userId && !!v.vacationDate && !!v.makeupDate && v.makeupDate === dateStr
+    ) ?? null;
   }
 
-  // Makeup attendance: only counts entries explicitly typed 'makeup'
-  function isMakeupAttended(userId: string, dateStr: string) {
-    const e = getEntry(userId, dateStr);
-    return e?.type === 'makeup';
+  // Returns the approved vacation whose vacationDate (결석일) is dateStr for this user.
+  function getAbsenceVacation(userId: string, dateStr: string) {
+    return approvedVacations.find(
+      v => v.requesterId === userId && v.vacationDate === dateStr
+    ) ?? null;
   }
 
   function getMonthStats(userId: string) {
@@ -78,12 +73,22 @@ export default function AttendanceTab({ currentUser }: Props) {
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
       const dateStr = `${monthPrefix}-${pad(d)}`;
+      if (dateStr > today) break;
       if (date.getDay() === 1) {
-        if (dateStr > today) break;
-        total++;
-        if (isRegularAttended(userId, dateStr)) attended++;
+        // Monday: count in total unless it's a makeupDate (보강일로 사용되는 월요일은 별도 집계)
+        const isMakeup = getMakeupVacation(userId, dateStr) !== null;
+        if (isMakeup) {
+          if (getEntry(userId, dateStr)) makeup++;
+        } else {
+          total++;
+          // Absence day (승인된 휴가의 결석일): don't count as attended
+          const isAbsence = getAbsenceVacation(userId, dateStr) !== null;
+          if (!isAbsence && getEntry(userId, dateStr)) attended++;
+        }
       } else {
-        if (isMakeupAttended(userId, dateStr)) makeup++;
+        // Non-Monday: only count explicitly typed 'makeup' entries
+        const e = getEntry(userId, dateStr);
+        if (e?.type === 'makeup') makeup++;
       }
     }
     return { total, attended, makeup, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
@@ -186,22 +191,26 @@ export default function AttendanceTab({ currentUser }: Props) {
                 const col = idx % 7;
                 const isMonday = col === 1;
 
-                // Regular attendance: only counts on Mondays, type !== 'makeup'
-                const regularAttended = !isFuture && isMonday && isRegularAttended(user.id, dateStr);
-
-                // Makeup day: non-Monday cell whose date matches an approved vacation's makeupDate
-                // for this specific user (checks requesterId + vacationDate + makeupDate)
-                const makeupVacation = !isMonday && !isFuture ? getMakeupVacation(user.id, dateStr) : null;
+                // Check vacation relationships for this cell
+                const makeupVacation = !isFuture ? getMakeupVacation(user.id, dateStr) : null;
+                const absenceVacation = !isFuture && isMonday ? getAbsenceVacation(user.id, dateStr) : null;
                 const isMakeupDay = makeupVacation !== null;
-                const makeupAttended = isMakeupDay && isMakeupAttended(user.id, dateStr);
+                // Absence day (결석일): don't show regular attendance even if entry exists
+                const isAbsenceDay = absenceVacation !== null && !isMakeupDay;
+
+                const hasEntry = !isFuture && getEntry(user.id, dateStr) !== null;
+
+                // Regular: Monday, not absence day, not makeup day, has any attendance entry
+                const showRegularCheck = isMonday && !isAbsenceDay && !isMakeupDay && hasEntry;
+                // Makeup attended: this date is a makeupDate and has an attendance entry
+                const showMakeupStar = isMakeupDay && hasEntry;
+                // Makeup pending: this date is a makeupDate but no entry yet
+                const showMakeupPending = isMakeupDay && !hasEntry;
+                // Absence indicator: this Monday is a vacation absence day
+                const showAbsence = isAbsenceDay;
+                const showSomething = showRegularCheck || showMakeupStar || showMakeupPending || showAbsence;
 
                 const isClickable = isPrivileged && !isFuture && (isMonday || isMakeupDay);
-
-                // What to show
-                const showRegularCheck = regularAttended;
-                const showMakeupStar = makeupAttended;
-                const showMakeupPending = isMakeupDay && !makeupAttended;
-                const showSomething = showRegularCheck || showMakeupStar || showMakeupPending;
 
                 return (
                   <div
@@ -211,14 +220,19 @@ export default function AttendanceTab({ currentUser }: Props) {
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
                       isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
-                      showRegularCheck ? 'bg-primary-100 hover:bg-primary-200' :
-                      showMakeupStar   ? 'bg-amber-50 hover:bg-amber-100' :
+                      showRegularCheck  ? 'bg-primary-100 hover:bg-primary-200' :
+                      showMakeupStar    ? 'bg-amber-50 hover:bg-amber-100' :
                       showMakeupPending ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100' :
-                      isToday_ && isMonday ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100' :
-                      isClickable ? 'bg-gray-50 hover:bg-primary-50' :
+                      showAbsence       ? 'bg-red-50' :
+                      isToday_ && isMonday ? 'bg-amber-50 ring-1 ring-amber-200' :
+                      isClickable       ? 'bg-gray-50 hover:bg-primary-50' :
                       'bg-transparent',
                     ].join(' ')}
-                    title={makeupVacation ? `보강일 (결석: ${makeupVacation.vacationDate})` : undefined}
+                    title={
+                      makeupVacation ? `보강일 (결석: ${makeupVacation.vacationDate})` :
+                      absenceVacation ? `결석일 (보강: ${absenceVacation.makeupDate || '미정'})` :
+                      undefined
+                    }
                   >
                     {showSomething ? (
                       <>
@@ -230,8 +244,14 @@ export default function AttendanceTab({ currentUser }: Props) {
                             <Star className="w-2 h-2 text-amber-400 fill-amber-300 absolute top-0.5 right-0.5" />
                           </>
                         )}
+                        {showAbsence && (
+                          <span className="text-[10px] font-bold text-red-300">결</span>
+                        )}
                         {isClickable && (showRegularCheck || showMakeupStar) && (
                           <MinusCircle className="w-4 h-4 text-red-400 absolute opacity-0 group-hover:opacity-100 transition" />
+                        )}
+                        {isClickable && showMakeupPending && (
+                          <PlusCircle className="w-4 h-4 text-amber-400 absolute opacity-0 group-hover:opacity-100 transition" />
                         )}
                       </>
                     ) : (
@@ -254,7 +274,7 @@ export default function AttendanceTab({ currentUser }: Props) {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-50">
+            <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-50 flex-wrap">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-primary-400" />
                 <span className="text-[10px] text-gray-400">정규</span>
@@ -266,6 +286,10 @@ export default function AttendanceTab({ currentUser }: Props) {
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 text-amber-300 fill-amber-200" />
                 <span className="text-[10px] text-gray-400">보강 예정</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-red-300 w-3 text-center">결</span>
+                <span className="text-[10px] text-gray-400">결석(휴가)</span>
               </div>
             </div>
           </div>
