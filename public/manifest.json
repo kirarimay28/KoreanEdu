@@ -4,8 +4,8 @@
   "description": "국어 임용 스터디",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#aecfc7",
-  "theme_color": "#1f4c49",
+  "background_color": "#fff0f5",
+  "theme_color": "#de4e80",
   "icons": [
     {
       "src": "/icon-192.png",
