@@ -118,7 +118,7 @@ function MemberCard({ user, rank, currentUser, onAction }: {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" />
+            <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
             {isMe && <span className="text-[10px] font-semibold bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">나</span>}
             <RoleBadge role={user.role} />
             {warnings.length > 0 && (

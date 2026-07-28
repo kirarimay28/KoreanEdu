@@ -92,12 +92,9 @@ export default function AttendanceTab() {
             {/* Member header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-bold text-primary-700">{user.username[0]}</span>
-                </div>
                 <div>
-                  <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" />
-                  <p className="text-xs text-gray-400">{attended}/{total}주 출석</p>
+                  <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
+                  <p className="text-xs text-gray-400 mt-0.5">{attended}/{total}주 출석</p>
                 </div>
               </div>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${

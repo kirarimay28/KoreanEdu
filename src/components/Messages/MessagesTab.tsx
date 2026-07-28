@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { User, Message } from '../../types';
 import {
-  getReceivedMessages, getSentMessages, sendMessage, markMessageRead, deleteMessage, getUsers,
+  getReceivedMessages, getSentMessages, sendMessage, markMessageRead, deleteMessage, getUsers, getUserByName,
 } from '../../store';
 import { ChevronLeft, Send, Pencil, Trash2, MessageCircle } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
@@ -141,10 +141,7 @@ export default function MessagesTab({ currentUser }: Props) {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-bold text-primary-600">{conv.partnerName[0]}</span>
-          </div>
-          <NameWithCrown name={conv.partnerName} className="text-sm font-bold text-gray-800" />
+          <NameWithCrown name={conv.partnerName} className="text-sm font-bold text-gray-800" showAvatar avatarSize="sm" />
         </div>
 
         {/* Messages */}
@@ -160,11 +157,14 @@ export default function MessagesTab({ currentUser }: Props) {
                   <p className="text-center text-[10px] text-gray-300 my-2">{formatFull(msg.createdAt)}</p>
                 )}
                 <div className={`flex items-end gap-1.5 group ${isMine ? 'justify-end' : 'justify-start'}`}>
-                  {!isMine && (
-                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mb-0.5">
-                      <span className="text-[10px] font-bold text-gray-500">{conv.partnerName[0]}</span>
-                    </div>
-                  )}
+                  {!isMine && (() => {
+                    const p = getUserByName(conv.partnerName);
+                    return p?.avatarUrl
+                      ? <img src={p.avatarUrl} alt={conv.partnerName} className="w-6 h-6 rounded-full object-cover flex-shrink-0 mb-0.5" />
+                      : <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mb-0.5">
+                          <span className="text-[10px] font-bold text-gray-500">{conv.partnerName[0]}</span>
+                        </div>;
+                  })()}
 
                   <div className={`flex flex-col gap-0.5 max-w-[70%] ${isMine ? 'items-end' : 'items-start'}`}>
                     <div className={`px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${
@@ -320,22 +320,26 @@ export default function MessagesTab({ currentUser }: Props) {
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition text-left"
               >
                 {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center ${
-                    c.unreadCount > 0 ? 'bg-primary-100' : 'bg-gray-100'
-                  }`}>
-                    <span className={`text-base font-bold ${
-                      c.unreadCount > 0 ? 'text-primary-600' : 'text-gray-500'
-                    }`}>
-                      {c.partnerName[0]}
-                    </span>
-                  </div>
-                  {c.unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
-                      {c.unreadCount}
-                    </span>
-                  )}
-                </div>
+                {(() => {
+                  const partner = getUserByName(c.partnerName);
+                  return (
+                    <div className="relative flex-shrink-0">
+                      {partner?.avatarUrl
+                        ? <img src={partner.avatarUrl} alt={c.partnerName} className="w-11 h-11 rounded-full object-cover" />
+                        : <div className={`w-11 h-11 rounded-full flex items-center justify-center ${c.unreadCount > 0 ? 'bg-primary-100' : 'bg-gray-100'}`}>
+                            <span className={`text-base font-bold ${c.unreadCount > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
+                              {c.partnerName[0]}
+                            </span>
+                          </div>
+                      }
+                      {c.unreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                          {c.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -344,6 +348,7 @@ export default function MessagesTab({ currentUser }: Props) {
                       name={c.partnerName}
                       className={`text-sm ${c.unreadCount > 0 ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}
                     />
+
                     <span className="text-[10px] text-gray-400 flex-shrink-0 ml-2">
                       {formatTime(lastMsg.createdAt)}
                     </span>

@@ -116,7 +116,7 @@ export default function VacationListTab() {
             {displayed.map(v => (
               <div key={v.id} className="card space-y-2">
                 <div className="flex items-center justify-between">
-                  <NameWithCrown name={v.requesterName} className="text-sm font-semibold text-gray-800" />
+                  <NameWithCrown name={v.requesterName} className="text-sm font-semibold text-gray-800" showAvatar avatarSize="sm" />
                   <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
                     승인
                   </span>

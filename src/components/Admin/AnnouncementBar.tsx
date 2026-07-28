@@ -232,7 +232,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
                   </div>
                 ) : (
                   <>
-                    <p className="text-[10px] text-primary-400 mt-0.5"><NameWithCrown name={ann.authorName} /> · {formatDate(ann.createdAt)}</p>
+                    <p className="text-[10px] text-primary-400 mt-0.5"><NameWithCrown name={ann.authorName} showAvatar avatarSize="xs" /> · {formatDate(ann.createdAt)}</p>
                     {isOpen && hasBody && (
                       <p className="text-sm text-primary-800 whitespace-pre-wrap mt-2 leading-relaxed">{ann.content}</p>
                     )}

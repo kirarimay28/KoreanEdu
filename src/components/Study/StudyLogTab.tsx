@@ -382,11 +382,8 @@ JSON만 반환하세요.
                 className="w-full flex items-center gap-3 px-4 py-3 text-left"
                 onClick={() => toggleExpand(user.id)}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${hasNote ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>
-                  {user.username[0]}
-                </div>
                 <div className="flex-1 min-w-0">
-                  <NameWithCrown name={user.username} className="text-sm font-semibold text-gray-800" />
+                  <NameWithCrown name={user.username} className="text-sm font-semibold text-gray-800" showAvatar avatarSize="sm" />
                   {isSelf && <span className="text-[10px] text-gray-400 ml-1">나</span>}
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${hasNote ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>

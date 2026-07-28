@@ -121,7 +121,7 @@ export default function VocabTestTab({ date, currentUser }: Props) {
             return (
               <div key={user.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                 <span className={`text-sm font-semibold flex-1 ${isMe ? 'text-primary-600' : 'text-gray-700'}`}>
-                  <NameWithCrown name={user.username} />{isMe ? ' (나)' : ''}
+                  <NameWithCrown name={user.username} showAvatar avatarSize="xs" />{isMe ? ' (나)' : ''}
                 </span>
                 {s ? (
                   <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${getResult(s.score).color}`}>
