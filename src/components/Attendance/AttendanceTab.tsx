@@ -1,18 +1,26 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
-import { getAttendanceEntries, getUsers } from '../../store';
+import { ChevronLeft, ChevronRight, CheckCircle2, PlusCircle, MinusCircle } from 'lucide-react';
+import { getAttendanceEntries, getUsers, markAttendance, removeAttendance } from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import NameWithCrown from '../common/NameWithCrown';
+import type { User } from '../../types';
+
+interface Props {
+  currentUser: User;
+}
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
-export default function AttendanceTab() {
+export default function AttendanceTab({ currentUser }: Props) {
   const today = getKSTToday();
   const [viewYear, setViewYear] = useState(() => parseInt(today.split('-')[0]));
   const [viewMonth, setViewMonth] = useState(() => parseInt(today.split('-')[1]) - 1);
+  const [tick, setTick] = useState(0);
+
+  const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
   const users = getUsers();
   const allAttendance = getAttendanceEntries();
@@ -47,7 +55,7 @@ export default function AttendanceTab() {
     let attended = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
-      if (date.getDay() !== 1) continue; // Mondays only
+      if (date.getDay() !== 1) continue;
       const dateStr = `${monthPrefix}-${pad(d)}`;
       if (dateStr > today) break;
       total++;
@@ -56,13 +64,24 @@ export default function AttendanceTab() {
     return { total, attended, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
   }
 
+  function handleToggle(user: User, day: number) {
+    if (!isPrivileged) return;
+    const dateStr = `${monthPrefix}-${pad(day)}`;
+    if (isAttended(user.id, day)) {
+      removeAttendance(dateStr, user.id);
+    } else {
+      markAttendance(dateStr, user.id, user.username);
+    }
+    setTick(t => t + 1);
+  }
+
   const cells: (number | null)[] = [
     ...Array(firstDayOfWeek).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" key={tick}>
       {/* Month navigator */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
         <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-500">
@@ -78,6 +97,15 @@ export default function AttendanceTab() {
         </button>
       </div>
 
+      {/* Admin hint */}
+      {isPrivileged && (
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-[11px] text-primary-400 bg-primary-50 border border-primary-100 rounded-lg px-2.5 py-1">
+            월요일 셀을 탭해서 출석을 추가·제거할 수 있습니다
+          </span>
+        </div>
+      )}
+
       {users.length === 0 && (
         <div className="card text-center py-10 text-gray-400 text-sm">
           등록된 스터디원이 없습니다.
@@ -91,11 +119,9 @@ export default function AttendanceTab() {
           <div key={user.id} className="card">
             {/* Member header */}
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div>
-                  <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
-                  <p className="text-xs text-gray-400 mt-0.5">{attended}/{total}주 출석</p>
-                </div>
+              <div>
+                <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
+                <p className="text-xs text-gray-400 mt-0.5">{attended}/{total}주 출석</p>
               </div>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${
                 rate >= 80 ? 'bg-green-100 text-green-700' :
@@ -133,32 +159,53 @@ export default function AttendanceTab() {
                 const col = idx % 7;
                 const isMonday = col === 1;
                 const showAttended = isMonday && attended_;
+                const isClickable = isPrivileged && isMonday && !isFuture;
 
-                return (
+                const cell = (
                   <div
                     key={day}
+                    onClick={isClickable ? () => handleToggle(user, day) : undefined}
                     className={[
-                      'flex items-center justify-center h-9 rounded-lg text-xs font-medium',
+                      'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
+                      isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
                       isMonday
-                        ? (showAttended ? 'bg-primary-100' : isToday_ ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-gray-50')
+                        ? (showAttended
+                            ? 'bg-primary-100 hover:bg-primary-200'
+                            : isToday_
+                              ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
+                              : isClickable
+                                ? 'bg-gray-50 hover:bg-primary-50'
+                                : 'bg-gray-50')
                         : 'bg-transparent',
                     ].join(' ')}
                   >
                     {showAttended ? (
-                      <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                        {isClickable && (
+                          <MinusCircle className="w-4 h-4 text-red-400 absolute opacity-0 group-hover:opacity-100 transition" />
+                        )}
+                      </>
                     ) : (
-                      <span className={
-                        !isMonday ? 'text-gray-200' :
-                        isFuture ? 'text-gray-300' :
-                        isToday_ ? 'text-amber-600 font-bold' :
-                        'text-gray-500'
-                      }>
-                        {day}
-                      </span>
+                      <>
+                        <span className={
+                          !isMonday ? 'text-gray-200' :
+                          isFuture ? 'text-gray-300' :
+                          isToday_ ? 'text-amber-600 font-bold' :
+                          'text-gray-500'
+                        }>
+                          {day}
+                        </span>
+                        {isClickable && !isFuture && (
+                          <PlusCircle className="w-4 h-4 text-primary-400 absolute opacity-0 group-hover:opacity-100 transition" />
+                        )}
+                      </>
                     )}
                   </div>
                 );
+
+                return cell;
               })}
             </div>
           </div>

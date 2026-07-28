@@ -425,6 +425,15 @@ export function getAttendanceEntries(): AttendanceEntry[] {
   return mem.attendanceEntries;
 }
 
+export function removeAttendance(date: string, userId: string): void {
+  const entry = mem.attendanceEntries.find(e => e.date === date && e.userId === userId);
+  if (entry) {
+    mem.attendanceEntries = mem.attendanceEntries.filter(e => e.id !== entry.id);
+    remove('attendanceEntries', entry.id);
+    saveCache();
+  }
+}
+
 export function hasStudyRecordOnDate(date: string): boolean {
   return (
     mem.classicalEntries.some(e => e.date === date) ||

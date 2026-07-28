@@ -491,7 +491,7 @@ export default function App() {
             <div key={refreshKey} className="jade-enter">
               {activeTab === 'qna'        && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar'   && <CalendarTab currentUser={currentUser} />}
-              {activeTab === 'attendance' && <AttendanceTab />}
+              {activeTab === 'attendance' && <AttendanceTab currentUser={currentUser} />}
               {activeTab === 'resource'   && <ResourceTab currentUser={currentUser} />}
               {activeTab === 'member'     && <MemberTab currentUser={currentUser} />}
               {activeTab === 'vacation'   && <VacationRequestTab currentUser={currentUser} />}
