@@ -47,18 +47,28 @@ export default function AttendanceTab({ currentUser }: Props) {
     else setViewMonth(m => m + 1);
   }
 
-  // Returns the approved vacation whose makeupDate matches this date for this user
+  // Returns the approved vacation whose makeupDate matches this date for this user.
+  // Requires: requesterId === userId AND makeupDate === dateStr AND vacationDate is non-empty.
   function getMakeupVacation(userId: string, dateStr: string) {
-    return approvedVacations.find(v => v.requesterId === userId && v.makeupDate === dateStr) ?? null;
+    return approvedVacations.find(
+      v => v.requesterId === userId && v.makeupDate === dateStr && !!v.makeupDate && !!v.vacationDate
+    ) ?? null;
   }
 
-  function getEntry(userId: string, day: number) {
-    const dateStr = `${monthPrefix}-${pad(day)}`;
+  function getEntry(userId: string, dateStr: string) {
     return allAttendance.find(e => e.userId === userId && e.date === dateStr) ?? null;
   }
 
-  function isAttended(userId: string, day: number) {
-    return getEntry(userId, day) !== null;
+  // Monday-only regular attendance lookup
+  function isRegularAttended(userId: string, dateStr: string) {
+    const e = getEntry(userId, dateStr);
+    return e !== null && e.type !== 'makeup';
+  }
+
+  // Makeup attendance: only counts entries explicitly typed 'makeup'
+  function isMakeupAttended(userId: string, dateStr: string) {
+    const e = getEntry(userId, dateStr);
+    return e?.type === 'makeup';
   }
 
   function getMonthStats(userId: string) {
@@ -67,24 +77,22 @@ export default function AttendanceTab({ currentUser }: Props) {
     let makeup = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
-      if (date.getDay() !== 1) continue;
       const dateStr = `${monthPrefix}-${pad(d)}`;
-      if (dateStr > today) break;
-      total++;
-      if (isAttended(userId, d)) attended++;
-    }
-    for (const e of allAttendance) {
-      if (e.userId !== userId) continue;
-      if (!e.date.startsWith(monthPrefix)) continue;
-      if (e.type === 'makeup') makeup++;
+      if (date.getDay() === 1) {
+        if (dateStr > today) break;
+        total++;
+        if (isRegularAttended(userId, dateStr)) attended++;
+      } else {
+        if (isMakeupAttended(userId, dateStr)) makeup++;
+      }
     }
     return { total, attended, makeup, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
   }
 
-  function handleToggle(user: User, day: number, isMakeupCell: boolean) {
+  function handleToggle(user: User, dateStr: string, isMakeupCell: boolean) {
     if (!isPrivileged) return;
-    const dateStr = `${monthPrefix}-${pad(day)}`;
-    if (isAttended(user.id, day)) {
+    const existing = getEntry(user.id, dateStr);
+    if (existing) {
       removeAttendance(dateStr, user.id);
     } else {
       markAttendance(dateStr, user.id, user.username, isMakeupCell ? 'makeup' : 'regular');
@@ -174,47 +182,55 @@ export default function AttendanceTab({ currentUser }: Props) {
                 if (day === null) return <div key={`e-${idx}`} />;
                 const dateStr = `${monthPrefix}-${pad(day)}`;
                 const isFuture = dateStr > today;
-                const entry = !isFuture ? getEntry(user.id, day) : null;
-                const attended_ = entry !== null;
-                const isMakeupEntry = entry?.type === 'makeup';
                 const isToday_ = viewYear === todayYear && viewMonth === todayMonth && day === todayDay;
                 const col = idx % 7;
                 const isMonday = col === 1;
 
-                // Non-Monday: only clickable if there's an approved vacation with this makeupDate
+                // Regular attendance: only counts on Mondays, type !== 'makeup'
+                const regularAttended = !isFuture && isMonday && isRegularAttended(user.id, dateStr);
+
+                // Makeup day: non-Monday cell whose date matches an approved vacation's makeupDate
+                // for this specific user (checks requesterId + vacationDate + makeupDate)
                 const makeupVacation = !isMonday && !isFuture ? getMakeupVacation(user.id, dateStr) : null;
                 const isMakeupDay = makeupVacation !== null;
+                const makeupAttended = isMakeupDay && isMakeupAttended(user.id, dateStr);
+
                 const isClickable = isPrivileged && !isFuture && (isMonday || isMakeupDay);
+
+                // What to show
+                const showRegularCheck = regularAttended;
+                const showMakeupStar = makeupAttended;
+                const showMakeupPending = isMakeupDay && !makeupAttended;
+                const showSomething = showRegularCheck || showMakeupStar || showMakeupPending;
 
                 return (
                   <div
                     key={day}
-                    onClick={isClickable ? () => handleToggle(user, day, isMakeupDay) : undefined}
+                    onClick={isClickable ? () => handleToggle(user, dateStr, isMakeupDay) : undefined}
                     className={[
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
                       isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
-                      attended_
-                        ? (isMakeupEntry
-                            ? 'bg-amber-50 hover:bg-amber-100'
-                            : 'bg-primary-100 hover:bg-primary-200')
-                        : isMakeupDay
-                          ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
-                          : isToday_
-                            ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100'
-                            : isClickable
-                              ? 'bg-gray-50 hover:bg-primary-50'
-                              : 'bg-transparent',
+                      showRegularCheck ? 'bg-primary-100 hover:bg-primary-200' :
+                      showMakeupStar   ? 'bg-amber-50 hover:bg-amber-100' :
+                      showMakeupPending ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100' :
+                      isToday_ && isMonday ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100' :
+                      isClickable ? 'bg-gray-50 hover:bg-primary-50' :
+                      'bg-transparent',
                     ].join(' ')}
-                    title={makeupVacation ? `보강일 (휴가: ${makeupVacation.vacationDate})` : undefined}
+                    title={makeupVacation ? `보강일 (결석: ${makeupVacation.vacationDate})` : undefined}
                   >
-                    {attended_ ? (
+                    {showSomething ? (
                       <>
-                        {isMakeupEntry
-                          ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                          : <CheckCircle2 className="w-4 h-4 text-primary-500" />
-                        }
-                        {isClickable && (
+                        {showRegularCheck && <CheckCircle2 className="w-4 h-4 text-primary-500" />}
+                        {showMakeupStar && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />}
+                        {showMakeupPending && (
+                          <>
+                            <span className="text-amber-500 font-bold">{day}</span>
+                            <Star className="w-2 h-2 text-amber-400 fill-amber-300 absolute top-0.5 right-0.5" />
+                          </>
+                        )}
+                        {isClickable && (showRegularCheck || showMakeupStar) && (
                           <MinusCircle className="w-4 h-4 text-red-400 absolute opacity-0 group-hover:opacity-100 transition" />
                         )}
                       </>
@@ -223,15 +239,10 @@ export default function AttendanceTab({ currentUser }: Props) {
                         <span className={
                           isMonday
                             ? (isFuture ? 'text-gray-300' : isToday_ ? 'text-amber-600 font-bold' : 'text-gray-500')
-                            : isMakeupDay
-                              ? 'text-amber-500 font-bold'
-                              : 'text-gray-200'
+                            : 'text-gray-200'
                         }>
                           {day}
                         </span>
-                        {isMakeupDay && !attended_ && (
-                          <Star className="w-2 h-2 text-amber-400 fill-amber-300 absolute top-0.5 right-0.5" />
-                        )}
                         {isClickable && !isFuture && (
                           <PlusCircle className={`w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition ${isMakeupDay ? 'text-amber-400' : 'text-primary-400'}`} />
                         )}
