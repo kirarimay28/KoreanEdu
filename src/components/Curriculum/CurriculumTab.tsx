@@ -19,6 +19,28 @@ interface Textbook {
   locked?: boolean;
 }
 
+interface BookEntry {
+  author: string;
+  title: string;
+  note?: string;
+}
+
+interface SubGroup {
+  label: string;
+  books: BookEntry[];
+}
+
+interface TextbookGroup {
+  label: string;
+  books?: BookEntry[];
+  subGroups?: SubGroup[];
+}
+
+interface StructuredTextbooks {
+  sectionTitle: string;
+  groups: TextbookGroup[];
+}
+
 interface Section {
   id: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -27,6 +49,7 @@ interface Section {
   title: string;
   steps?: Step[];
   textbook: Textbook;
+  textbookList?: StructuredTextbooks;
 }
 
 const SECTIONS: Section[] = [
@@ -66,7 +89,60 @@ const SECTIONS: Section[] = [
     gradient: 'linear-gradient(135deg, #7a6248, #a08060)',
     badge: '03',
     title: '문법',
-    textbook: { title: '우리말 문법론' },
+    textbook: {},
+    textbookList: {
+      sectionTitle: '국어학 (현대 및 중세 문법)',
+      groups: [
+        {
+          label: '총론 격',
+          books: [
+            { author: '구본관 외', title: '한국어 문법 총론 1, 2' },
+            { author: '유현경 외', title: '한국어 표준 문법' },
+            { author: '임지룡 외', title: '학교문법과 문법교육 (2020)' },
+            { author: '이관규', title: '학교문법론 (2023)' },
+          ],
+        },
+        {
+          label: '각론 격',
+          subGroups: [
+            {
+              label: '음운론',
+              books: [
+                { author: '이진호', title: '국어 음운론 강의' },
+                { author: '이문규', title: '국어 교육을 위한 현대 국어 음운론' },
+                { author: '신승용', title: '쉽게 풀어 쓴 국어 음운론' },
+              ],
+            },
+            {
+              label: '형태론',
+              books: [
+                { author: '고영근ㆍ구본관', title: '우리말 문법론', note: '주로 구본관 관점' },
+              ],
+            },
+            {
+              label: '통사론',
+              books: [
+                { author: '남기심ㆍ고영근ㆍ유현경ㆍ최형용', title: '표준 국어 문법론', note: '주로 남기심 관점' },
+              ],
+            },
+            {
+              label: '어휘론',
+              books: [
+                { author: '이선웅 외', title: '한국어 어휘 교육론' },
+                { author: '최경봉 외', title: '한국어 어휘론' },
+              ],
+            },
+            {
+              label: '의미론',
+              books: [
+                { author: '박철우 외', title: '한국어 의미론' },
+                { author: '임지룡', title: '한국어 의미론' },
+              ],
+            },
+          ],
+        },
+      ],
+    },
     steps: [
       { label: '매주 개론서 한 챕터씩 회독', sub: '모여서 질의응답' },
       { label: '각자 빈칸 시험지 만들어 오기', note: '양식 있음' },
@@ -142,6 +218,81 @@ function TextbookBadge({
           <p className="text-xs font-semibold text-gray-800">{textbook.title}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function StructuredTextbookDisplay({ data, gradient }: { data: StructuredTextbooks; gradient: string }) {
+  return (
+    <div
+      className="mt-3 rounded-xl px-3 py-3 space-y-3"
+      style={{
+        background: 'rgba(255,255,255,0.55)',
+        border: '1px solid rgba(255,163,199,0.22)',
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <BookText className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
+        <p className="text-[10px] font-semibold text-primary-500 uppercase tracking-wider">교재 안내</p>
+      </div>
+      <p className="text-[11px] font-bold text-gray-700 -mt-1">{data.sectionTitle}</p>
+
+      {data.groups.map((group, gi) => (
+        <div key={gi} className="space-y-2">
+          <div
+            className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black tracking-wide text-white"
+            style={{ background: gradient }}
+          >
+            {group.label}
+          </div>
+
+          {group.books && (
+            <ul className="space-y-1 ml-1">
+              {group.books.map((b, bi) => (
+                <li key={bi} className="flex gap-1.5 items-start">
+                  <span className="text-gray-300 mt-0.5 flex-shrink-0 text-[10px]">▪</span>
+                  <div>
+                    <span className="text-[11px] text-gray-500">{b.author}</span>
+                    <span className="text-[11px] text-gray-300 mx-1">·</span>
+                    <span className="text-[11px] font-semibold text-gray-800">《{b.title}》</span>
+                    {b.note && (
+                      <span className="text-[10px] text-amber-600 ml-1 font-medium">— {b.note}</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {group.subGroups && (
+            <div className="space-y-2.5 ml-1">
+              {group.subGroups.map((sg, si) => (
+                <div key={si}>
+                  <p className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-gray-400 inline-block" />
+                    {sg.label}
+                  </p>
+                  <ul className="space-y-1 ml-3">
+                    {sg.books.map((b, bi) => (
+                      <li key={bi} className="flex gap-1.5 items-start">
+                        <span className="text-gray-300 mt-0.5 flex-shrink-0 text-[10px]">▪</span>
+                        <div>
+                          <span className="text-[11px] text-gray-500">{b.author}</span>
+                          <span className="text-[11px] text-gray-300 mx-1">·</span>
+                          <span className="text-[11px] font-semibold text-gray-800">《{b.title}》</span>
+                          {b.note && (
+                            <span className="text-[10px] text-amber-600 ml-1 font-medium">— {b.note}</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -238,12 +389,16 @@ function SectionCard({
           )}
 
           {/* Textbook */}
-          <TextbookBadge
-            textbook={section.textbook}
-            isAdmin={isAdmin}
-            litVisible={litVisible}
-            onToggle={section.id === 'lit' ? onToggleLit : undefined}
-          />
+          {section.textbookList ? (
+            <StructuredTextbookDisplay data={section.textbookList} gradient={section.gradient} />
+          ) : (
+            <TextbookBadge
+              textbook={section.textbook}
+              isAdmin={isAdmin}
+              litVisible={litVisible}
+              onToggle={section.id === 'lit' ? onToggleLit : undefined}
+            />
+          )}
         </div>
       )}
     </div>
