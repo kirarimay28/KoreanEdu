@@ -517,23 +517,36 @@ export default function App() {
             <AnnouncementBar currentUser={currentUser} />
             <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
-            <a
-              href="https://drive.google.com/drive/folders/1vLHj2XRxWT6-C5cJvz99w0dZvxRNXSVI?usp=drive_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition w-full mb-3"
-            >
-              <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <span className="text-base">📂</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800">과제 자료</p>
-                <p className="text-[11px] text-gray-400 truncate">Google Drive에서 열기</p>
-              </div>
-              <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
+            <div className="flex gap-2 mb-3">
+              <a
+                href="https://drive.google.com/drive/folders/1vLHj2XRxWT6-C5cJvz99w0dZvxRNXSVI?usp=drive_link"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center gap-2 px-3 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-base">📂</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800">과제 자료</p>
+                  <p className="text-[11px] text-gray-400 truncate">Google Drive</p>
+                </div>
+              </a>
+              <a
+                href="https://drive.google.com/drive/folders/17YVOp3dyqZn5yIbeiBcvjS4etZuLld6s?usp=drive_link"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center gap-2 px-3 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition"
+              >
+                <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-base">📋</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800">임용 기출</p>
+                  <p className="text-[11px] text-gray-400 truncate">Google Drive</p>
+                </div>
+              </a>
+            </div>
             {currentUser && <StudyRoomPanel currentUser={currentUser} />}
             <StudyLogWarningBanner />
             {activeTab === 'study' && (
