@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Pencil, X, Check, Share2 } from 'lucide-react';
 import type { User } from '../../types';
-import { getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice, clearAssignmentNotice } from '../../store';
+import { getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice, clearAssignmentNotice, subscribeAssignmentNotices } from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
 import NameWithCrown from '../common/NameWithCrown';
 
@@ -120,6 +120,11 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
   const canEdit = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const [editing, setEditing] = useState(false);
   const [tick, setTick] = useState(0);
+
+  // 다른 기기에서 저장 시 실시간 반영
+  useEffect(() => {
+    return subscribeAssignmentNotices(() => setTick(t => t + 1));
+  }, []);
 
   const thisWeekMonday = getThisWeekMonday();
   const [date, setDate] = useState(thisWeekMonday);

@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
@@ -889,17 +889,31 @@ export function getAssignmentNotice(): AssignmentNotice | null {
 }
 
 export function getAssignmentNoticeForWeek(weekKey: string): AssignmentNotice | undefined {
-  return mem.assignmentNotices.find(n => n.date === weekKey);
+  return mem.assignmentNotices.find(n => n.id === weekKey);
 }
 
 export function setAssignmentNotice(notice: Omit<AssignmentNotice, 'id'>): void {
   const weekKey = weekMondayKey(notice.date);
-  const full: AssignmentNotice = { ...notice, id: weekKey, date: weekKey };
+  // id는 weekKey(해당 주 월요일)로 고정, date는 사용자가 선택한 날짜 그대로 보존
+  const full: AssignmentNotice = { ...notice, id: weekKey };
   const idx = mem.assignmentNotices.findIndex(n => n.id === weekKey);
   if (idx >= 0) mem.assignmentNotices[idx] = full;
   else mem.assignmentNotices.push(full);
   persist('assignmentNotice', weekKey, full);
   saveCache();
+}
+
+export function subscribeAssignmentNotices(callback: () => void): () => void {
+  const unsub = onSnapshot(
+    collection(db, 'assignmentNotice'),
+    (snap) => {
+      mem.assignmentNotices = snap.docs.map(d => d.data() as AssignmentNotice);
+      saveCache();
+      callback();
+    },
+    (err) => console.warn('assignmentNotice listener error:', err)
+  );
+  return unsub;
 }
 
 export function clearAssignmentNotice(weekKey?: string): void {
