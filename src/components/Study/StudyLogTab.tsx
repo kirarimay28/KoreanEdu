@@ -167,10 +167,12 @@ export default function StudyLogTab({ date, currentUser }: Props) {
     setTick(t => t + 1);
   }
 
+  const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+
   async function handleAnalyze(targetUser: User) {
     if (!pdfFile) return;
-    if (pdfFile.type !== 'application/pdf') {
-      setAnalyzeError('PDF 파일만 업로드 가능합니다.');
+    if (!ACCEPTED_TYPES.includes(pdfFile.type)) {
+      setAnalyzeError('PDF 또는 이미지 파일(JPG, PNG 등)만 업로드 가능합니다.');
       return;
     }
     setAnalyzing(true);
@@ -204,7 +206,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
       }
 
-      const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지 PDF입니다.${noticeStr ? '\n' + noticeStr : ''}
+      const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다 (PDF 또는 사진).${noticeStr ? '\n' + noticeStr : ''}
 
 【핵심 원칙】
 - PDF에 명시적으로 기재된 내용만 정리하세요.
@@ -238,7 +240,7 @@ JSON만 반환하세요.
       const body = JSON.stringify({
         contents: [{
           parts: [
-            { inlineData: { mimeType: 'application/pdf', data: base64 } },
+            { inlineData: { mimeType: pdfFile.type || 'application/pdf', data: base64 } },
             { text: prompt },
           ],
         }],
@@ -411,7 +413,7 @@ JSON만 반환하세요.
                       <NoteContent fields={fields} notice={notice} />
                       {canUpload && (
                         <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                          <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf" className="hidden"
+                          <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
                             onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
                           <button
                             className="text-[10px] text-gray-400 hover:text-primary-500 transition flex items-center gap-1"
@@ -433,7 +435,7 @@ JSON만 반환하세요.
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
-                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                                ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '파일 준비 중...' : 'AI 분석 중...'}</>
                                 : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
                             </button>
                           )}
@@ -442,7 +444,7 @@ JSON만 반환하세요.
                     </div>
                   ) : canUpload ? (
                     <div className="pt-3 space-y-2">
-                      <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf" className="hidden"
+                      <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
                         onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
                       {pdfFile ? (
                         <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
@@ -457,7 +459,7 @@ JSON만 반환하세요.
                           className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-primary-300 hover:text-primary-500 transition"
                           onClick={() => fileInputRef.current?.click()}
                         >
-                          <Upload className="w-4 h-4" /> PDF 파일 선택
+                          <Upload className="w-4 h-4" /> PDF 또는 사진 선택
                         </button>
                       )}
                       {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
@@ -467,7 +469,7 @@ JSON만 반환하세요.
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
-                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '텍스트 추출 중...' : 'AI 분석 중...'}</>
+                          ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '파일 준비 중...' : 'AI 분석 중...'}</>
                           : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
                       </button>
                     </div>
