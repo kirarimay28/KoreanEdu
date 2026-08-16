@@ -139,7 +139,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   const [tick, setTick] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(currentUser.id);
 
-  const [pdfFile, setPdfFile]           = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [analyzing, setAnalyzing]       = useState(false);
   const [analyzeStep, setAnalyzeStep]   = useState<'extract' | 'ai'>('extract');
   const [analyzeError, setAnalyzeError] = useState('');
@@ -155,7 +155,7 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 
   function toggleExpand(userId: string) {
     setExpandedId(prev => prev === userId ? null : userId);
-    setPdfFile(null);
+    setSelectedFiles([]);
     setAnalyzeError('');
   }
 
@@ -170,8 +170,9 @@ export default function StudyLogTab({ date, currentUser }: Props) {
   const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
 
   async function handleAnalyze(targetUser: User) {
-    if (!pdfFile) return;
-    if (!ACCEPTED_TYPES.includes(pdfFile.type)) {
+    if (selectedFiles.length === 0) return;
+    const invalidFile = selectedFiles.find(f => !ACCEPTED_TYPES.includes(f.type));
+    if (invalidFile) {
       setAnalyzeError('PDF 또는 이미지 파일(JPG, PNG 등)만 업로드 가능합니다.');
       return;
     }
@@ -184,16 +185,17 @@ export default function StudyLogTab({ date, currentUser }: Props) {
       const { geminiKey } = await cfgRes.json();
       if (!geminiKey) throw new Error('API 키가 설정되지 않았습니다.');
 
-      // PDF → base64 변환 (FileReader — 모든 브라우저/iOS 호환)
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(',')[1]);
-        };
-        reader.onerror = () => reject(new Error('파일 읽기 실패'));
-        reader.readAsDataURL(pdfFile);
-      });
+      // 파일들을 base64로 병렬 변환 (FileReader — 모든 브라우저/iOS 호환)
+      const fileParts = await Promise.all(selectedFiles.map(file =>
+        new Promise<{ inlineData: { mimeType: string; data: string } }>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({
+            inlineData: { mimeType: file.type || 'application/pdf', data: (reader.result as string).split(',')[1] },
+          });
+          reader.onerror = () => reject(new Error('파일 읽기 실패'));
+          reader.readAsDataURL(file);
+        })
+      ));
 
       // 과제 공지 문자열 구성
       let noticeStr = '';
@@ -206,13 +208,13 @@ export default function StudyLogTab({ date, currentUser }: Props) {
         noticeStr = `이번 주 과제 — ${classicParts.length ? classicParts.join(', ') : '고전: 미정'}, 현대시: ${modernPoet}, 현대산문: ${modernProse}`;
       }
 
-      const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다 (PDF 또는 사진).${noticeStr ? '\n' + noticeStr : ''}
+      const prompt = `다음은 국어 임용고시 스터디 구성원의 발표 자료 또는 스터디 일지입니다 (PDF 또는 사진 ${selectedFiles.length}장).${noticeStr ? '\n' + noticeStr : ''}
 
 【핵심 원칙】
-- PDF에 명시적으로 기재된 내용만 정리하세요.
-- PDF에 없는 내용은 절대 추가하거나 추측하지 마세요.
+- 파일에 명시적으로 기재된 내용만 정리하세요.
+- 파일에 없는 내용은 절대 추가하거나 추측하지 마세요.
 - 풀지 않은 문제를 오답으로 처리하거나, 언급되지 않은 약점을 임의로 추가하지 마세요.
-- 해당 항목의 내용이 PDF에 없으면 반드시 빈 문자열("")로 남기세요.
+- 해당 항목의 내용이 파일에 없으면 반드시 빈 문자열("")로 남기세요.
 
 각 필드는 **단권화 스타일**로 작성해주세요:
 - 핵심 키워드나 개념은 **굵게** 표시 (예: **화자**, **주제**)
@@ -222,27 +224,24 @@ export default function StudyLogTab({ date, currentUser }: Props) {
 JSON만 반환하세요.
 
 {
-  "classicAnalysis": "PDF에 있는 고전 작품 분석 내용만. 없으면 \"\"",
-  "classicDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
-  "modernPoetAnalysis": "PDF에 있는 현대시 분석 내용만. 없으면 \"\"",
-  "modernPoetDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
-  "modernProseAnalysis": "PDF에 있는 현대산문 분석 내용만. 없으면 \"\"",
-  "modernProseDifficulty": "PDF에 명시된 어려웠던 부분만. 없으면 \"\"",
-  "wrongAnswerAnalysis": "PDF에 실제로 기재된 오답 분석만. 문제를 풀지 않았거나 언급이 없으면 반드시 \"\"",
-  "examTypeAnalysis": "PDF에 있는 기출 유형 분석만. 없으면 \"\"",
-  "studyGroupLearnings": "PDF에 기재된 스터디에서 배운 점만. 없으면 \"\"",
-  "selfFeedback": "PDF에 실제로 작성된 자기 피드백과 계획만. 없는 내용을 임의로 추가하지 말 것. 없으면 \"\""
+  "classicAnalysis": "파일에 있는 고전 작품 분석 내용만. 없으면 \"\"",
+  "classicDifficulty": "파일에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "modernPoetAnalysis": "파일에 있는 현대시 분석 내용만. 없으면 \"\"",
+  "modernPoetDifficulty": "파일에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "modernProseAnalysis": "파일에 있는 현대산문 분석 내용만. 없으면 \"\"",
+  "modernProseDifficulty": "파일에 명시된 어려웠던 부분만. 없으면 \"\"",
+  "wrongAnswerAnalysis": "파일에 실제로 기재된 오답 분석만. 문제를 풀지 않았거나 언급이 없으면 반드시 \"\"",
+  "examTypeAnalysis": "파일에 있는 기출 유형 분석만. 없으면 \"\"",
+  "studyGroupLearnings": "파일에 기재된 스터디에서 배운 점만. 없으면 \"\"",
+  "selfFeedback": "파일에 실제로 작성된 자기 피드백과 계획만. 없는 내용을 임의로 추가하지 말 것. 없으면 \"\""
 }`;
 
-      // Gemini에 직접 요청 (generateContent는 CORS 허용, 파일 크기 제한 없음)
+      // Gemini에 직접 요청 (generateContent는 CORS 허용)
       setAnalyzeStep('ai');
       const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
       const body = JSON.stringify({
         contents: [{
-          parts: [
-            { inlineData: { mimeType: pdfFile.type || 'application/pdf', data: base64 } },
-            { text: prompt },
-          ],
+          parts: [...fileParts, { text: prompt }],
         }],
       });
 
@@ -295,7 +294,7 @@ JSON만 반환하세요.
         updatedAt: new Date().toISOString(),
       };
       upsertStudyLog(log);
-      setPdfFile(null);
+      setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (e: unknown) {
       setAnalyzeError(e instanceof Error ? e.message : 'AI 분석 중 오류가 발생했습니다.');
@@ -413,30 +412,34 @@ JSON만 반환하세요.
                       <NoteContent fields={fields} notice={notice} />
                       {canUpload && (
                         <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                          <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
-                            onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
+                          <input ref={isSelf ? fileInputRef : undefined} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
+                            onChange={e => { setSelectedFiles(prev => [...prev, ...Array.from(e.target.files ?? [])]); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }} />
                           <button
                             className="text-[10px] text-gray-400 hover:text-primary-500 transition flex items-center gap-1"
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <Upload className="w-3 h-3" /> 다시 분석
                           </button>
-                          {pdfFile && (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
-                              <span className="text-xs font-medium text-primary-700 flex-1 truncate">{pdfFile.name}</span>
-                              <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
-                                onClick={() => { setPdfFile(null); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                          {selectedFiles.length > 0 && (
+                            <div className="space-y-1">
+                              {selectedFiles.map((file, i) => (
+                                <div key={i} className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
+                                  <span className="text-xs font-medium text-primary-700 flex-1 truncate">{file.name}</span>
+                                  <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
+                                    onClick={() => { setSelectedFiles(prev => prev.filter((_, j) => j !== i)); setAnalyzeError(''); }}>
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
                           )}
                           {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
-                          {pdfFile && (
+                          {selectedFiles.length > 0 && (
                             <button disabled={analyzing} onClick={() => handleAnalyze(user)}
                               className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition">
                               {analyzing
                                 ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '파일 준비 중...' : 'AI 분석 중...'}</>
-                                : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작</>}
+                                : <><Sparkles className="w-3.5 h-3.5" />AI 분석 시작 ({selectedFiles.length}개)</>}
                             </button>
                           )}
                         </div>
@@ -444,33 +447,37 @@ JSON만 반환하세요.
                     </div>
                   ) : canUpload ? (
                     <div className="pt-3 space-y-2">
-                      <input ref={isSelf ? fileInputRef : undefined} type="file" accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
-                        onChange={e => { setPdfFile(e.target.files?.[0] ?? null); setAnalyzeError(''); }} />
-                      {pdfFile ? (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
-                          <span className="text-xs font-medium text-primary-700 flex-1 truncate">{pdfFile.name}</span>
-                          <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
-                            onClick={() => { setPdfFile(null); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }}>
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                      <input ref={isSelf ? fileInputRef : undefined} type="file" multiple accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif" className="hidden"
+                        onChange={e => { setSelectedFiles(prev => [...prev, ...Array.from(e.target.files ?? [])]); setAnalyzeError(''); if (fileInputRef.current) fileInputRef.current.value = ''; }} />
+                      <button
+                        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-primary-300 hover:text-primary-500 transition"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="w-4 h-4" />
+                        {selectedFiles.length > 0 ? `${selectedFiles.length}개 선택됨 · 더 추가하기` : 'PDF 또는 사진 선택'}
+                      </button>
+                      {selectedFiles.length > 0 && (
+                        <div className="space-y-1">
+                          {selectedFiles.map((file, i) => (
+                            <div key={i} className="flex items-center gap-2 px-3 py-2 bg-primary-50 rounded-xl">
+                              <span className="text-xs font-medium text-primary-700 flex-1 truncate">{file.name}</span>
+                              <button className="text-primary-400 hover:text-primary-600 flex-shrink-0"
+                                onClick={() => { setSelectedFiles(prev => prev.filter((_, j) => j !== i)); setAnalyzeError(''); }}>
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <button
-                          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-xs text-gray-400 hover:border-primary-300 hover:text-primary-500 transition"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="w-4 h-4" /> PDF 또는 사진 선택
-                        </button>
                       )}
                       {analyzeError && <p className="text-xs text-red-500">{analyzeError}</p>}
                       <button
-                        disabled={!pdfFile || analyzing}
+                        disabled={selectedFiles.length === 0 || analyzing}
                         onClick={() => handleAnalyze(user)}
                         className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-xl transition"
                       >
                         {analyzing
                           ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{analyzeStep === 'extract' ? '파일 준비 중...' : 'AI 분석 중...'}</>
-                          : <><Sparkles className="w-4 h-4" />AI 분석 시작</>}
+                          : <><Sparkles className="w-4 h-4" />{selectedFiles.length > 0 ? `AI 분석 시작 (${selectedFiles.length}개)` : 'AI 분석 시작'}</>}
                       </button>
                     </div>
                   ) : (
