@@ -4,9 +4,9 @@ import type { EduRound, EduQuestion, EduAnswer } from '../../types';
 import {
   getEduRounds, getEduQuestionsForRound, getMyEduAnswer, getEduAnswersForRound,
   saveEduRound, saveEduQuestions, saveEduAnswer, runEduDerangement, subscribeEduData,
-  weekMondayKey, getUserById,
+  weekMondayKey, getUserById, deleteEduRound,
 } from '../../store';
-import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock } from 'lucide-react';
+import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock, Plus, Trash2 } from 'lucide-react';
 import { isPrivileged } from '../../types';
 
 function thisWeekKey(): string {
@@ -63,6 +63,9 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [archiveRoundId, setArchiveRoundId] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addFormDate, setAddFormDate] = useState('');
+  const [addFormTitle, setAddFormTitle] = useState('');
 
   useEffect(() => subscribeEduData(() => setTick(t => t + 1)), []);
 
@@ -166,6 +169,36 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
     const result = runEduDerangement(currentRound.id, creators);
     if (!result.ok) alert(result.error ?? '배정 실패');
     else alert(`배정 완료! ${creators.length}명이 배정되었습니다.`);
+  };
+
+  const handleAddRound = () => {
+    if (!addFormDate || !addFormTitle.trim()) return;
+    const wk = weekMondayKey(addFormDate);
+    if (rounds.some(r => r.id === wk)) {
+      alert(`${fmtDate(wk)} 주차 회차가 이미 존재합니다.`);
+      return;
+    }
+    const round: EduRound = {
+      id: wk,
+      weekKey: wk,
+      title: addFormTitle.trim(),
+      assignments: {},
+      assignedAt: '',
+      isArchived: false,
+      createdAt: new Date().toISOString(),
+      createdById: currentUser.id,
+      createdByName: currentUser.username,
+    };
+    saveEduRound(round);
+    setAddFormDate('');
+    setAddFormTitle('');
+    setShowAddForm(false);
+  };
+
+  const handleDeleteRound = (roundId: string, title: string) => {
+    if (!window.confirm(`'${title}' 회차를 삭제하면 문제와 풀이 기록이 모두 삭제됩니다. 계속하시겠습니까?`)) return;
+    deleteEduRound(roundId);
+    setArchiveRoundId(null);
   };
 
   const handlePrint = (type: 'create' | 'solve') => {
@@ -320,6 +353,14 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
               </button>
             )}
           </div>
+          {isAdmin && archiveRound && (
+            <button
+              onClick={() => handleDeleteRound(archiveRound.id, archiveRound.title)}
+              className="w-full mb-3 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> 이 회차 삭제
+            </button>
+          )}
           {!canView ? (
             <div className="bg-white rounded-2xl p-8 text-center text-sm text-gray-500 shadow-sm border border-gray-100">
               <Lock className="w-8 h-8 mx-auto text-gray-300 mb-2" />
@@ -367,8 +408,61 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
     return (
       <div className="pb-20">
         <BackBtn to="week" />
-        <h2 className="font-bold text-gray-900 mb-3">아카이브</h2>
-        {rounds.length === 0 && (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-gray-900">아카이브</h2>
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddForm(v => !v)}
+              className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 px-2.5 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-50 transition font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" /> 새 회차 추가
+            </button>
+          )}
+        </div>
+
+        {isAdmin && showAddForm && (
+          <div className="bg-white rounded-2xl shadow-sm border border-primary-100 p-4 mb-4">
+            <p className="text-xs font-bold text-gray-600 mb-3">새 회차 추가</p>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[11px] text-gray-400 mb-0.5 block">날짜 (해당 주 아무 날)</label>
+                <input
+                  type="date"
+                  value={addFormDate}
+                  onChange={e => setAddFormDate(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-gray-400 mb-0.5 block">회차 제목</label>
+                <input
+                  value={addFormTitle}
+                  onChange={e => setAddFormTitle(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleAddRound()}
+                  placeholder="예: 3단원 교수학습론"
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleAddRound}
+                  className="flex-1 py-2 rounded-xl text-sm font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                >
+                  추가
+                </button>
+                <button
+                  onClick={() => { setShowAddForm(false); setAddFormDate(''); setAddFormTitle(''); }}
+                  className="px-4 py-2 rounded-xl text-sm text-gray-500 border border-gray-200 hover:bg-gray-50"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {rounds.length === 0 && !showAddForm && (
           <div className="text-center text-sm text-gray-400 py-10">아직 회차가 없습니다.</div>
         )}
         {rounds.map(r => {

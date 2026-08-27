@@ -1094,6 +1094,16 @@ export function runEduDerangement(roundId: string, creatorIds: string[]): { ok: 
   }
 }
 
+export function deleteEduRound(roundId: string): void {
+  mem.eduQuestions.filter(q => q.roundId === roundId).forEach(q => remove('eduQuestions', q.id));
+  mem.eduQuestions = mem.eduQuestions.filter(q => q.roundId !== roundId);
+  mem.eduAnswers.filter(a => a.roundId === roundId).forEach(a => remove('eduAnswers', a.id));
+  mem.eduAnswers = mem.eduAnswers.filter(a => a.roundId !== roundId);
+  mem.eduRounds = mem.eduRounds.filter(r => r.id !== roundId);
+  remove('eduRounds', roundId);
+  saveCache();
+}
+
 export function subscribeEduData(callback: () => void): () => void {
   const unsubs = [
     onSnapshot(
