@@ -571,13 +571,23 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
           </div>
 
           <div className="space-y-2">
-            <button
-              onClick={() => setView('create')}
-              className="w-full py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
-              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-            >
-              {hasMyQs ? '내 문제 수정하기' : '문제 제작하기'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView('create')}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              >
+                {hasMyQs ? '내 문제 수정하기' : '문제 제작하기'}
+              </button>
+              {hasMyQs && (
+                <button
+                  onClick={() => handlePrint('create')}
+                  className="px-4 py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm flex items-center gap-1.5 font-medium hover:bg-gray-50 transition"
+                >
+                  <Printer className="w-4 h-4" /> PDF
+                </button>
+              )}
+            </div>
 
             {isAssigned && (
               <button
