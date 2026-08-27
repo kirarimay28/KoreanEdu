@@ -3,7 +3,7 @@ import {
   BookOpen, GraduationCap, HelpCircle, CalendarDays,
   Megaphone, CalendarCheck, Mail, Plane, Inbox, Users,
   Map, BookMarked, TableProperties, ChevronDown, ChevronUp,
-  Receipt, Languages, Settings,
+  Receipt, Languages, Settings, ClipboardList,
 } from 'lucide-react';
 
 interface Tip { emoji: string; text: string; }
@@ -33,7 +33,7 @@ const SECTIONS: Section[] = [
     summary: '나랏말의 화면 구성과 기본 사용법',
     tips: [
       { emoji: '📱', text: '하단 탭으로 4개 화면(스터디 · 벌금 · 과제 · 고어)을 이동해요.' },
-      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 질의응답 · 캘린더 · 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관 · 커리큘럼 · 설정에 접근해요.' },
+      { emoji: '☰', text: '우측 상단 메뉴(≡)에서 질의응답 · 캘린더 · 출석 · 멤버 · 자료요청 · 휴가신청 · 쪽지 · 도서관 · 커리큘럼 · 국교론 · 설정에 접근해요.' },
       { emoji: '👤', text: '이름 옆에 프로필 사진이 함께 표시돼요. 설정 탭에서 사진을 등록할 수 있어요.' },
       { emoji: '👑', text: '방장 이름 옆엔 금빛 왕관, 부방장 이름 옆엔 파란색 왕관이 표시돼요.' },
       { emoji: '🔄', text: '새로고침(↻) 버튼을 누르면 다른 멤버가 올린 최신 데이터를 불러와요.' },
@@ -102,6 +102,7 @@ const SECTIONS: Section[] = [
         heading: '📔 스터디 일지',
         tips: [
           { emoji: '📝', text: '작품명, 맡은 문항, 어려웠던 점, 자가 피드백을 작성해요.' },
+          { emoji: '📎', text: 'PDF 파일 또는 JPG·PNG·HEIC 사진을 여러 장 첨부해 AI 분석을 받을 수 있어요.' },
           { emoji: '👥', text: '다른 멤버들이 작성한 일지도 펼쳐서 확인할 수 있어요.' },
         ],
       },
@@ -225,6 +226,49 @@ const SECTIONS: Section[] = [
       { emoji: '📚', text: '국어교과교육론 · 문학 · 문법 3개 과목의 스터디 진행 방식을 안내해요.' },
       { emoji: '👆', text: '각 과목을 탭하면 단계별 진행 방식과 교재 정보가 펼쳐져요.' },
       { emoji: '🔒', text: '문학 교재는 방장·부방장이 공개/비공개를 직접 전환할 수 있어요.' },
+    ],
+  },
+  {
+    id: 'edu',
+    icon: ClipboardList,
+    iconBg: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    borderColor: 'border-violet-100',
+    badge: '국교론',
+    title: '국어교과교육론 탭',
+    summary: '빈칸 문제 제작 · 무작위 배정 · 풀이 · 아카이브',
+    subs: [
+      {
+        heading: '📝 문제 제작',
+        tips: [
+          { emoji: '👑', text: '방장·부방장이 이번 주 회차를 개설하면 참여할 수 있어요.' },
+          { emoji: '✏️', text: '[문제 제작하기]를 눌러 빈칸 문제 10개와 각 정답을 작성해 제출해요.' },
+          { emoji: '🔄', text: '제출 후에도 [내 문제 수정하기]를 눌러 언제든 수정할 수 있어요.' },
+        ],
+      },
+      {
+        heading: '🎲 배정',
+        tips: [
+          { emoji: '🔀', text: '방장·부방장이 [배정 실행]을 누르면 멤버마다 다른 멤버의 문제가 자동 배정돼요 (자기 자신 제외).' },
+          { emoji: '🔒', text: '배정 후 [풀이하기] 버튼이 활성화돼요. 배정 전에는 풀이 화면에 접근할 수 없어요.' },
+        ],
+      },
+      {
+        heading: '✍️ 풀이하기',
+        tips: [
+          { emoji: '❓', text: '배정된 문제 10개만 표시돼요. 제작자 이름은 공개되지 않아요.' },
+          { emoji: '💾', text: '[저장하기]로 중간 저장이 가능하고, 저장 후에도 수정할 수 있어요.' },
+          { emoji: '🖨️', text: '[PDF] 버튼을 누르면 문제와 내 답변을 새 창으로 열어 인쇄/저장할 수 있어요.' },
+        ],
+      },
+      {
+        heading: '📁 아카이브',
+        tips: [
+          { emoji: '🗂️', text: '지금까지 진행된 모든 회차 목록을 확인할 수 있어요.' },
+          { emoji: '🔒', text: '회차별 결과는 기본 비공개. 방장·부방장이 [비공개] 버튼을 눌러 전체 공개로 전환해요.' },
+          { emoji: '👤', text: '공개된 회차에서는 제작자 이름 · 정답 · 풀이자의 답변을 함께 확인할 수 있어요.' },
+        ],
+      },
     ],
   },
   {
