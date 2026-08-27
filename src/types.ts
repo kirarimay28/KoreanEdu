@@ -272,6 +272,38 @@ export interface FineRecord {
   paidAt?: string;
 }
 
+export interface EduRound {
+  id: string;        // weekKey (YYYY-MM-DD, Monday)
+  weekKey: string;
+  title: string;
+  assignments: Record<string, string>; // assigneeId → creatorId
+  assignedAt: string;
+  isArchived: boolean;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
+export interface EduQuestion {
+  id: string;        // `${roundId}_${creatorId}_${num}`
+  roundId: string;
+  creatorId: string;
+  questionNum: number;
+  questionText: string;
+  answerText: string;
+  createdAt: string;
+}
+
+export interface EduAnswer {
+  id: string;        // `${roundId}_${userId}`
+  roundId: string;
+  userId: string;
+  username: string;
+  answers: Record<string, string>; // questionId → answer
+  submittedAt: string;
+  updatedAt: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -299,6 +331,9 @@ export interface AppData {
   studySessionNotes: StudySessionNote[];
   fines: FineRecord[];
   litTextbookVisible: boolean;
+  eduRounds: EduRound[];
+  eduQuestions: EduQuestion[];
+  eduAnswers: EduAnswer[];
 }
 
 export interface LibraryItem {
@@ -339,7 +374,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu';
 export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
 
 export interface VocabExamRecord {

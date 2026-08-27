@@ -6,7 +6,7 @@ import type {
   Announcement, Warning, VacationRequest, EducationAnswer, QnAPost, QnAComment, Message,
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
-  VocabExamRecord, StudySessionNote, FineRecord,
+  VocabExamRecord, StudySessionNote, FineRecord, EduRound, EduQuestion, EduAnswer,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -38,6 +38,9 @@ const defaultData: AppData = {
   studySessionNotes: [],
   fines: [],
   litTextbookVisible: false,
+  eduRounds: [],
+  eduQuestions: [],
+  eduAnswers: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -95,7 +98,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -122,6 +125,9 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('studySessionNotes'),
     safeGet('fines'),
     safeGet('appSettings'),
+    safeGet('eduRounds'),
+    safeGet('eduQuestions'),
+    safeGet('eduAnswers'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -161,6 +167,9 @@ async function fetchFromFirestore(): Promise<void> {
     studySessionNotes:   mergeById(sn.docs.map(d => d.data() as StudySessionNote), mem.studySessionNotes),
     fines:               fi.docs.map(d => d.data() as FineRecord),
     litTextbookVisible:  (cfg.docs[0]?.data() as { litTextbookVisible?: boolean })?.litTextbookVisible ?? mem.litTextbookVisible,
+    eduRounds:           er.docs.map(d => d.data() as EduRound),
+    eduQuestions:        eq.docs.map(d => d.data() as EduQuestion),
+    eduAnswers:          eaw.docs.map(d => d.data() as EduAnswer),
   };
   bootstrapAdmin();
   saveCache();
@@ -872,7 +881,7 @@ export function clearLocationNotice(): void {
 }
 
 // ── Assignment Notice ──────────────────────────────────────
-function weekMondayKey(dateStr: string): string {
+export function weekMondayKey(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d, 12); // noon local to avoid DST edge cases
   const day = date.getDay();
@@ -1015,4 +1024,93 @@ export function getStudySessionNotesForWeek(weekKey: string): StudySessionNote[]
     dates.push(`${y}-${m}-${dd}`);
   }
   return mem.studySessionNotes.filter(n => dates.includes(n.date));
+}
+
+// ── 국어교과교육론 ──────────────────────────────────────────
+
+export function getEduRounds(): EduRound[] {
+  return [...mem.eduRounds].sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+}
+
+export function saveEduRound(round: EduRound): void {
+  const idx = mem.eduRounds.findIndex(r => r.id === round.id);
+  if (idx >= 0) mem.eduRounds[idx] = round;
+  else mem.eduRounds.push(round);
+  persist('eduRounds', round.id, round);
+  saveCache();
+}
+
+export function getEduQuestionsForRound(roundId: string): EduQuestion[] {
+  return mem.eduQuestions
+    .filter(q => q.roundId === roundId)
+    .sort((a, b) => a.questionNum - b.questionNum);
+}
+
+export function saveEduQuestions(questions: EduQuestion[]): void {
+  if (questions.length === 0) return;
+  const { roundId, creatorId } = questions[0];
+  mem.eduQuestions = mem.eduQuestions.filter(q => !(q.roundId === roundId && q.creatorId === creatorId));
+  mem.eduQuestions.push(...questions);
+  questions.forEach(q => persist('eduQuestions', q.id, q));
+  saveCache();
+}
+
+export function getEduAnswersForRound(roundId: string): EduAnswer[] {
+  return mem.eduAnswers.filter(a => a.roundId === roundId);
+}
+
+export function getMyEduAnswer(roundId: string, userId: string): EduAnswer | undefined {
+  return mem.eduAnswers.find(a => a.roundId === roundId && a.userId === userId);
+}
+
+export function saveEduAnswer(answer: EduAnswer): void {
+  const idx = mem.eduAnswers.findIndex(a => a.id === answer.id);
+  if (idx >= 0) mem.eduAnswers[idx] = answer;
+  else mem.eduAnswers.push(answer);
+  persist('eduAnswers', answer.id, answer);
+  saveCache();
+}
+
+function computeDerangement(ids: string[]): Record<string, string> {
+  for (let attempt = 0; attempt < 1000; attempt++) {
+    const perm = [...ids].sort(() => Math.random() - 0.5);
+    if (perm.every((p, i) => p !== ids[i])) {
+      return Object.fromEntries(ids.map((id, i) => [id, perm[i]]));
+    }
+  }
+  throw new Error('1000회 시도 후 유효한 배정을 찾지 못했습니다.');
+}
+
+export function runEduDerangement(roundId: string, creatorIds: string[]): { ok: boolean; error?: string } {
+  if (creatorIds.length < 2) return { ok: false, error: '배정하려면 최소 2명이 문제를 제작해야 합니다.' };
+  try {
+    const assignments = computeDerangement(creatorIds);
+    const round = mem.eduRounds.find(r => r.id === roundId);
+    if (!round) return { ok: false, error: '회차를 찾을 수 없습니다.' };
+    saveEduRound({ ...round, assignments, assignedAt: new Date().toISOString() });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : '배정 실패' };
+  }
+}
+
+export function subscribeEduData(callback: () => void): () => void {
+  const unsubs = [
+    onSnapshot(
+      collection(db, 'eduRounds'),
+      snap => { mem.eduRounds = snap.docs.map(d => d.data() as EduRound); saveCache(); callback(); },
+      err => console.warn('eduRounds listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'eduQuestions'),
+      snap => { mem.eduQuestions = snap.docs.map(d => d.data() as EduQuestion); saveCache(); callback(); },
+      err => console.warn('eduQuestions listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'eduAnswers'),
+      snap => { mem.eduAnswers = snap.docs.map(d => d.data() as EduAnswer); saveCache(); callback(); },
+      err => console.warn('eduAnswers listener error:', err)
+    ),
+  ];
+  return () => unsubs.forEach(u => u());
 }
