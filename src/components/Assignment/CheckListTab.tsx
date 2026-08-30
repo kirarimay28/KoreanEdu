@@ -1,41 +1,16 @@
 import { useState } from 'react';
-import type { User, CheckStatus } from '../../types';
-import { getUsers, getAssignmentCheck, getAssignmentChecksForWeek, upsertAssignmentCheck } from '../../store';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import type { User, CheckStatus, ChecklistItem } from '../../types';
+import { isPrivileged } from '../../types';
+import {
+  getUsers, getAssignmentCheck, getAssignmentChecksForWeek, upsertAssignmentCheck,
+  getChecklistConfig, saveChecklistConfig,
+} from '../../store';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Settings, Plus, X, Check, Pencil } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
   currentUser: User;
 }
-
-interface Item {
-  id: string;
-  category: string;
-  group?: string;
-  label: string;
-  description: string;
-}
-
-const ITEMS: Item[] = [
-  // 고전문학
-  { id: 'cls_sun_solve',   category: '고전문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
-  { id: 'cls_sun_review',  category: '고전문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
-  { id: 'cls_sun_summary', category: '고전문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
-  { id: 'cls_exam',        category: '고전문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
-  { id: 'cls_vocab',       category: '고전문학', label: '고어 정리',      description: '작품에 나온 고어 정리했는지' },
-  // 현대문학
-  { id: 'mod_exam',        category: '현대문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
-  { id: 'mod_sun_solve',   category: '현대문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
-  { id: 'mod_sun_review',  category: '현대문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
-  { id: 'mod_sun_summary', category: '현대문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
-  // 현대문법
-  { id: 'grm_read',        category: '현대문법', label: '한문총 회독',          description: '한문총 회독했는지' },
-  { id: 'grm_create',      category: '현대문법', label: '문제 창작/기출 분석', description: '문제 창작 또는 기출 분석 완료했는지' },
-  // 복습
-  { id: 'rev_study',       category: '복습',     label: '스터디 내용 복습',    description: '지난 시간 스터디 내용 복습했는지' },
-];
-
-const CATEGORIES = ['고전문학', '현대문학', '현대문법', '복습'];
 
 const STATUS_OPTIONS: { value: CheckStatus; label: string }[] = [
   { value: 'O',    label: 'O' },
@@ -67,10 +42,10 @@ function formatWeekLabel(weekKey: string): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${fmt(d)} ~ ${fmt(end)}`;
 }
 
-function calcCompletion(checks: Record<string, CheckStatus>): { pct: number; total: number } {
+function calcCompletion(checks: Record<string, CheckStatus>, items: ChecklistItem[]): { pct: number; total: number } {
   let total = 0;
   let score = 0;
-  for (const item of ITEMS) {
+  for (const item of items) {
     const s = checks[item.id] ?? '';
     if (s === 'none') continue;
     total++;
@@ -80,8 +55,8 @@ function calcCompletion(checks: Record<string, CheckStatus>): { pct: number; tot
   return { pct: total === 0 ? 100 : Math.round((score / total) * 100), total };
 }
 
-function groupItems(items: Item[]) {
-  const result: Array<{ group?: string; items: Item[] }> = [];
+function groupItems(items: ChecklistItem[]) {
+  const result: Array<{ group?: string; items: ChecklistItem[] }> = [];
   for (const item of items) {
     const last = result[result.length - 1];
     if (item.group && last?.group === item.group) {
@@ -105,15 +80,53 @@ function PctBar({ pct }: { pct: number }) {
   );
 }
 
-function StatusButton({ status, selected, onClick }: { status: CheckStatus; label: string; selected: boolean; onClick: () => void }) {
-  const opt = STATUS_OPTIONS.find(o => o.value === status)!;
+function StatusButton({ status, label, selected, onClick }: { status: CheckStatus; label: string; selected: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className={`w-10 h-7 text-xs font-bold rounded-lg border transition-all ${selected ? STATUS_STYLE[status] : 'bg-white text-gray-300 border-gray-200 hover:border-gray-300'}`}
     >
-      {opt.label}
+      {label}
     </button>
+  );
+}
+
+type ItemForm = { id: string; category: string; group: string; label: string; description: string };
+
+function CategoryHeader({
+  cat, onRename, onRemove,
+}: { cat: string; onRename: (old: string, next: string) => void; onRemove: (cat: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(cat);
+
+  function save() {
+    const trimmed = value.trim();
+    if (trimmed) onRename(cat, trimmed);
+    setEditing(false);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {editing ? (
+        <>
+          <input
+            className="flex-1 text-xs font-bold border border-primary-300 rounded-lg px-2 py-1 focus:outline-none"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+            autoFocus
+          />
+          <button onClick={save} className="p-1 rounded text-green-500 hover:bg-green-50"><Check className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setEditing(false)} className="p-1 rounded text-gray-400 hover:bg-gray-100"><X className="w-3.5 h-3.5" /></button>
+        </>
+      ) : (
+        <>
+          <p className="flex-1 text-[11px] font-bold text-primary-500 uppercase tracking-wide">{cat}</p>
+          <button onClick={() => { setValue(cat); setEditing(true); }} className="p-1 rounded hover:bg-gray-100 text-gray-400"><Pencil className="w-3 h-3" /></button>
+          <button onClick={() => onRemove(cat)} className="p-1 rounded hover:bg-red-50 text-red-400"><X className="w-3 h-3" /></button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -122,9 +135,20 @@ export default function CheckListTab({ currentUser }: Props) {
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [editCats, setEditCats] = useState<string[]>([]);
+  const [editItems, setEditItems] = useState<ChecklistItem[]>([]);
+  const [newCatInput, setNewCatInput] = useState('');
+  const [itemForm, setItemForm] = useState<ItemForm | null>(null);
+
   const weekKey = getWeekStart(weekOffset);
   const myEntry = getAssignmentCheck(currentUser.id, weekKey);
   const myChecks: Record<string, CheckStatus> = myEntry?.checks ?? {};
+
+  const config = getChecklistConfig();
+  const items = config.items;
+  const categories = config.categories;
 
   function handleCheck(itemId: string, value: CheckStatus) {
     const next = value === (myChecks[itemId] ?? '') ? '' : value;
@@ -133,10 +157,187 @@ export default function CheckListTab({ currentUser }: Props) {
     setTick(t => t + 1);
   }
 
-  const { pct: myPct } = calcCompletion(myChecks);
-
+  const { pct: myPct } = calcCompletion(myChecks, items);
   const allUsers = getUsers().filter(u => u.id !== currentUser.id);
   const weekEntries = getAssignmentChecksForWeek(weekKey);
+
+  // ─── Edit mode helpers ────────────────────────────────────
+
+  function enterEditMode() {
+    setEditCats([...categories]);
+    setEditItems(items.map(i => ({ ...i })));
+    setItemForm(null);
+    setNewCatInput('');
+    setEditMode(true);
+  }
+
+  function cancelEdit() {
+    setEditMode(false);
+    setItemForm(null);
+  }
+
+  function saveEdit() {
+    saveChecklistConfig(editCats, editItems);
+    setEditMode(false);
+    setItemForm(null);
+    setTick(t => t + 1);
+  }
+
+  function addCategory() {
+    const name = newCatInput.trim();
+    if (!name || editCats.includes(name)) return;
+    setEditCats(c => [...c, name]);
+    setNewCatInput('');
+  }
+
+  function removeCategory(cat: string) {
+    if (!window.confirm(`'${cat}' 과목과 그 항목을 모두 삭제할까요?`)) return;
+    setEditCats(c => c.filter(x => x !== cat));
+    setEditItems(it => it.filter(i => i.category !== cat));
+    if (itemForm?.category === cat) setItemForm(null);
+  }
+
+  function renameCategory(oldName: string, newName: string) {
+    if (newName === oldName) return;
+    if (editCats.includes(newName)) return;
+    setEditCats(c => c.map(x => x === oldName ? newName : x));
+    setEditItems(it => it.map(i => i.category === oldName ? { ...i, category: newName } : i));
+    if (itemForm?.category === oldName) setItemForm(f => f ? { ...f, category: newName } : f);
+  }
+
+  function openAddItem(cat: string) {
+    setItemForm({ id: '', category: cat, group: '', label: '', description: '' });
+  }
+
+  function openEditItem(item: ChecklistItem) {
+    setItemForm({ id: item.id, category: item.category, group: item.group ?? '', label: item.label, description: item.description });
+  }
+
+  function removeItem(id: string) {
+    setEditItems(it => it.filter(i => i.id !== id));
+    if (itemForm?.id === id) setItemForm(null);
+  }
+
+  function submitItemForm() {
+    if (!itemForm) return;
+    const label = itemForm.label.trim();
+    if (!label) return;
+    const item: ChecklistItem = {
+      id: itemForm.id || crypto.randomUUID(),
+      category: itemForm.category,
+      group: itemForm.group.trim() || undefined,
+      label,
+      description: itemForm.description.trim(),
+    };
+    if (itemForm.id) {
+      setEditItems(it => it.map(i => i.id === itemForm.id ? item : i));
+    } else {
+      setEditItems(it => [...it, item]);
+    }
+    setItemForm(null);
+  }
+
+  // ─── Edit Mode UI ─────────────────────────────────────────
+
+  if (editMode) {
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold text-gray-800">체크리스트 편집</p>
+          <div className="flex gap-2">
+            <button onClick={cancelEdit} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">취소</button>
+            <button onClick={saveEdit} className="text-xs px-3 py-1.5 rounded-lg bg-primary-500 text-white font-semibold hover:bg-primary-600">저장</button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {editCats.map(cat => (
+            <div key={cat} className="card">
+              <CategoryHeader cat={cat} onRename={renameCategory} onRemove={removeCategory} />
+
+              <div className="mt-3 space-y-2">
+                {editItems.filter(i => i.category === cat).map(item => (
+                  <div key={item.id} className="flex items-start gap-2 p-2 rounded-lg bg-gray-50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-700">{item.label}</p>
+                      {item.group && <p className="text-[10px] text-blue-400 mt-0.5">그룹: {item.group}</p>}
+                      {item.description && <p className="text-[10px] text-gray-400 mt-0.5">{item.description}</p>}
+                    </div>
+                    <button onClick={() => openEditItem(item)} className="p-1 rounded hover:bg-gray-200 text-gray-400"><Pencil className="w-3 h-3" /></button>
+                    <button onClick={() => removeItem(item.id)} className="p-1 rounded hover:bg-red-50 text-red-400"><X className="w-3 h-3" /></button>
+                  </div>
+                ))}
+
+                {/* Inline item form */}
+                {itemForm && itemForm.category === cat && (
+                  <div className="p-3 rounded-lg border border-primary-200 bg-primary-50/30 space-y-2">
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-semibold">항목명 *</label>
+                      <input
+                        className="mt-0.5 w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400"
+                        value={itemForm.label}
+                        onChange={e => setItemForm(f => f ? { ...f, label: e.target.value } : f)}
+                        placeholder="항목 이름"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-semibold">그룹 (선택)</label>
+                      <input
+                        className="mt-0.5 w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400"
+                        value={itemForm.group}
+                        onChange={e => setItemForm(f => f ? { ...f, group: e.target.value } : f)}
+                        placeholder="예: 수능 기출 풀이"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-semibold">설명 (선택)</label>
+                      <input
+                        className="mt-0.5 w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400"
+                        value={itemForm.description}
+                        onChange={e => setItemForm(f => f ? { ...f, description: e.target.value } : f)}
+                        placeholder="부가 설명"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end pt-1">
+                      <button onClick={() => setItemForm(null)} className="text-xs px-3 py-1 rounded-lg border border-gray-200 text-gray-500">취소</button>
+                      <button onClick={submitItemForm} className="text-xs px-3 py-1 rounded-lg bg-primary-500 text-white font-semibold">
+                        {itemForm.id ? '수정 완료' : '추가'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => openAddItem(cat)}
+                  className="w-full text-xs text-gray-400 py-1.5 rounded-lg border border-dashed border-gray-200 hover:border-primary-300 hover:text-primary-500 transition flex items-center justify-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> 항목 추가
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add category */}
+        <div className="card">
+          <p className="text-xs font-semibold text-gray-600 mb-2">과목 추가</p>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400"
+              value={newCatInput}
+              onChange={e => setNewCatInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addCategory()}
+              placeholder="새 과목명"
+            />
+            <button onClick={addCategory} className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-semibold">추가</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Normal Mode UI ───────────────────────────────────────
 
   return (
     <div className="space-y-5" key={tick}>
@@ -155,6 +356,18 @@ export default function CheckListTab({ currentUser }: Props) {
         </button>
       </div>
 
+      {/* Admin edit button */}
+      {isPrivileged(currentUser) && (
+        <div className="flex justify-end">
+          <button
+            onClick={enterEditMode}
+            className="flex items-center gap-1 text-xs text-gray-400 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition"
+          >
+            <Settings className="w-3.5 h-3.5" /> 체크리스트 편집
+          </button>
+        </div>
+      )}
+
       {/* My checklist */}
       <div className="card">
         <div className="flex items-center justify-between mb-3">
@@ -163,15 +376,13 @@ export default function CheckListTab({ currentUser }: Props) {
         </div>
 
         <div className="space-y-4">
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <div key={cat}>
               <p className="text-[11px] font-bold text-primary-500 uppercase tracking-wide mb-2">{cat}</p>
               <div className="space-y-2">
-                {groupItems(ITEMS.filter(i => i.category === cat)).map((g, gi) => (
+                {groupItems(items.filter(i => i.category === cat)).map((g, gi) => (
                   <div key={gi}>
-                    {g.group && (
-                      <p className="text-[10px] font-bold text-gray-400 mb-1.5 mt-1">{g.group}</p>
-                    )}
+                    {g.group && <p className="text-[10px] font-bold text-gray-400 mb-1.5 mt-1">{g.group}</p>}
                     <div className={`space-y-2 ${g.group ? 'pl-2 border-l-2 border-gray-100' : ''}`}>
                       {g.items.map(item => (
                         <div key={item.id} className="flex items-start gap-3">
@@ -213,7 +424,7 @@ export default function CheckListTab({ currentUser }: Props) {
           {allUsers.map(user => {
             const entry = weekEntries.find(e => e.userId === user.id);
             const checks = entry?.checks ?? {};
-            const { pct } = calcCompletion(checks);
+            const { pct } = calcCompletion(checks, items);
             const isExpanded = expandedMember === user.id;
 
             return (
@@ -226,24 +437,20 @@ export default function CheckListTab({ currentUser }: Props) {
                   {!entry ? (
                     <span className="text-[10px] text-gray-300 mr-1">미입력</span>
                   ) : (
-                    <div className="w-32">
-                      <PctBar pct={pct} />
-                    </div>
+                    <div className="w-32"><PctBar pct={pct} /></div>
                   )}
                   {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />}
                 </button>
 
                 {isExpanded && (
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
-                    {CATEGORIES.map(cat => (
+                    {categories.map(cat => (
                       <div key={cat}>
                         <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wide mb-1.5">{cat}</p>
                         <div className="space-y-1.5">
-                          {groupItems(ITEMS.filter(i => i.category === cat)).map((g, gi) => (
+                          {groupItems(items.filter(i => i.category === cat)).map((g, gi) => (
                             <div key={gi}>
-                              {g.group && (
-                                <p className="text-[10px] font-bold text-gray-400 mb-1 mt-0.5">{g.group}</p>
-                              )}
+                              {g.group && <p className="text-[10px] font-bold text-gray-400 mb-1 mt-0.5">{g.group}</p>}
                               <div className={`space-y-1.5 ${g.group ? 'pl-2 border-l-2 border-gray-100' : ''}`}>
                                 {g.items.map(item => {
                                   const s = checks[item.id] ?? '';

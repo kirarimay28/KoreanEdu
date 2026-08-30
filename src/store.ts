@@ -7,6 +7,7 @@ import type {
   AssignmentCheck, CheckStatus, CalendarEvent, LibraryItem,
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
   VocabExamRecord, StudySessionNote, FineRecord, EduRound, EduQuestion, EduAnswer,
+  ChecklistItem, ChecklistConfig,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -41,6 +42,7 @@ const defaultData: AppData = {
   eduRounds: [],
   eduQuestions: [],
   eduAnswers: [],
+  checklistConfig: null,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -98,7 +100,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -128,6 +130,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('eduRounds'),
     safeGet('eduQuestions'),
     safeGet('eduAnswers'),
+    safeGet('checklistConfig'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -170,6 +173,7 @@ async function fetchFromFirestore(): Promise<void> {
     eduRounds:           er.docs.map(d => d.data() as EduRound),
     eduQuestions:        eq.docs.map(d => d.data() as EduQuestion),
     eduAnswers:          eaw.docs.map(d => d.data() as EduAnswer),
+    checklistConfig:     (clcfg.docs[0]?.data() as ChecklistConfig) ?? null,
   };
   bootstrapAdmin();
   saveCache();
@@ -1101,6 +1105,38 @@ export function deleteEduRound(roundId: string): void {
   mem.eduAnswers = mem.eduAnswers.filter(a => a.roundId !== roundId);
   mem.eduRounds = mem.eduRounds.filter(r => r.id !== roundId);
   remove('eduRounds', roundId);
+  saveCache();
+}
+
+// ── Checklist Config ───────────────────────────────────────
+
+const DEFAULT_CHECKLIST_ITEMS: ChecklistItem[] = [
+  { id: 'cls_sun_solve',   category: '고전문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
+  { id: 'cls_sun_review',  category: '고전문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
+  { id: 'cls_sun_summary', category: '고전문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
+  { id: 'cls_exam',        category: '고전문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
+  { id: 'cls_vocab',       category: '고전문학', label: '고어 정리',      description: '작품에 나온 고어 정리했는지' },
+  { id: 'mod_exam',        category: '현대문학', label: '기출 문제 분석', description: '지문·문제·선지 삼단 구조 + 키워드별 분석' },
+  { id: 'mod_sun_solve',   category: '현대문학', group: '수능 기출 풀이', label: '문제 풀이',       description: '' },
+  { id: 'mod_sun_review',  category: '현대문학', group: '수능 기출 풀이', label: '채점&오답 정리', description: '' },
+  { id: 'mod_sun_summary', category: '현대문학', group: '수능 기출 풀이', label: '선지 단권화',     description: '' },
+  { id: 'grm_read',        category: '현대문법', label: '한문총 회독',          description: '한문총 회독했는지' },
+  { id: 'grm_create',      category: '현대문법', label: '문제 창작/기출 분석', description: '문제 창작 또는 기출 분석 완료했는지' },
+  { id: 'rev_study',       category: '복습',     label: '스터디 내용 복습',    description: '지난 시간 스터디 내용 복습했는지' },
+];
+
+const DEFAULT_CHECKLIST_CATEGORIES = ['고전문학', '현대문학', '현대문법', '복습'];
+
+export function getChecklistConfig(): { categories: string[]; items: ChecklistItem[] } {
+  const stored = mem.checklistConfig;
+  if (stored) return { categories: stored.categories, items: stored.items };
+  return { categories: DEFAULT_CHECKLIST_CATEGORIES, items: DEFAULT_CHECKLIST_ITEMS };
+}
+
+export function saveChecklistConfig(categories: string[], items: ChecklistItem[]): void {
+  const config: ChecklistConfig = { id: 'v1', categories, items, updatedAt: new Date().toISOString() };
+  mem.checklistConfig = config;
+  persist('checklistConfig', 'v1', config);
   saveCache();
 }
 

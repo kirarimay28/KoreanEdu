@@ -304,6 +304,21 @@ export interface EduAnswer {
   updatedAt: string;
 }
 
+export interface ChecklistItem {
+  id: string;
+  category: string;
+  group?: string;
+  label: string;
+  description: string;
+}
+
+export interface ChecklistConfig {
+  id: 'v1';
+  categories: string[];
+  items: ChecklistItem[];
+  updatedAt: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -334,6 +349,7 @@ export interface AppData {
   eduRounds: EduRound[];
   eduQuestions: EduQuestion[];
   eduAnswers: EduAnswer[];
+  checklistConfig: ChecklistConfig | null;
 }
 
 export interface LibraryItem {
