@@ -4,6 +4,7 @@ import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
 import PersonalStudyTab from './components/Personal/PersonalStudyTab';
 import FineTab from './components/Fine/FineTab';
+import WalletTab from './components/Wallet/WalletTab';
 import AttendanceTab from './components/Attendance/AttendanceTab';
 import ResourceTab from './components/Resource/ResourceTab';
 import MemberTab from './components/Member/MemberTab';
@@ -21,7 +22,7 @@ import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
-  BookOpen, Receipt, CalendarCheck, CalendarDays,
+  BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
   BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList,
 } from 'lucide-react';
@@ -48,7 +49,7 @@ const SESSION_KEY = 'korean_edu_session';
 
 const MAIN_TABS: { id: MainTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'study',       label: '스터디', icon: BookOpen },
-  { id: 'fine',        label: '벌금',   icon: Receipt },
+  { id: 'wallet',      label: '지갑',   icon: Wallet },
   { id: 'assignment',  label: '과제',   icon: TableProperties },
   { id: 'vocab_study', label: '고어',   icon: Languages },
 ];
@@ -579,6 +580,7 @@ export default function App() {
               {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'personal'    && <PersonalStudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'fine'        && <FineTab currentUser={currentUser} />}
+              {activeTab === 'wallet'      && <WalletTab currentUser={currentUser} />}
               {activeTab === 'qna'         && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar'    && <CalendarTab currentUser={currentUser} />}
               {activeTab === 'assignment'  && <AssignmentTab currentUser={currentUser} />}

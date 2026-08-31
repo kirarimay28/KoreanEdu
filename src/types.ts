@@ -255,7 +255,7 @@ export interface StudySessionNote {
   createdByName: string;
 }
 
-export type FineType = '지각' | '과제' | '일지';
+export type FineType = '지각' | '과제' | '국교론' | '체크리스트' | '일지';
 
 export interface FineRecord {
   id: string;
@@ -270,6 +270,27 @@ export interface FineRecord {
   issuedByName: string;
   paid: boolean;
   paidAt?: string;
+  exempted?: boolean;
+  exemptedAt?: string;
+}
+
+export type FineExemptionStatus = '대기중' | '승인' | '반려';
+
+export interface FineExemptionRequest {
+  id: string;
+  fineId: string;
+  requesterId: string;
+  requesterName: string;
+  fineType: FineType;
+  fineAmount: number;
+  fineReason: string;
+  exemptionReason: string;
+  status: FineExemptionStatus;
+  createdAt: string;
+  reviewedAt?: string;
+  reviewedById?: string;
+  reviewedByName?: string;
+  rejectReason?: string;
 }
 
 export interface EduRound {
@@ -360,6 +381,7 @@ export interface AppData {
   vocabExamRecords: VocabExamRecord[];
   studySessionNotes: StudySessionNote[];
   fines: FineRecord[];
+  fineExemptionRequests: FineExemptionRequest[];
   litTextbookVisible: boolean;
   eduRounds: EduRound[];
   eduQuestions: EduQuestion[];
@@ -406,7 +428,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu';
 export type StudySubTab = 'vocab' | 'feedback' | 'journal' | 'exam';
 
 export interface VocabExamRecord {

@@ -48,9 +48,11 @@ function formatWon(amount: number): string {
 }
 
 const TYPE_STYLE: Record<FineType, { bg: string; text: string; label: string }> = {
-  '지각': { bg: 'bg-orange-100', text: 'text-orange-700', label: '지각' },
-  '과제': { bg: 'bg-blue-100',   text: 'text-blue-700',   label: '과제' },
-  '일지': { bg: 'bg-primary-100', text: 'text-primary-700', label: '일지' },
+  '지각':     { bg: 'bg-orange-100',  text: 'text-orange-700',  label: '지각' },
+  '과제':     { bg: 'bg-blue-100',    text: 'text-blue-700',    label: '과제' },
+  '일지':     { bg: 'bg-primary-100', text: 'text-primary-700', label: '일지' },
+  '국교론':   { bg: 'bg-violet-100',  text: 'text-violet-700',  label: '국교론' },
+  '체크리스트': { bg: 'bg-sky-100',   text: 'text-sky-700',     label: '체크리스트' },
 };
 
 export default function FineTab({ currentUser }: Props) {

@@ -9,6 +9,7 @@ import type {
   VocabExamRecord, StudySessionNote, FineRecord, EduRound, EduQuestion, EduAnswer,
   ChecklistItem, ChecklistConfig,
   AssignmentSubjectConfig, AssignmentNoticeConfig,
+  FineType, FineExemptionRequest, FineExemptionStatus,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -39,6 +40,7 @@ const defaultData: AppData = {
   vocabExamRecords: [],
   studySessionNotes: [],
   fines: [],
+  fineExemptionRequests: [],
   litTextbookVisible: false,
   eduRounds: [],
   eduQuestions: [],
@@ -102,7 +104,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -134,6 +136,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('eduAnswers'),
     safeGet('checklistConfig'),
     safeGet('assignmentNoticeConfig'),
+    safeGet('fineExemptionRequests'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -178,6 +181,7 @@ async function fetchFromFirestore(): Promise<void> {
     eduAnswers:          eaw.docs.map(d => d.data() as EduAnswer),
     checklistConfig:          (clcfg.docs[0]?.data() as ChecklistConfig) ?? null,
     assignmentNoticeConfig:   (ancfg.docs[0]?.data() as AssignmentNoticeConfig) ?? null,
+    fineExemptionRequests:    fer.docs.map(d => d.data() as FineExemptionRequest),
   };
   bootstrapAdmin();
   saveCache();
@@ -1016,6 +1020,64 @@ export function markFinePaid(fineId: string, paid: boolean): void {
 export function deleteFine(fineId: string): void {
   mem.fines = mem.fines.filter(f => f.id !== fineId);
   remove('fines', fineId);
+  saveCache();
+}
+
+export function getFineCumulativeCount(userId: string, type: FineType): number {
+  return mem.fines.filter(f => f.targetUserId === userId && f.type === type).length;
+}
+
+export function getVocabTestScoresForWeek(weekKey: string): VocabTestScore[] {
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekKey + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+  return mem.vocabTestScores.filter(s => dates.includes(s.date));
+}
+
+export function getFineExemptionRequests(): FineExemptionRequest[] {
+  return [...mem.fineExemptionRequests].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function getMyFineExemptionRequests(userId: string): FineExemptionRequest[] {
+  return mem.fineExemptionRequests.filter(r => r.requesterId === userId);
+}
+
+export function getExemptionRequestForFine(fineId: string): FineExemptionRequest | undefined {
+  return mem.fineExemptionRequests.find(r => r.fineId === fineId);
+}
+
+export function submitFineExemptionRequest(req: FineExemptionRequest): void {
+  const existing = mem.fineExemptionRequests.findIndex(r => r.fineId === req.fineId);
+  if (existing >= 0) return;
+  mem.fineExemptionRequests.push(req);
+  persist('fineExemptionRequests', req.id, req);
+  saveCache();
+}
+
+export function reviewFineExemptionRequest(
+  id: string, status: FineExemptionStatus, reviewerId: string, reviewerName: string, rejectReason?: string
+): void {
+  const req = mem.fineExemptionRequests.find(r => r.id === id);
+  if (!req) return;
+  req.status = status;
+  req.reviewedAt = new Date().toISOString();
+  req.reviewedById = reviewerId;
+  req.reviewedByName = reviewerName;
+  if (rejectReason) req.rejectReason = rejectReason;
+  persist('fineExemptionRequests', id, req);
+  if (status === '승인') {
+    const fine = mem.fines.find(f => f.id === req.fineId);
+    if (fine) {
+      fine.exempted = true;
+      fine.exemptedAt = new Date().toISOString();
+      persist('fines', fine.id, fine);
+    }
+  }
   saveCache();
 }
 
