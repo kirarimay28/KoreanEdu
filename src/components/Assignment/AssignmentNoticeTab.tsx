@@ -419,13 +419,16 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
           <button
             onClick={() => shareAssignmentNotice({
               date: notice.date,
-              classicPoetWork:  notice.classicPoetWork ?? '',
-              classicProseWork: notice.classicProseWork ?? '',
-              classicWork:      notice.classicWork,
-              modernPoetWork:   notice.modernPoetWork,
-              modernProseWork:  notice.modernProseWork,
+              works: {
+                classicPoet:  notice.classicPoetWork  ?? notice.classicWork ?? '',
+                classicProse: notice.classicProseWork ?? '',
+                modernPoet:   notice.modernPoetWork   ?? '',
+                modernProse:  notice.modernProseWork  ?? '',
+              },
               goeoStart: notice.goeoStart,
               goeoEnd:   notice.goeoEnd,
+              subjects,
+              warningText,
             })}
             className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-xl transition"
           >
