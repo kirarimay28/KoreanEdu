@@ -371,6 +371,19 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
               <FileText className="w-4 h-4 text-red-400 shrink-0" />
               <span className="text-xs text-gray-500 truncate">{selectedChapter.pdfFileName ?? 'PDF 파일'}</span>
             </div>
+            {isAdmin && selectedChapter.pdfUrl && (
+              <div className="mb-2 bg-gray-50 rounded-xl p-2 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] text-gray-400 break-all flex-1">{selectedChapter.pdfUrl}</span>
+                <a
+                  href={selectedChapter.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-blue-500 underline shrink-0"
+                >
+                  새 탭 열기
+                </a>
+              </div>
+            )}
             <iframe
               src={selectedChapter.pdfUrl}
               title={selectedChapter.pdfFileName ?? 'PDF'}
