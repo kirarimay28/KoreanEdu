@@ -8,6 +8,7 @@ import type {
   VocabTestScore, PeerFeedback, StudyLog, LocationNotice, AssignmentNotice,
   VocabExamRecord, StudySessionNote, FineRecord, EduRound, EduQuestion, EduAnswer,
   ChecklistItem, ChecklistConfig,
+  AssignmentSubjectConfig, AssignmentNoticeConfig,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -43,6 +44,7 @@ const defaultData: AppData = {
   eduQuestions: [],
   eduAnswers: [],
   checklistConfig: null,
+  assignmentNoticeConfig: null,
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -100,7 +102,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -131,6 +133,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('eduQuestions'),
     safeGet('eduAnswers'),
     safeGet('checklistConfig'),
+    safeGet('assignmentNoticeConfig'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -173,7 +176,8 @@ async function fetchFromFirestore(): Promise<void> {
     eduRounds:           er.docs.map(d => d.data() as EduRound),
     eduQuestions:        eq.docs.map(d => d.data() as EduQuestion),
     eduAnswers:          eaw.docs.map(d => d.data() as EduAnswer),
-    checklistConfig:     (clcfg.docs[0]?.data() as ChecklistConfig) ?? null,
+    checklistConfig:          (clcfg.docs[0]?.data() as ChecklistConfig) ?? null,
+    assignmentNoticeConfig:   (ancfg.docs[0]?.data() as AssignmentNoticeConfig) ?? null,
   };
   bootstrapAdmin();
   saveCache();
@@ -1137,6 +1141,67 @@ export function saveChecklistConfig(categories: string[], items: ChecklistItem[]
   const config: ChecklistConfig = { id: 'v1', categories, items, updatedAt: new Date().toISOString() };
   mem.checklistConfig = config;
   persist('checklistConfig', 'v1', config);
+  saveCache();
+}
+
+// ── Assignment Notice Config ───────────────────────────────
+
+const DEFAULT_CLASSIC_METHOD = `1. 수능 기출 풀이
+
+1) 문제 풀기
+
+2) 채점하기 (오답 있을 경우 →정답 체크 금지)
+
+3) 오답 정리
+-틀린 이유/오답이 오답인 이유/새로 고른 선지가
+맞는 선지라고 판단한 근거
+
+4) 선지 단권화
+→작품 분석의 근거 추출하기 (문제 푸는 용도 XXX)
+
+2. 임용 기출 문제 유형 분석
+→키워드 위주로 분석합니다!
+지문/문제/선지 삼단 구조로 꼼꼼히!!
+
+3. 고어 암기 ▶ 매주 20개씩!
+→모이는 날에 10분 간 시험 봅니다!`;
+
+const DEFAULT_MODERN_METHOD = `1. 수능 기출 풀이
+
+1) 문제 풀기
+
+2) 채점하기 (오답 있을 경우 →정답 체크 금지)
+
+3) 오답 정리
+-틀린 이유/오답이 오답인 이유/새로 고른 선지가
+맞는 선지라고 판단한 근거
+
+4) 선지 단권화
+→작품 분석의 근거 추출하기 (문제 푸는 용도 XXX)
+
+2. 임용 기출 문제 유형 분석
+→키워드 위주로 분석합니다!
+지문/문제/선지 삼단 구조로 꼼꼼히!!`;
+
+const DEFAULT_ASSIGNMENT_SUBJECTS: AssignmentSubjectConfig[] = [
+  { key: 'classicPoet',  label: '고전 시가',  methodText: DEFAULT_CLASSIC_METHOD },
+  { key: 'classicProse', label: '고전 산문',  methodText: DEFAULT_CLASSIC_METHOD },
+  { key: 'modernPoet',   label: '현대시',     methodText: DEFAULT_MODERN_METHOD },
+  { key: 'modernProse',  label: '현대산문',   methodText: DEFAULT_MODERN_METHOD },
+];
+
+const DEFAULT_WARNING_TEXT = '★ 과제 불성실하게 해 오시면 경고 들어갑니다!!';
+
+export function getAssignmentNoticeConfig(): { subjects: AssignmentSubjectConfig[]; warningText: string } {
+  const stored = mem.assignmentNoticeConfig;
+  if (stored) return { subjects: stored.subjects, warningText: stored.warningText };
+  return { subjects: DEFAULT_ASSIGNMENT_SUBJECTS, warningText: DEFAULT_WARNING_TEXT };
+}
+
+export function saveAssignmentNoticeConfig(subjects: AssignmentSubjectConfig[], warningText: string): void {
+  const config: AssignmentNoticeConfig = { id: 'v1', subjects, warningText, updatedAt: new Date().toISOString() };
+  mem.assignmentNoticeConfig = config;
+  persist('assignmentNoticeConfig', 'v1', config);
   saveCache();
 }
 

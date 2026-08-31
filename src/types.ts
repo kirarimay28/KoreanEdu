@@ -304,6 +304,21 @@ export interface EduAnswer {
   updatedAt: string;
 }
 
+export type AssignmentSubjectKey = 'classicPoet' | 'classicProse' | 'modernPoet' | 'modernProse';
+
+export interface AssignmentSubjectConfig {
+  key: AssignmentSubjectKey;
+  label: string;
+  methodText: string;
+}
+
+export interface AssignmentNoticeConfig {
+  id: 'v1';
+  subjects: AssignmentSubjectConfig[];
+  warningText: string;
+  updatedAt: string;
+}
+
 export interface ChecklistItem {
   id: string;
   category: string;
@@ -350,6 +365,7 @@ export interface AppData {
   eduQuestions: EduQuestion[];
   eduAnswers: EduAnswer[];
   checklistConfig: ChecklistConfig | null;
+  assignmentNoticeConfig: AssignmentNoticeConfig | null;
 }
 
 export interface LibraryItem {

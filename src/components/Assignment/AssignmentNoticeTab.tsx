@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Pencil, X, Check, Share2 } from 'lucide-react';
-import type { User } from '../../types';
-import { getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice, clearAssignmentNotice, subscribeAssignmentNotices } from '../../store';
+import { Pencil, X, Check, Share2, Settings } from 'lucide-react';
+import type { User, AssignmentSubjectConfig } from '../../types';
+import {
+  getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice,
+  clearAssignmentNotice, subscribeAssignmentNotices,
+  getAssignmentNoticeConfig, saveAssignmentNoticeConfig,
+} from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
 import NameWithCrown from '../common/NameWithCrown';
 
@@ -10,7 +14,6 @@ interface Props {
 }
 
 const NUMS = Array.from({ length: 100 }, (_, i) => i + 1);
-
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function formatDate(dateStr: string): string {
@@ -19,45 +22,7 @@ function formatDate(dateStr: string): string {
   return `${m}월 ${d}일 (${DAYS[date.getDay()]})`;
 }
 
-const CLASSIC_METHOD = `1. 수능 기출 풀이
-
-1) 문제 풀기
-
-2) 채점하기 (오답 있을 경우 →정답 체크 금지)
-
-3) 오답 정리
--틀린 이유/오답이 오답인 이유/새로 고른 선지가
-맞는 선지라고 판단한 근거
-
-4) 선지 단권화
-→작품 분석의 근거 추출하기 (문제 푸는 용도 XXX)
-
-2. 임용 기출 문제 유형 분석
-→키워드 위주로 분석합니다!
-지문/문제/선지 삼단 구조로 꼼꼼히!!
-
-3. 고어 암기 ▶ 매주 20개씩!
-→모이는 날에 10분 간 시험 봅니다!`;
-
-const MODERN_METHOD = `1. 수능 기출 풀이
-
-1) 문제 풀기
-
-2) 채점하기 (오답 있을 경우 →정답 체크 금지)
-
-3) 오답 정리
--틀린 이유/오답이 오답인 이유/새로 고른 선지가
-맞는 선지라고 판단한 근거
-
-4) 선지 단권화
-→작품 분석의 근거 추출하기 (문제 푸는 용도 XXX)
-
-2. 임용 기출 문제 유형 분석
-→키워드 위주로 분석합니다!
-지문/문제/선지 삼단 구조로 꼼꼼히!!`;
-
 function getThisWeekMonday(): string {
-  // Use KST today to avoid UTC offset causing wrong day
   const now = new Date();
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const [y, m, d] = kst.toISOString().split('T')[0].split('-').map(Number);
@@ -68,17 +33,17 @@ function getThisWeekMonday(): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+// Map subject key to notice field key
+function subjectWorkValue(
+  key: AssignmentSubjectConfig['key'],
+  works: Record<string, string>,
+): string {
+  return works[key] ?? '';
+}
+
 function WorkRow({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-}) {
+  label, value, onChange, placeholder,
+}: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
   const isNone = value === '없음';
   return (
     <div className="space-y-1">
@@ -116,44 +81,54 @@ function WorkDisplay({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Header color per subject index
+const HEADER_COLORS = [
+  { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700' },
+  { bg: 'bg-orange-50', border: 'border-orange-100', text: 'text-orange-700' },
+  { bg: 'bg-sky-50', border: 'border-sky-100', text: 'text-sky-700' },
+  { bg: 'bg-indigo-50', border: 'border-indigo-100', text: 'text-indigo-700' },
+];
+
 export default function AssignmentNoticeTab({ currentUser }: Props) {
   const canEdit = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const [editing, setEditing] = useState(false);
+  const [configMode, setConfigMode] = useState(false);
   const [tick, setTick] = useState(0);
 
-  // 다른 기기에서 저장 시 실시간 반영
   useEffect(() => {
     return subscribeAssignmentNotices(() => setTick(t => t + 1));
   }, []);
 
   const thisWeekMonday = getThisWeekMonday();
   const [date, setDate] = useState(thisWeekMonday);
-  const [classicPoetWork, setClassicPoetWork] = useState('');
-  const [classicProseWork, setClassicProseWork] = useState('');
-  const [modernPoetWork, setModernPoetWork] = useState('');
-  const [modernProseWork, setModernProseWork] = useState('');
+  const [works, setWorks] = useState<Record<string, string>>({});
   const [goeoStart, setGoeoStart] = useState(1);
   const [goeoEnd, setGoeoEnd] = useState(20);
 
+  // Config edit state
+  const [editSubjects, setEditSubjects] = useState<AssignmentSubjectConfig[]>([]);
+  const [editWarning, setEditWarning] = useState('');
+  const [editingSubjectKey, setEditingSubjectKey] = useState<string | null>(null);
+
   const notice = getAssignmentNotice();
   const thisWeekNotice = getAssignmentNoticeForWeek(thisWeekMonday);
+  const { subjects, warningText } = getAssignmentNoticeConfig();
 
   function startEdit(editExisting = false) {
     const src = editExisting ? thisWeekNotice : null;
     if (src) {
       setDate(src.date);
-      setClassicPoetWork(src.classicPoetWork ?? src.classicWork ?? '');
-      setClassicProseWork(src.classicProseWork ?? '');
-      setModernPoetWork(src.modernPoetWork);
-      setModernProseWork(src.modernProseWork);
+      setWorks({
+        classicPoet:  src.classicPoetWork  ?? src.classicWork ?? '',
+        classicProse: src.classicProseWork ?? '',
+        modernPoet:   src.modernPoetWork   ?? '',
+        modernProse:  src.modernProseWork  ?? '',
+      });
       setGoeoStart(src.goeoStart);
       setGoeoEnd(src.goeoEnd);
     } else {
       setDate(thisWeekMonday);
-      setClassicPoetWork('');
-      setClassicProseWork('');
-      setModernPoetWork('');
-      setModernProseWork('');
+      setWorks({});
       setGoeoStart(1);
       setGoeoEnd(20);
     }
@@ -161,12 +136,16 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
   }
 
   function handleSave() {
+    const get = (key: string) => {
+      const v = works[key] ?? '';
+      return v.trim() === '' ? '' : v;
+    };
     setAssignmentNotice({
       date,
-      classicPoetWork: classicPoetWork.trim() || (classicPoetWork === '없음' ? '없음' : ''),
-      classicProseWork: classicProseWork.trim() || (classicProseWork === '없음' ? '없음' : ''),
-      modernPoetWork: modernPoetWork.trim() || (modernPoetWork === '없음' ? '없음' : ''),
-      modernProseWork: modernProseWork.trim() || (modernProseWork === '없음' ? '없음' : ''),
+      classicPoetWork:  get('classicPoet'),
+      classicProseWork: get('classicProse'),
+      modernPoetWork:   get('modernPoet'),
+      modernProseWork:  get('modernProse'),
       goeoStart,
       goeoEnd,
       createdAt: new Date().toISOString(),
@@ -184,6 +163,105 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
     setTick(t => t + 1);
   }
 
+  // ── Config mode helpers ─────────────────────────────────
+
+  function openConfigMode() {
+    setEditSubjects(subjects.map(s => ({ ...s })));
+    setEditWarning(warningText);
+    setEditingSubjectKey(null);
+    setConfigMode(true);
+  }
+
+  function saveConfig() {
+    saveAssignmentNoticeConfig(editSubjects, editWarning);
+    setConfigMode(false);
+    setTick(t => t + 1);
+  }
+
+  function updateSubjectField(key: string, field: 'label' | 'methodText', value: string) {
+    setEditSubjects(ss => ss.map(s => s.key === key ? { ...s, [field]: value } : s));
+  }
+
+  // ── Config Mode UI ───────────────────────────────────────
+
+  if (configMode && canEdit) {
+    const editing_subj = editSubjects.find(s => s.key === editingSubjectKey);
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold text-gray-800">과제 설정 편집</p>
+          <div className="flex gap-2">
+            <button onClick={() => setConfigMode(false)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">취소</button>
+            <button onClick={saveConfig} className="text-xs px-3 py-1.5 rounded-lg bg-primary-500 text-white font-semibold hover:bg-primary-600">저장</button>
+          </div>
+        </div>
+
+        {/* Subject list */}
+        <div className="card space-y-3">
+          <p className="text-xs font-semibold text-gray-600">과목</p>
+          {editSubjects.map((subj, idx) => {
+            const hc = HEADER_COLORS[idx % HEADER_COLORS.length];
+            const isOpen = editingSubjectKey === subj.key;
+            return (
+              <div key={subj.key} className={`rounded-xl border overflow-hidden ${hc.border}`}>
+                <button
+                  className={`w-full flex items-center justify-between px-3 py-2 ${hc.bg}`}
+                  onClick={() => setEditingSubjectKey(isOpen ? null : subj.key)}
+                >
+                  <span className={`text-xs font-bold ${hc.text}`}>{subj.label}</span>
+                  <Pencil className={`w-3 h-3 ${hc.text} opacity-60`} />
+                </button>
+
+                {isOpen && editing_subj && (
+                  <div className="p-3 space-y-3 bg-white">
+                    <div>
+                      <label className="text-[10px] font-semibold text-gray-500">과목명</label>
+                      <input
+                        className="mt-0.5 w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400"
+                        value={editing_subj.label}
+                        onChange={e => updateSubjectField(subj.key, 'label', e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-gray-500">학습 방법 설명</label>
+                      <textarea
+                        rows={10}
+                        className="mt-0.5 w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400 font-mono leading-relaxed resize-none"
+                        value={editing_subj.methodText}
+                        onChange={e => updateSubjectField(subj.key, 'methodText', e.target.value)}
+                      />
+                    </div>
+                    <button
+                      onClick={() => setEditingSubjectKey(null)}
+                      className="w-full text-xs py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-semibold"
+                    >
+                      <Check className="w-3 h-3 inline mr-1" />닫기
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Warning text */}
+        <div className="card space-y-2">
+          <p className="text-xs font-semibold text-gray-600">경고 문구</p>
+          <textarea
+            rows={2}
+            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary-400 resize-none"
+            value={editWarning}
+            onChange={e => setEditWarning(e.target.value)}
+            placeholder="경고 문구"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal / Edit Mode UI ────────────────────────────────
+
   return (
     <div key={tick} className="space-y-4">
       {/* Header bar */}
@@ -191,6 +269,12 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
         <h2 className="text-sm font-bold text-gray-700">이번 주 과제</h2>
         {canEdit && !editing && (
           <div className="flex gap-2">
+            <button
+              onClick={openConfigMode}
+              className="flex items-center gap-1 text-xs text-gray-400 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition"
+            >
+              <Settings className="w-3.5 h-3.5" /> 설정
+            </button>
             {thisWeekNotice && (
               <button
                 onClick={() => startEdit(true)}
@@ -224,13 +308,20 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
             />
           </div>
 
-          {/* Works */}
+          {/* Works — use dynamic subject labels */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-gray-600 mb-1">작품 <span className="font-normal text-gray-400">(과제 없으면 '없음' 선택)</span></label>
-            <WorkRow label="고전 시가" value={classicPoetWork} onChange={setClassicPoetWork} placeholder="고전 시가 작품명 입력" />
-            <WorkRow label="고전 산문" value={classicProseWork} onChange={setClassicProseWork} placeholder="고전 산문 작품명 입력" />
-            <WorkRow label="현대시" value={modernPoetWork} onChange={setModernPoetWork} placeholder="현대시 작품명 입력" />
-            <WorkRow label="현대산문" value={modernProseWork} onChange={setModernProseWork} placeholder="현대산문 작품명 입력" />
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              작품 <span className="font-normal text-gray-400">(과제 없으면 '없음' 선택)</span>
+            </label>
+            {subjects.map(subj => (
+              <WorkRow
+                key={subj.key}
+                label={subj.label}
+                value={works[subj.key] ?? ''}
+                onChange={v => setWorks(w => ({ ...w, [subj.key]: v }))}
+                placeholder={`${subj.label} 작품명 입력`}
+              />
+            ))}
           </div>
 
           {/* Goeo range */}
@@ -285,48 +376,42 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
               </button>
             </div>
           )}
+
           {/* Date + works summary */}
           <div className="bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3">
             <p className="text-sm font-bold text-primary-800 mb-2">{formatDate(notice.date)}</p>
             <div className="space-y-1">
-              {/* New fields: classicPoetWork / classicProseWork */}
-              {(notice.classicPoetWork || notice.classicProseWork) ? (
-                <>
-                  <WorkDisplay label="고전 시가" value={notice.classicPoetWork} />
-                  <WorkDisplay label="고전 산문" value={notice.classicProseWork} />
-                </>
-              ) : notice.classicWork ? (
-                <p className="text-sm text-primary-700"><span className="font-semibold">고전</span> · {notice.classicWork}</p>
-              ) : null}
-              <WorkDisplay label="현대시" value={notice.modernPoetWork} />
-              <WorkDisplay label="현대산문" value={notice.modernProseWork} />
+              {subjects.map(subj => {
+                const val = subjectWorkValue(subj.key, {
+                  classicPoet:  notice.classicPoetWork  ?? notice.classicWork ?? '',
+                  classicProse: notice.classicProseWork ?? '',
+                  modernPoet:   notice.modernPoetWork   ?? '',
+                  modernProse:  notice.modernProseWork  ?? '',
+                });
+                return <WorkDisplay key={subj.key} label={subj.label} value={val} />;
+              })}
             </div>
             <p className="text-[10px] text-primary-400 mt-2"><NameWithCrown name={notice.createdByName} /> 등록</p>
           </div>
 
-          {/* Classic method */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-amber-50 border-b border-amber-100 px-4 py-2">
-              <p className="text-xs font-bold text-amber-700">[고전]</p>
-            </div>
-            <div className="px-4 py-3">
-              <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{CLASSIC_METHOD}</p>
-            </div>
-          </div>
+          {/* Per-subject method texts */}
+          {subjects.map((subj, idx) => {
+            const hc = HEADER_COLORS[idx % HEADER_COLORS.length];
+            return (
+              <div key={subj.key} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className={`${hc.bg} border-b ${hc.border} px-4 py-2`}>
+                  <p className={`text-xs font-bold ${hc.text}`}>[{subj.label}]</p>
+                </div>
+                <div className="px-4 py-3">
+                  <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{subj.methodText}</p>
+                </div>
+              </div>
+            );
+          })}
 
-          {/* Modern method */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-sky-50 border-b border-sky-100 px-4 py-2">
-              <p className="text-xs font-bold text-sky-700">[현대]</p>
-            </div>
-            <div className="px-4 py-3">
-              <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">{MODERN_METHOD}</p>
-            </div>
-          </div>
-
-          {/* Warnings */}
+          {/* Warning */}
           <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 space-y-1">
-            <p className="text-xs font-semibold text-red-600">★ 과제 불성실하게 해 오시면 경고 들어갑니다!!</p>
+            <p className="text-xs font-semibold text-red-600">{warningText}</p>
             <p className="text-xs font-semibold text-red-600">★ 이번 주 고전 어휘는 {notice.goeoStart}번부터 {notice.goeoEnd}번까지입니다.</p>
           </div>
 
@@ -334,13 +419,13 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
           <button
             onClick={() => shareAssignmentNotice({
               date: notice.date,
-              classicPoetWork: notice.classicPoetWork ?? '',
+              classicPoetWork:  notice.classicPoetWork ?? '',
               classicProseWork: notice.classicProseWork ?? '',
-              classicWork: notice.classicWork,
-              modernPoetWork: notice.modernPoetWork,
-              modernProseWork: notice.modernProseWork,
+              classicWork:      notice.classicWork,
+              modernPoetWork:   notice.modernPoetWork,
+              modernProseWork:  notice.modernProseWork,
               goeoStart: notice.goeoStart,
-              goeoEnd: notice.goeoEnd,
+              goeoEnd:   notice.goeoEnd,
             })}
             className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-xl transition"
           >
