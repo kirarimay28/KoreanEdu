@@ -4,8 +4,10 @@ import {
   getEduChapters, saveEduChapter, deleteEduChapter,
   getEduBookmark, saveEduBookmark,
   getMyEduExamDrafts, saveEduExamDraft, deleteEduExamDraft,
-  uploadEduChapterPdf, deleteEduChapterPdf,
+  deleteEduChapterPdf,
 } from '../../store';
+import { storage } from '../../firebase';
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { ChevronLeft, BookOpen, FileText, Bookmark, Plus, Trash2, BookMarked, ClipboardList, Pencil } from 'lucide-react';
 import { isPrivileged } from '../../types';
 
@@ -27,6 +29,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
   const [showDrafts, setShowDrafts] = useState(false);
   const [bookmarkMsg, setBookmarkMsg] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [formTitle, setFormTitle] = useState('');
   const [formText, setFormText] = useState('');
@@ -110,6 +113,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     setFormError('');
     try {
       const chapterId = editingChapter?.id ?? crypto.randomUUID();
@@ -119,9 +123,21 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
 
       if (formPdfFile) {
         if (pdfStoragePath) await deleteEduChapterPdf(pdfStoragePath);
-        const result = await uploadEduChapterPdf(chapterId, formPdfFile);
-        pdfUrl = result.url;
-        pdfStoragePath = result.storagePath;
+        const path = `eduChapters/${chapterId}/textbook.pdf`;
+        const sRef = storageRef(storage, path);
+        const task = uploadBytesResumable(sRef, formPdfFile);
+
+        await new Promise<void>((resolve, reject) => {
+          task.on(
+            'state_changed',
+            snap => setUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+            reject,
+            () => resolve(),
+          );
+        });
+
+        pdfUrl = await getDownloadURL(sRef);
+        pdfStoragePath = path;
         pdfFileName = formPdfFile.name;
       }
 
@@ -149,6 +165,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
       setFormError('업로드 실패: ' + (e instanceof Error ? e.message : '알 수 없는 오류'));
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -220,18 +237,33 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
               {formPdfFile && <p className="text-xs text-gray-400 mt-1">{formPdfFile.name}</p>}
             </div>
           </div>
-          <div className="flex gap-2 mt-5">
+          {uploading && formPdfFile && (
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>PDF 업로드 중...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div
+                  className="h-2 rounded-full transition-all duration-200"
+                  style={{ width: `${uploadProgress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2 mt-4">
             <button
               onClick={handleUploadChapter}
               disabled={uploading}
               className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
             >
-              {uploading ? '업로드 중...' : editingChapter ? '수정 완료' : '업로드'}
+              {uploading ? (formPdfFile ? `업로드 중 ${uploadProgress}%` : '저장 중...') : editingChapter ? '수정 완료' : '업로드'}
             </button>
             <button
               onClick={() => { setShowUploadForm(false); setEditingChapter(null); resetForm(); }}
-              className="px-4 py-2.5 rounded-xl text-sm text-gray-500 border border-gray-200 hover:bg-gray-50"
+              disabled={uploading}
+              className="px-4 py-2.5 rounded-xl text-sm text-gray-500 border border-gray-200 hover:bg-gray-50 disabled:opacity-40"
             >
               취소
             </button>
