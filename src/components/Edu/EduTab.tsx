@@ -63,6 +63,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
   const [solveAnswers, setSolveAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [draftSavedAt, setDraftSavedAt] = useState<string>('');
   const [archiveRoundId, setArchiveRoundId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormDate, setAddFormDate] = useState('');
@@ -90,13 +91,27 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
   const isAssigned = !!assignedCreatorId && assignedQs.length > 0;
   const creatorCount = useMemo(() => new Set(roundQs.map(q => q.creatorId)).size, [roundQs]);
 
+  const draftKey = currentRound ? `eduDraft_${currentUser.id}_${currentRound.id}` : null;
+
   useEffect(() => {
-    if (view === 'create') {
-      setCreateQs(Array.from({ length: 10 }, (_, i) => ({
-        q: myQs[i]?.questionText ?? '',
-        a: myQs[i]?.answerText ?? '',
-      })));
+    if (view !== 'create') return;
+    const raw = draftKey ? localStorage.getItem(draftKey) : null;
+    if (raw) {
+      try {
+        const { questions, savedAt } = JSON.parse(raw) as { questions: { q: string; a: string }[]; savedAt: string };
+        setCreateQs(Array.from({ length: 10 }, (_, i) => ({
+          q: questions[i]?.q ?? '',
+          a: questions[i]?.a ?? '',
+        })));
+        setDraftSavedAt(savedAt);
+        return;
+      } catch { /* fall through */ }
     }
+    setDraftSavedAt('');
+    setCreateQs(Array.from({ length: 10 }, (_, i) => ({
+      q: myQs[i]?.questionText ?? '',
+      a: myQs[i]?.answerText ?? '',
+    })));
   }, [view]);
 
   useEffect(() => {
@@ -122,6 +137,25 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
     setRoundTitleInput('');
   };
 
+  const handleSaveDraft = () => {
+    if (!draftKey) return;
+    const savedAt = new Date().toISOString();
+    localStorage.setItem(draftKey, JSON.stringify({ questions: createQs, savedAt }));
+    setDraftSavedAt(savedAt);
+    setSaveMsg('임시저장됨');
+    setTimeout(() => setSaveMsg(''), 2500);
+  };
+
+  const handleClearDraft = () => {
+    if (!draftKey) return;
+    localStorage.removeItem(draftKey);
+    setDraftSavedAt('');
+    setCreateQs(Array.from({ length: 10 }, (_, i) => ({
+      q: myQs[i]?.questionText ?? '',
+      a: myQs[i]?.answerText ?? '',
+    })));
+  };
+
   const handleSubmitQs = () => {
     if (!currentRound) return;
     if (createQs.some(q => !q.q.trim() || !q.a.trim())) {
@@ -140,6 +174,8 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
       createdAt: now,
     }));
     saveEduQuestions(qs);
+    if (draftKey) localStorage.removeItem(draftKey);
+    setDraftSavedAt('');
     setSaving(false);
     setView('week');
   };
@@ -230,9 +266,28 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
 
   // ── CREATE view ─────────────────────────────────────────────
   if (view === 'create') {
+    const fmtDraftTime = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    };
     return (
       <div className="pb-20">
         <BackBtn to="week" />
+
+        {draftSavedAt && (
+          <div className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs text-amber-700">
+              임시저장 불러옴 ({fmtDraftTime(draftSavedAt)}) — 제출된 문제로 되돌리려면 오른쪽을 누르세요.
+            </p>
+            <button
+              onClick={handleClearDraft}
+              className="text-[11px] text-amber-600 underline shrink-0 hover:text-amber-800"
+            >
+              초기화
+            </button>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
           <h2 className="font-bold text-gray-900 text-base mb-0.5">문제 제작</h2>
           <p className="text-xs text-gray-500 mb-4">{currentRound?.title} · 빈칸 문제 10개를 작성하세요.</p>
@@ -255,6 +310,11 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
             </div>
           ))}
         </div>
+
+        {saveMsg && (
+          <div className="mb-3 text-center text-sm text-emerald-600 font-medium">{saveMsg}</div>
+        )}
+
         <div className="flex gap-2">
           <button
             onClick={handleSubmitQs}
@@ -263,6 +323,12 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
             style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
           >
             {saving ? '저장 중...' : '제출하기'}
+          </button>
+          <button
+            onClick={handleSaveDraft}
+            className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition"
+          >
+            임시저장
           </button>
           {hasMyQs && (
             <button
