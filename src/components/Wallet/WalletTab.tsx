@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Wallet, Check, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Trash2 } from 'lucide-react';
 import type { User, FineRecord, FineExemptionRequest } from '../../types';
 import { isPrivileged } from '../../types';
 import {
@@ -179,11 +179,33 @@ function OverviewSection({ weekKey, currentUser, onRefresh }: FormProps) {
 
 // ── MyWalletSection ───────────────────────────────────────────────────────────
 
+const RECEIPT_BG = '#fffef9';
+const PAGE_BG = '#fff0f5';
+
+function ReceiptEdge({ pos }: { pos: 'top' | 'bottom' }) {
+  const r = 9;
+  const h = 14;
+  const cy = pos === 'top' ? 0 : h;
+  return (
+    <div style={{
+      height: h,
+      background: `radial-gradient(circle at 10px ${cy}px, ${PAGE_BG} ${r}px, ${RECEIPT_BG} ${r}px)`,
+      backgroundSize: '20px 14px',
+      backgroundRepeat: 'repeat-x',
+    }} />
+  );
+}
+
 function MyWalletSection({ currentUser, onRefresh }: { currentUser: User; onRefresh: () => void }) {
   const allFines = getAllFines().filter(f => f.targetUserId === currentUser.id);
-  const unpaidTotal = allFines.filter(f => !f.paid && !f.exempted).reduce((s, f) => s + f.amount, 0);
+  const unpaidTotal   = allFines.filter(f => !f.paid && !f.exempted).reduce((s, f) => s + f.amount, 0);
+  const paidTotal     = allFines.filter(f => f.paid && !f.exempted).reduce((s, f) => s + f.amount, 0);
+  const exemptedTotal = allFines.filter(f => f.exempted).reduce((s, f) => s + f.amount, 0);
+
   const [exemptingId, setExemptingId] = useState<string | null>(null);
   const [exemptionReason, setExemptionReason] = useState('');
+
+  const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   function requestExemption(fine: FineRecord) {
     if (!exemptionReason.trim()) return;
@@ -208,103 +230,170 @@ function MyWalletSection({ currentUser, onRefresh }: { currentUser: User; onRefr
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl p-4 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #de4e80 0%, #c43b6a 100%)' }}>
-        <div className="flex items-center gap-2 mb-1">
-          <Wallet className="w-4 h-4 opacity-80" />
-          <span className="text-xs opacity-80">미납 총액</span>
-        </div>
-        <p className="text-2xl font-bold">{fmtAmount(unpaidTotal)}</p>
-        {unpaidTotal > 0 && (
-          <div className="mt-3 bg-white/20 rounded-xl p-2.5">
-            <p className="text-[10px] opacity-80 mb-0.5">납부 계좌</p>
-            <p className="text-sm font-bold">{PAYMENT_ACCOUNT}</p>
-          </div>
-        )}
-      </div>
+      {/* ── Receipt ── */}
+      <div style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.13))' }}>
+        <div style={{ background: RECEIPT_BG }}>
+          <ReceiptEdge pos="top" />
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-          <span className="text-sm font-semibold text-gray-700">나의 벌금 내역</span>
-        </div>
-        {allFines.length === 0 ? (
-          <div className="py-8 text-center text-gray-400 text-sm">벌금 내역이 없습니다. 😊</div>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {allFines.map(fine => {
-              const req = getExemptionRequestForFine(fine.id);
-              const canRequest = !fine.paid && !fine.exempted && !req;
-              const isExempting = exemptingId === fine.id;
+          <div className="px-5 pb-0">
+            {/* Header */}
+            <div className="text-center pt-1 pb-3">
+              <p className="font-mono text-[10px] text-gray-400 tracking-widest uppercase">Receipt</p>
+              <p className="text-[22px] font-bold tracking-wider text-gray-800 mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>나랏말 지갑</p>
+              <div className="flex items-center justify-center gap-3 mt-1">
+                <span className="font-mono text-[11px] text-gray-500">{today}</span>
+                <span className="text-gray-300">|</span>
+                <span className="font-mono text-[11px] text-gray-600 font-semibold">{currentUser.username} 님</span>
+              </div>
+            </div>
 
-              return (
-                <div key={fine.id} className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <TypeBadge type={fine.type} />
-                    <span className="flex-1 text-xs text-gray-600 truncate">{fine.reason}</span>
-                    <span className="text-sm font-bold text-gray-800">{fmtAmount(fine.amount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(fine.issuedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {fine.exempted && <span className="text-[10px] font-semibold text-blue-500">면제</span>}
-                      {fine.paid && !fine.exempted && <span className="text-[10px] font-semibold text-green-500">완납</span>}
-                      {!fine.paid && !fine.exempted && (
-                        req ? (
-                          <span className={`text-[10px] font-semibold ${
-                            req.status === '대기중' ? 'text-yellow-500' :
-                            req.status === '반려' ? 'text-orange-500' : 'text-blue-500'
-                          }`}>
-                            면제{req.status === '대기중' ? ' 심사중' : req.status === '반려' ? ` 반려됨` : ''}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-semibold text-red-500">미납</span>
-                        )
-                      )}
-                      {canRequest && !isExempting && (
-                        <button
-                          onClick={() => { setExemptingId(fine.id); setExemptionReason(''); }}
-                          className="text-[10px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition"
-                        >
-                          면제 요청
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  {req?.status === '반려' && req.rejectReason && (
-                    <p className="text-[10px] text-orange-500 mt-1 pl-0.5">반려 사유: {req.rejectReason}</p>
-                  )}
-                  {isExempting && (
-                    <div className="mt-2 space-y-1.5">
-                      <textarea
-                        value={exemptionReason}
-                        onChange={e => setExemptionReason(e.target.value)}
-                        placeholder="면제 요청 사유를 입력하세요"
-                        className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none h-14 focus:outline-none focus:ring-1 focus:ring-primary-300"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => requestExemption(fine)}
-                          disabled={!exemptionReason.trim()}
-                          className="flex-1 text-xs py-1.5 bg-primary-600 text-white rounded-lg disabled:opacity-40 font-medium"
-                        >
-                          요청하기
-                        </button>
-                        <button
-                          onClick={() => setExemptingId(null)}
-                          className="text-xs py-1.5 px-3 bg-gray-100 text-gray-600 rounded-lg"
-                        >
-                          취소
-                        </button>
+            {/* Dashed separator */}
+            <div className="border-t border-dashed border-gray-300 mb-3" />
+
+            {/* Column headers */}
+            <div className="flex items-center gap-2 mb-1 px-0.5">
+              <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest w-14">구분</span>
+              <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest flex-1">내역</span>
+              <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest w-12 text-right">상태</span>
+              <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest w-16 text-right">금액</span>
+            </div>
+
+            {/* Fine rows */}
+            {allFines.length === 0 ? (
+              <div className="py-6 text-center font-mono text-xs text-gray-400">벌금 내역 없음 😊</div>
+            ) : (
+              <div className="space-y-0">
+                {allFines.map((fine, idx) => {
+                  const req = getExemptionRequestForFine(fine.id);
+                  const statusLabel = fine.exempted ? '면제'
+                    : fine.paid ? '완납'
+                    : req?.status === '대기중' ? '심사중'
+                    : req?.status === '반려' ? '반려'
+                    : '미납';
+                  const statusColor = fine.exempted ? 'text-blue-400'
+                    : fine.paid ? 'text-emerald-500'
+                    : req?.status === '대기중' ? 'text-amber-400'
+                    : req?.status === '반려' ? 'text-orange-400'
+                    : 'text-red-400';
+                  const amountColor = fine.exempted || fine.paid ? 'text-gray-400 line-through' : 'text-gray-800';
+
+                  return (
+                    <div key={fine.id}>
+                      {idx > 0 && <div className="border-t border-dotted border-gray-200" />}
+                      <div className="flex items-center gap-2 py-2 px-0.5">
+                        <span className={`text-[10px] font-bold w-14 flex-shrink-0 ${
+                          fine.type === '지각' ? 'text-orange-500' :
+                          fine.type === '과제' ? 'text-red-500' :
+                          fine.type === '국교론' ? 'text-violet-500' :
+                          fine.type === '체크리스트' ? 'text-blue-500' : 'text-gray-500'
+                        }`}>[{fine.type}]</span>
+                        <span className="flex-1 font-mono text-[11px] text-gray-600 truncate">{fine.reason}</span>
+                        <span className={`font-mono text-[10px] font-semibold w-12 text-right flex-shrink-0 ${statusColor}`}>{statusLabel}</span>
+                        <span className={`font-mono text-[11px] font-bold w-16 text-right flex-shrink-0 ${amountColor}`}>
+                          {fine.amount.toLocaleString()}
+                        </span>
                       </div>
+                      {/* Rejection reason */}
+                      {req?.status === '반려' && req.rejectReason && (
+                        <p className="font-mono text-[9px] text-orange-400 pb-1 px-0.5 pl-16">↳ {req.rejectReason}</p>
+                      )}
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="border-t border-dashed border-gray-300 mt-3 pt-3 space-y-1">
+              {paidTotal > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-[11px] text-gray-400">납부 완료</span>
+                  <span className="font-mono text-[11px] text-emerald-500 font-semibold">−{paidTotal.toLocaleString()}원</span>
                 </div>
-              );
-            })}
+              )}
+              {exemptedTotal > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-[11px] text-gray-400">면제</span>
+                  <span className="font-mono text-[11px] text-blue-400 font-semibold">−{exemptedTotal.toLocaleString()}원</span>
+                </div>
+              )}
+            </div>
+
+            {/* Total */}
+            <div className="border-t-2 border-double border-gray-400 mt-2 pt-3 pb-1">
+              <div className="flex justify-between items-baseline">
+                <span className="font-mono text-sm font-bold text-gray-700 tracking-wide">미납 합계</span>
+                <span className={`font-mono text-xl font-black ${unpaidTotal > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                  {unpaidTotal.toLocaleString()}원
+                </span>
+              </div>
+            </div>
+
+            {/* Payment account */}
+            {unpaidTotal > 0 && (
+              <div className="mt-4 text-center pb-1">
+                <p className="font-mono text-[9px] text-gray-400 tracking-widest uppercase mb-1">납부 계좌</p>
+                <p className="font-mono text-[13px] font-bold text-gray-700">{PAYMENT_ACCOUNT}</p>
+              </div>
+            )}
+
+            {/* Barcode decoration */}
+            <div className="mt-4 flex justify-center gap-px opacity-20">
+              {Array.from({ length: 42 }).map((_, i) => (
+                <div key={i} style={{ width: i % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1, height: i % 7 === 0 ? 28 : i % 4 === 0 ? 22 : 18, background: '#333' }} />
+              ))}
+            </div>
+            <p className="font-mono text-[8px] text-gray-300 text-center mt-1 tracking-widest mb-2">나랏말 · 국어 임용 스터디</p>
           </div>
-        )}
+
+          <ReceiptEdge pos="bottom" />
+        </div>
       </div>
+
+      {/* ── 면제 요청 가능 목록 (영수증 아래) ── */}
+      {allFines.some(f => !f.paid && !f.exempted && !getExemptionRequestForFine(f.id)) && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500 px-1">면제 요청 가능 항목</p>
+          {allFines.filter(f => !f.paid && !f.exempted && !getExemptionRequestForFine(f.id)).map(fine => (
+            <div key={fine.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <TypeBadge type={fine.type} />
+                <span className="flex-1 text-xs text-gray-600 truncate">{fine.reason}</span>
+                <span className="text-sm font-bold text-gray-800">{fmtAmount(fine.amount)}</span>
+              </div>
+              {exemptingId === fine.id ? (
+                <div className="space-y-1.5">
+                  <textarea
+                    value={exemptionReason}
+                    onChange={e => setExemptionReason(e.target.value)}
+                    placeholder="면제 요청 사유를 입력하세요"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none h-14 focus:outline-none focus:ring-1 focus:ring-primary-300"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => requestExemption(fine)}
+                      disabled={!exemptionReason.trim()}
+                      className="flex-1 text-xs py-1.5 bg-primary-600 text-white rounded-lg disabled:opacity-40 font-medium"
+                    >
+                      요청하기
+                    </button>
+                    <button onClick={() => setExemptingId(null)} className="text-xs py-1.5 px-3 bg-gray-100 text-gray-600 rounded-lg">
+                      취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setExemptingId(fine.id); setExemptionReason(''); }}
+                  className="w-full text-xs py-1.5 rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 transition font-medium"
+                >
+                  면제 요청하기
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
