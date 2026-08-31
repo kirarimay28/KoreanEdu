@@ -5,8 +5,9 @@ import {
   getEduRounds, getEduQuestionsForRound, getMyEduAnswer, getEduAnswersForRound,
   saveEduRound, saveEduQuestions, saveEduAnswer, runEduDerangement, subscribeEduData,
   weekMondayKey, getUserById, deleteEduRound,
+  getMyEduExamDrafts, deleteEduExamDraft,
 } from '../../store';
-import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock, Plus, Trash2, BookOpen } from 'lucide-react';
+import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock, Plus, Trash2, BookOpen, ClipboardList } from 'lucide-react';
 import { isPrivileged } from '../../types';
 import EduReaderView from './EduReaderView';
 
@@ -64,6 +65,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [draftSavedAt, setDraftSavedAt] = useState<string>('');
+  const [showExamDrafts, setShowExamDrafts] = useState(false);
   const [archiveRoundId, setArchiveRoundId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addFormDate, setAddFormDate] = useState('');
@@ -270,6 +272,20 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
       const d = new Date(iso);
       return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     };
+
+    const examDrafts = getMyEduExamDrafts(currentUser.id);
+
+    const handleInsertDraft = (passage: string) => {
+      setCreateQs(prev => {
+        const firstEmpty = prev.findIndex(x => !x.q.trim());
+        if (firstEmpty === -1) {
+          alert('비어 있는 문제 칸이 없습니다. 직접 붙여넣을 칸을 선택해 주세요.');
+          return prev;
+        }
+        return prev.map((x, i) => i === firstEmpty ? { ...x, q: passage } : x);
+      });
+    };
+
     return (
       <div className="pb-20">
         <BackBtn to="week" />
@@ -285,6 +301,59 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
             >
               초기화
             </button>
+          </div>
+        )}
+
+        {examDrafts.length > 0 && (
+          <div className="mb-3">
+            <button
+              onClick={() => setShowExamDrafts(v => !v)}
+              className="w-full flex items-center justify-between bg-violet-50 border border-violet-100 rounded-2xl px-4 py-3 hover:bg-violet-100 transition"
+            >
+              <span className="flex items-center gap-2 text-xs font-bold text-violet-700">
+                <ClipboardList className="w-3.5 h-3.5" />
+                교재 임시저장 구절 ({examDrafts.length})
+              </span>
+              <span className="text-[11px] text-violet-400">{showExamDrafts ? '접기' : '펼쳐서 문제에 넣기'}</span>
+            </button>
+
+            {showExamDrafts && (
+              <div className="mt-1.5 space-y-2">
+                {examDrafts.map(draft => (
+                  <div key={draft.id} className="bg-white border border-violet-100 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[10px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">{draft.chapterTitle}</span>
+                      <span className="text-[10px] text-gray-300">{new Date(draft.createdAt).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                    <p className="text-xs text-gray-700 mb-1.5 line-clamp-3" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                      {draft.passage}
+                    </p>
+                    {draft.note && (
+                      <p className="text-[11px] text-gray-400 mb-1.5">메모: {draft.note}</p>
+                    )}
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => handleInsertDraft(draft.passage)}
+                        className="flex-1 py-1.5 text-[11px] font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg transition"
+                      >
+                        빈 칸에 삽입
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('이 구절을 삭제하시겠습니까?')) {
+                            deleteEduExamDraft(draft.id);
+                            setTick(t => t + 1);
+                          }
+                        }}
+                        className="p-1.5 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
