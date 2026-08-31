@@ -366,18 +366,17 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
         )}
 
         {showPdfTab && (
-          <div className="mb-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-            <FileText className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-            <p className="text-sm text-gray-500 mb-4">{selectedChapter.pdfFileName ?? 'PDF 파일'}</p>
-            <a
-              href={selectedChapter.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-sm font-bold text-white px-6 py-2.5 rounded-xl"
-              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-            >
-              PDF 열기
-            </a>
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="w-4 h-4 text-red-400 shrink-0" />
+              <span className="text-xs text-gray-500 truncate">{selectedChapter.pdfFileName ?? 'PDF 파일'}</span>
+            </div>
+            <iframe
+              src={selectedChapter.pdfUrl}
+              title={selectedChapter.pdfFileName ?? 'PDF'}
+              className="w-full rounded-2xl border border-gray-100 shadow-sm"
+              style={{ height: '70vh', border: 'none' }}
+            />
           </div>
         )}
 
