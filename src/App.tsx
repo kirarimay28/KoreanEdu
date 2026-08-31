@@ -523,7 +523,7 @@ export default function App() {
             <DailyVocab date={date} />
             <div className="flex gap-2 mb-3">
               <a
-                href="https://drive.google.com/drive/folders/1vLHj2XRxWT6-C5cJvz99w0dZvxRNXSVI?usp=drive_link"
+                href="https://drive.google.com/drive/folders/1glzn6syR6vLhlE7TpsbRJHgrRBGtbTF1?usp=sharing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center gap-2 px-3 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition"
