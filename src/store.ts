@@ -1300,6 +1300,11 @@ export function subscribeEduData(callback: () => void): () => void {
       snap => { mem.eduChapters = snap.docs.map(d => d.data() as EduChapter); saveCache(); callback(); },
       err => console.warn('eduChapters listener error:', err)
     ),
+    onSnapshot(
+      collection(db, 'eduExamDrafts'),
+      snap => { mem.eduExamDrafts = snap.docs.map(d => d.data() as EduExamDraft); saveCache(); callback(); },
+      err => console.warn('eduExamDrafts listener error:', err)
+    ),
   ];
   return () => unsubs.forEach(u => u());
 }
