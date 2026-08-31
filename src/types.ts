@@ -355,6 +355,38 @@ export interface ChecklistConfig {
   updatedAt: string;
 }
 
+export interface EduChapter {
+  id: string;
+  title: string;
+  orderIndex: number;
+  textContent: string;
+  pdfUrl?: string;
+  pdfStoragePath?: string;
+  pdfFileName?: string;
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+  updatedAt: string;
+}
+
+export interface EduReaderBookmark {
+  id: string;           // `${userId}_${chapterId}`
+  userId: string;
+  chapterId: string;
+  scrollPercent: number;
+  updatedAt: string;
+}
+
+export interface EduExamDraft {
+  id: string;
+  userId: string;
+  chapterId: string;
+  chapterTitle: string;
+  passage: string;
+  note: string;
+  createdAt: string;
+}
+
 export interface AppData {
   users: User[];
   classicalEntries: ClassicalLiteratureEntry[];
@@ -388,6 +420,9 @@ export interface AppData {
   eduAnswers: EduAnswer[];
   checklistConfig: ChecklistConfig | null;
   assignmentNoticeConfig: AssignmentNoticeConfig | null;
+  eduChapters: EduChapter[];
+  eduReaderBookmarks: EduReaderBookmark[];
+  eduExamDrafts: EduExamDraft[];
 }
 
 export interface LibraryItem {

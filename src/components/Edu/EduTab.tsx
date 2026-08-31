@@ -6,8 +6,9 @@ import {
   saveEduRound, saveEduQuestions, saveEduAnswer, runEduDerangement, subscribeEduData,
   weekMondayKey, getUserById, deleteEduRound,
 } from '../../store';
-import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, Printer, CheckCircle2, Clock, Users, Archive, Lock, Unlock, Plus, Trash2, BookOpen } from 'lucide-react';
 import { isPrivileged } from '../../types';
+import EduReaderView from './EduReaderView';
 
 function thisWeekKey(): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -50,7 +51,7 @@ h1{font-size:20px;font-weight:800;margin:0 0 2px;}h2{font-size:13px;color:#6b728
 ${rows}</body></html>`;
 }
 
-type EduView = 'week' | 'create' | 'solve' | 'archive';
+type EduView = 'week' | 'create' | 'solve' | 'archive' | 'reader';
 
 export default function EduTab({ currentUser }: { currentUser: User }) {
   const [view, setView] = useState<EduView>('week');
@@ -221,6 +222,11 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
       <ChevronLeft className="w-4 h-4" /> {label}
     </button>
   );
+
+  // ── READER view ─────────────────────────────────────────────
+  if (view === 'reader') {
+    return <EduReaderView currentUser={currentUser} onBack={() => setView('week')} tick={tick} />;
+  }
 
   // ── CREATE view ─────────────────────────────────────────────
   if (view === 'create') {
@@ -498,12 +504,20 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
     <div className="pb-20">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-gray-900">국어교과교육론</h2>
-        <button
-          onClick={() => setView('archive')}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-        >
-          <Archive className="w-3.5 h-3.5" /> 아카이브
-        </button>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => setView('reader')}
+            className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-800 px-2.5 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-50 transition font-medium"
+          >
+            <BookOpen className="w-3.5 h-3.5" /> 교재 읽기
+          </button>
+          <button
+            onClick={() => setView('archive')}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+          >
+            <Archive className="w-3.5 h-3.5" /> 아카이브
+          </button>
+        </div>
       </div>
 
       {!currentRound ? (

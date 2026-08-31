@@ -1,5 +1,6 @@
-import { db } from './firebase';
+import { db, storage } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
@@ -10,6 +11,7 @@ import type {
   ChecklistItem, ChecklistConfig,
   AssignmentSubjectConfig, AssignmentNoticeConfig,
   FineType, FineExemptionRequest, FineExemptionStatus,
+  EduChapter, EduReaderBookmark, EduExamDraft,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -47,6 +49,9 @@ const defaultData: AppData = {
   eduAnswers: [],
   checklistConfig: null,
   assignmentNoticeConfig: null,
+  eduChapters: [],
+  eduReaderBookmarks: [],
+  eduExamDrafts: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -104,7 +109,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer, ec, erb, eed] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -137,6 +142,9 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('checklistConfig'),
     safeGet('assignmentNoticeConfig'),
     safeGet('fineExemptionRequests'),
+    safeGet('eduChapters'),
+    safeGet('eduReaderBookmarks'),
+    safeGet('eduExamDrafts'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -182,6 +190,9 @@ async function fetchFromFirestore(): Promise<void> {
     checklistConfig:          (clcfg.docs[0]?.data() as ChecklistConfig) ?? null,
     assignmentNoticeConfig:   (ancfg.docs[0]?.data() as AssignmentNoticeConfig) ?? null,
     fineExemptionRequests:    fer.docs.map(d => d.data() as FineExemptionRequest),
+    eduChapters:              ec.docs.map(d => d.data() as EduChapter),
+    eduReaderBookmarks:       erb.docs.map(d => d.data() as EduReaderBookmark),
+    eduExamDrafts:            eed.docs.map(d => d.data() as EduExamDraft),
   };
   bootstrapAdmin();
   saveCache();
@@ -1284,6 +1295,85 @@ export function subscribeEduData(callback: () => void): () => void {
       snap => { mem.eduAnswers = snap.docs.map(d => d.data() as EduAnswer); saveCache(); callback(); },
       err => console.warn('eduAnswers listener error:', err)
     ),
+    onSnapshot(
+      collection(db, 'eduChapters'),
+      snap => { mem.eduChapters = snap.docs.map(d => d.data() as EduChapter); saveCache(); callback(); },
+      err => console.warn('eduChapters listener error:', err)
+    ),
   ];
   return () => unsubs.forEach(u => u());
+}
+
+// ── Edu Chapters ────────────────────────────────────────
+export function getEduChapters(): EduChapter[] {
+  return [...mem.eduChapters].sort((a, b) => a.orderIndex - b.orderIndex);
+}
+
+export function saveEduChapter(chapter: EduChapter): void {
+  const idx = mem.eduChapters.findIndex(c => c.id === chapter.id);
+  if (idx >= 0) mem.eduChapters[idx] = chapter;
+  else mem.eduChapters.push(chapter);
+  persist('eduChapters', chapter.id, chapter);
+  saveCache();
+}
+
+export function deleteEduChapter(id: string): void {
+  mem.eduChapters = mem.eduChapters.filter(c => c.id !== id);
+  remove('eduChapters', id);
+  mem.eduReaderBookmarks.filter(b => b.chapterId === id).forEach(b => remove('eduReaderBookmarks', b.id));
+  mem.eduReaderBookmarks = mem.eduReaderBookmarks.filter(b => b.chapterId !== id);
+  mem.eduExamDrafts.filter(d => d.chapterId === id).forEach(d => remove('eduExamDrafts', d.id));
+  mem.eduExamDrafts = mem.eduExamDrafts.filter(d => d.chapterId !== id);
+  saveCache();
+}
+
+// ── Edu Reader Bookmarks ────────────────────────────────
+export function getEduBookmark(userId: string, chapterId: string): EduReaderBookmark | undefined {
+  return mem.eduReaderBookmarks.find(b => b.userId === userId && b.chapterId === chapterId);
+}
+
+export function saveEduBookmark(bm: EduReaderBookmark): void {
+  const idx = mem.eduReaderBookmarks.findIndex(b => b.id === bm.id);
+  if (idx >= 0) mem.eduReaderBookmarks[idx] = bm;
+  else mem.eduReaderBookmarks.push(bm);
+  persist('eduReaderBookmarks', bm.id, bm);
+  saveCache();
+}
+
+// ── Edu Exam Drafts ─────────────────────────────────────
+export function getMyEduExamDrafts(userId: string, chapterId?: string): EduExamDraft[] {
+  return mem.eduExamDrafts
+    .filter(d => d.userId === userId && (chapterId === undefined || d.chapterId === chapterId))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function saveEduExamDraft(draft: EduExamDraft): void {
+  const idx = mem.eduExamDrafts.findIndex(d => d.id === draft.id);
+  if (idx >= 0) mem.eduExamDrafts[idx] = draft;
+  else mem.eduExamDrafts.push(draft);
+  persist('eduExamDrafts', draft.id, draft);
+  saveCache();
+}
+
+export function deleteEduExamDraft(id: string): void {
+  mem.eduExamDrafts = mem.eduExamDrafts.filter(d => d.id !== id);
+  remove('eduExamDrafts', id);
+  saveCache();
+}
+
+// ── Edu Chapter PDF ─────────────────────────────────────
+export async function uploadEduChapterPdf(chapterId: string, file: File): Promise<{ url: string; storagePath: string }> {
+  const path = `eduChapters/${chapterId}/textbook.pdf`;
+  const sRef = storageRef(storage, path);
+  await uploadBytes(sRef, file);
+  const url = await getDownloadURL(sRef);
+  return { url, storagePath: path };
+}
+
+export async function deleteEduChapterPdf(storagePath: string): Promise<void> {
+  try {
+    await deleteObject(storageRef(storage, storagePath));
+  } catch (e) {
+    console.warn('PDF delete failed:', e);
+  }
 }
