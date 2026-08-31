@@ -8,7 +8,9 @@ import {
   getFineExemptionRequests, getExemptionRequestForFine,
   submitFineExemptionRequest, reviewFineExemptionRequest,
   getVocabTestScoresForWeek, getAssignmentChecksForWeek, weekMondayKey,
+  sendMessage,
 } from '../../store';
+import type { Message } from '../../types';
 import { getKSTToday } from '../common/DateNavigator';
 
 interface Props { currentUser: User; }
@@ -59,9 +61,32 @@ function calcLatenessFine(timeStr: string): number {
   return (Math.floor(minutesFrom20 / 5) + 1) * 1000;
 }
 
+// ── Notification helpers ──────────────────────────────────────────────────────
+
+function notify(sender: User, receiverId: string, receiverName: string, content: string) {
+  if (sender.id === receiverId) return;
+  const msg: Message = {
+    id: crypto.randomUUID(),
+    senderId: sender.id,
+    senderName: sender.username,
+    receiverId,
+    receiverName,
+    content,
+    createdAt: new Date().toISOString(),
+    read: false,
+  };
+  sendMessage(msg);
+}
+
+function notifyAdmins(sender: User, content: string) {
+  getUsers()
+    .filter(u => isPrivileged(u) && u.id !== sender.id)
+    .forEach(admin => notify(sender, admin.id, admin.username, content));
+}
+
 // ── FineRow ──────────────────────────────────────────────────────────────────
 
-function FineRow({ fine, isAdmin, onRefresh }: { fine: FineRecord; isAdmin: boolean; onRefresh: () => void }) {
+function FineRow({ fine, isAdmin, onRefresh, currentUser }: { fine: FineRecord; isAdmin: boolean; onRefresh: () => void; currentUser: User }) {
   const req = getExemptionRequestForFine(fine.id);
   const statusLabel = fine.exempted ? '면제'
     : fine.paid ? '완납'
@@ -83,7 +108,15 @@ function FineRow({ fine, isAdmin, onRefresh }: { fine: FineRecord; isAdmin: bool
       {isAdmin && !fine.exempted && (
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
-            onClick={() => { markFinePaid(fine.id, !fine.paid); onRefresh(); }}
+            onClick={() => {
+              const nowPaid = !fine.paid;
+              markFinePaid(fine.id, nowPaid);
+              if (nowPaid) {
+                notify(currentUser, fine.targetUserId, fine.targetUsername,
+                  `✅ 벌금 납부가 확인됐어요!\n[${fine.type}] ${fine.reason} — ${fmtAmount(fine.amount)}`);
+              }
+              onRefresh();
+            }}
             className={`text-[10px] px-1.5 py-0.5 rounded-full transition ${
               fine.paid ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-green-100 hover:text-green-600'
             }`}
@@ -134,7 +167,7 @@ function OverviewSection({ weekKey, currentUser, onRefresh }: FormProps) {
             </div>
             <div className="divide-y divide-gray-50">
               {data.fines.map(fine => (
-                <FineRow key={fine.id} fine={fine} isAdmin={isAdmin} onRefresh={onRefresh} />
+                <FineRow key={fine.id} fine={fine} isAdmin={isAdmin} onRefresh={onRefresh} currentUser={currentUser} />
               ))}
             </div>
           </div>
@@ -166,6 +199,8 @@ function MyWalletSection({ currentUser, onRefresh }: { currentUser: User; onRefr
       status: '대기중',
       createdAt: new Date().toISOString(),
     });
+    notifyAdmins(currentUser,
+      `📋 면제 요청이 접수됐어요.\n[${fine.type}] ${fine.reason} — ${fmtAmount(fine.amount)}\n사유: ${exemptionReason.trim()}`);
     setExemptingId(null);
     setExemptionReason('');
     onRefresh();
@@ -561,12 +596,16 @@ function ExemptionSection({ currentUser, onRefresh }: { currentUser: User; onRef
 
   function approve(req: FineExemptionRequest) {
     reviewFineExemptionRequest(req.id, '승인', currentUser.id, currentUser.username);
+    notify(currentUser, req.requesterId, req.requesterName,
+      `✅ 면제 요청이 승인됐어요!\n[${req.fineType}] ${req.fineReason} — ${fmtAmount(req.fineAmount)}`);
     onRefresh();
   }
 
   function reject(req: FineExemptionRequest) {
     if (!rejectReason.trim()) return;
     reviewFineExemptionRequest(req.id, '반려', currentUser.id, currentUser.username, rejectReason.trim());
+    notify(currentUser, req.requesterId, req.requesterName,
+      `❌ 면제 요청이 반려됐어요.\n[${req.fineType}] ${req.fineReason} — ${fmtAmount(req.fineAmount)}\n반려 사유: ${rejectReason.trim()}`);
     setRejectingId(null); setRejectReason(''); onRefresh();
   }
 
