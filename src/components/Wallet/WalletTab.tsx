@@ -7,7 +7,8 @@ import {
   getUsers, getFineCumulativeCount,
   getFineExemptionRequests, getExemptionRequestForFine,
   submitFineExemptionRequest, reviewFineExemptionRequest,
-  getVocabTestScoresForWeek, getAssignmentChecksForWeek, weekMondayKey,
+  getAssignmentChecksForWeek, weekMondayKey,
+  getEduRounds, getEduQuestionsForRound, getEduAnswersForRound,
   sendMessage,
 } from '../../store';
 import type { Message } from '../../types';
@@ -521,9 +522,26 @@ function AssignmentFineForm({ weekKey, currentUser, onRefresh }: FormProps) {
 // ── GogyoronForm ──────────────────────────────────────────────────────────────
 
 function GogyoronForm({ weekKey, currentUser, onRefresh }: FormProps) {
-  const scores = getVocabTestScoresForWeek(weekKey).sort((a, b) => a.score - b.score);
-  const eligible = scores.filter(s => s.score < 20);
-  const autoIds = new Set(eligible.slice(0, 2).map(s => s.userId));
+  // 해당 주의 국교론 회차를 찾는다
+  const round = getEduRounds().find(r => r.weekKey === weekKey) ?? null;
+  const answers = round ? getEduAnswersForRound(round.id) : [];
+  const allQs   = round ? getEduQuestionsForRound(round.id) : [];
+
+  // 각 응시자의 점수 계산 (정답·오답 단순 문자열 비교)
+  type Scored = { userId: string; username: string; score: number; total: number };
+  const scored: Scored[] = answers.map(ans => {
+    const creatorId = round?.assignments[ans.userId];
+    if (!creatorId) return { userId: ans.userId, username: ans.username, score: 0, total: 0 };
+    const qs = allQs.filter(q => q.creatorId === creatorId);
+    const correct = qs.filter(q =>
+      (ans.answers[q.id] ?? '').trim().toLowerCase() === q.answerText.trim().toLowerCase()
+    ).length;
+    return { userId: ans.userId, username: ans.username, score: correct, total: qs.length };
+  }).sort((a, b) => (a.total === 0 ? 1 : b.total === 0 ? -1 : a.score / a.total - b.score / b.total));
+
+  // 만점자(100%) 제외 후 하위 2명 자동 선정
+  const eligible = scored.filter(p => p.total > 0 && p.score < p.total);
+  const autoIds  = new Set(eligible.slice(0, 2).map(p => p.userId));
   const [selected, setSelected] = useState<Set<string>>(new Set(autoIds));
 
   function getAmount(userId: string): number {
@@ -535,48 +553,74 @@ function GogyoronForm({ weekKey, currentUser, onRefresh }: FormProps) {
     let issued = 0;
     for (const userId of Array.from(selected)) {
       if (alreadyFined.has(userId)) continue;
-      const s = scores.find(x => x.userId === userId);
-      if (!s) continue;
-      addFine({ type: '국교론', targetUserId: userId, targetUsername: s.username, amount: getAmount(userId), reason: `고어 시험 ${s.score}/20점`, weekKey, issuedAt: new Date().toISOString(), issuedById: currentUser.id, issuedByName: currentUser.username, paid: false });
+      const p = scored.find(x => x.userId === userId);
+      if (!p) continue;
+      addFine({
+        type: '국교론', targetUserId: userId, targetUsername: p.username,
+        amount: getAmount(userId),
+        reason: `빈칸 시험 ${p.score}/${p.total}점 (하위권)`,
+        weekKey, issuedAt: new Date().toISOString(),
+        issuedById: currentUser.id, issuedByName: currentUser.username, paid: false,
+      });
       issued++;
     }
     onRefresh();
     alert(issued > 0 ? `국교론 벌금이 부과되었습니다. (${issued}명)` : '이미 부과된 인원입니다.');
   }
 
-  if (scores.length === 0) {
-    return <div className="text-center py-8 text-gray-400 text-sm bg-white rounded-xl border border-gray-100">이번 주 고어 시험 점수가 없습니다.</div>;
+  if (!round) {
+    return <div className="text-center py-8 text-gray-400 text-sm bg-white rounded-xl border border-gray-100">이번 주 국교론 회차가 없습니다.</div>;
+  }
+  if (answers.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-400 text-sm bg-white rounded-xl border border-gray-100">
+        <p className="font-medium text-gray-500 mb-1">{round.title}</p>
+        <p>아직 풀이를 제출한 멤버가 없습니다.</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">이번 주 고어 시험 하위 2명 (100점 제외). 3회 누적 시 2,000원으로 인상.</p>
+      <div className="bg-violet-50 border border-violet-100 rounded-xl px-3 py-2">
+        <p className="text-xs font-semibold text-violet-700">{round.title}</p>
+        <p className="text-[11px] text-violet-500 mt-0.5">빈칸 시험 하위 2명 (만점 제외). 3회 누적 시 2,000원으로 인상.</p>
+      </div>
+      <p className="text-[11px] text-gray-400 px-0.5">※ 정답은 공백·대소문자 무시 후 비교됩니다. 직접 조정 가능.</p>
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600">이번 주 고어 시험 점수 (낮은 순)</div>
+        <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600">빈칸 시험 점수 (낮은 순)</div>
         <div className="divide-y divide-gray-50">
-          {scores.map(s => {
-            const isPerfect = s.score >= 20;
-            const isSel = selected.has(s.userId);
-            const isAuto = autoIds.has(s.userId);
+          {scored.map(p => {
+            const isPerfect = p.total > 0 && p.score >= p.total;
+            const isNoAssign = p.total === 0;
+            const isSel = selected.has(p.userId);
+            const isAuto = autoIds.has(p.userId);
+            const scoreLabel = isNoAssign ? '배정없음' : `${p.score}/${p.total}`;
             return (
               <button
-                key={s.userId}
-                disabled={isPerfect}
+                key={p.userId}
+                disabled={isPerfect || isNoAssign}
                 onClick={() => {
-                  if (isPerfect) return;
-                  setSelected(prev => { const n = new Set(prev); n.has(s.userId) ? n.delete(s.userId) : n.add(s.userId); return n; });
+                  if (isPerfect || isNoAssign) return;
+                  setSelected(prev => { const n = new Set(prev); n.has(p.userId) ? n.delete(p.userId) : n.add(p.userId); return n; });
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 transition text-left ${isPerfect ? 'opacity-40 cursor-default' : isSel ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 transition text-left ${
+                  isPerfect || isNoAssign ? 'opacity-40 cursor-default' : isSel ? 'bg-red-50' : 'hover:bg-gray-50'
+                }`}
               >
-                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${isPerfect ? 'border-2 border-gray-200' : isSel ? 'bg-red-500' : 'border-2 border-gray-300'}`}>
-                  {isSel && !isPerfect && <Check className="w-3 h-3 text-white" />}
+                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
+                  isPerfect || isNoAssign ? 'border-2 border-gray-200' : isSel ? 'bg-red-500' : 'border-2 border-gray-300'
+                }`}>
+                  {isSel && !isPerfect && !isNoAssign && <Check className="w-3 h-3 text-white" />}
                 </div>
-                <span className="flex-1 text-sm text-gray-700">{s.username}</span>
-                {isAuto && !isPerfect && <span className="text-[10px] text-red-400">하위</span>}
+                <span className="flex-1 text-sm text-gray-700">{p.username}</span>
+                {isAuto && !isPerfect && !isNoAssign && <span className="text-[10px] text-red-400">하위</span>}
                 <span className={`text-sm font-bold ${isPerfect ? 'text-green-500' : isAuto ? 'text-red-500' : 'text-gray-700'}`}>
-                  {s.score}/20{isPerfect ? ' 🎉' : ''}
+                  {scoreLabel}{isPerfect ? ' 🎉' : ''}
                 </span>
-                {isSel && !isPerfect && <span className="text-xs font-bold text-red-500 flex-shrink-0">{fmtAmount(getAmount(s.userId))}</span>}
+                {isSel && !isPerfect && !isNoAssign && (
+                  <span className="text-xs font-bold text-red-500 flex-shrink-0">{fmtAmount(getAmount(p.userId))}</span>
+                )}
               </button>
             );
           })}
