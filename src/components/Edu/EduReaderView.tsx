@@ -4,10 +4,10 @@ import {
   getEduChapters, saveEduChapter, deleteEduChapter,
   getEduBookmark, saveEduBookmark,
   getMyEduExamDrafts, saveEduExamDraft, deleteEduExamDraft,
-  deleteEduChapterPdf,
 } from '../../store';
-import { storage } from '../../firebase';
-import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
 import { ChevronLeft, BookOpen, FileText, Bookmark, Plus, Trash2, BookMarked, ClipboardList, Pencil } from 'lucide-react';
 import { isPrivileged } from '../../types';
 
@@ -122,23 +122,31 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
       let pdfFileName = editingChapter?.pdfFileName;
 
       if (formPdfFile) {
-        if (pdfStoragePath) await deleteEduChapterPdf(pdfStoragePath);
-        const path = `eduChapters/${chapterId}/textbook.pdf`;
-        const sRef = storageRef(storage, path);
-        const task = uploadBytesResumable(sRef, formPdfFile);
+        const formData = new FormData();
+        formData.append('file', formPdfFile);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('folder', 'korean-edu-chapters');
 
         await new Promise<void>((resolve, reject) => {
-          task.on(
-            'state_changed',
-            snap => setUploadProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-            reject,
-            () => resolve(),
-          );
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
+          xhr.upload.onprogress = e => {
+            if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          };
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const data = JSON.parse(xhr.responseText);
+              pdfUrl = data.secure_url;
+              pdfStoragePath = data.public_id;
+              pdfFileName = formPdfFile.name;
+              resolve();
+            } else {
+              reject(new Error(`업로드 실패 (${xhr.status})`));
+            }
+          };
+          xhr.onerror = () => reject(new Error('네트워크 오류'));
+          xhr.send(formData);
         });
-
-        pdfUrl = await getDownloadURL(sRef);
-        pdfStoragePath = path;
-        pdfFileName = formPdfFile.name;
       }
 
       const now = new Date().toISOString();
@@ -178,9 +186,8 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
     setShowUploadForm(true);
   };
 
-  const handleDeleteChapter = async (chapter: EduChapter) => {
+  const handleDeleteChapter = (chapter: EduChapter) => {
     if (!window.confirm(`'${chapter.title}' 챕터를 삭제합니까? 북마크와 임시 저장도 함께 삭제됩니다.`)) return;
-    if (chapter.pdfStoragePath) await deleteEduChapterPdf(chapter.pdfStoragePath);
     deleteEduChapter(chapter.id);
     setLocalTick(t => t + 1);
     if (selectedChapterId === chapter.id) setSelectedChapterId(null);
