@@ -639,46 +639,47 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
     <div className="pb-20">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-gray-900">국어교과교육론</h2>
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setView('reader')}
-            className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-800 px-2.5 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-50 transition font-medium"
-          >
-            <BookOpen className="w-3.5 h-3.5" /> 교재 읽기
-          </button>
-          <button
-            onClick={() => setView('archive')}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-          >
-            <Archive className="w-3.5 h-3.5" /> 아카이브
-          </button>
-        </div>
+        <button
+          onClick={() => setView('archive')}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+        >
+          <Archive className="w-3.5 h-3.5" /> 아카이브
+        </button>
       </div>
 
       {!currentRound ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
-          <p className="text-sm text-gray-500 mb-3">이번 주 회차가 아직 개설되지 않았습니다.</p>
-          {isAdmin ? (
-            <div className="flex gap-2">
-              <input
-                value={roundTitleInput}
-                onChange={e => setRoundTitleInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCreateRound()}
-                placeholder="회차 제목 (예: 3단원 교수학습론)"
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200"
-              />
-              <button
-                onClick={handleCreateRound}
-                className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-              >
-                개설
-              </button>
-            </div>
-          ) : (
-            <p className="text-xs text-gray-400">관리자가 회차를 개설하면 참여할 수 있습니다.</p>
-          )}
-        </div>
+        <>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+            <p className="text-sm text-gray-500 mb-3">이번 주 회차가 아직 개설되지 않았습니다.</p>
+            {isAdmin ? (
+              <div className="flex gap-2">
+                <input
+                  value={roundTitleInput}
+                  onChange={e => setRoundTitleInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreateRound()}
+                  placeholder="회차 제목 (예: 3단원 교수학습론)"
+                  className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+                <button
+                  onClick={handleCreateRound}
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                >
+                  개설
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">관리자가 회차를 개설하면 참여할 수 있습니다.</p>
+            )}
+          </div>
+          <button
+            onClick={() => setView('reader')}
+            className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary-200 text-primary-600 hover:bg-primary-50 transition"
+          >
+            <BookOpen className="w-5 h-5" />
+            교재 읽기
+          </button>
+        </>
       ) : (
         <>
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-3">
@@ -760,6 +761,14 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
                 </button>
               </div>
             )}
+
+            <button
+              onClick={() => setView('reader')}
+              className="w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 border-2 border-primary-200 text-primary-600 hover:bg-primary-50 transition"
+            >
+              <BookOpen className="w-5 h-5" />
+              교재 읽기
+            </button>
           </div>
 
           {assignedCreatorId && assignedQs.length > 0 && (
