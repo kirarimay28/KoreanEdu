@@ -30,8 +30,6 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
   const [bookmarkMsg, setBookmarkMsg] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-  const [pdfFetching, setPdfFetching] = useState(false);
   const [pdfFetchError, setPdfFetchError] = useState<string>('');
 
   const [formTitle, setFormTitle] = useState('');
@@ -63,45 +61,14 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
   useEffect(() => {
     const url = selectedChapter?.pdfUrl;
     if (!url || readMode !== 'pdf') {
-      setPdfBlobUrl(null);
       setPdfFetchError('');
       return;
     }
-
     if (url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com')) {
       setPdfFetchError('firebase');
-      return;
+    } else {
+      setPdfFetchError('');
     }
-
-    let cancelled = false;
-    let objectUrl: string | null = null;
-
-    setPdfFetching(true);
-    setPdfFetchError('');
-    setPdfBlobUrl(null);
-
-    fetch(url)
-      .then(res => {
-        if (!res.ok) throw new Error(String(res.status));
-        return res.blob();
-      })
-      .then(blob => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setPdfBlobUrl(objectUrl);
-      })
-      .catch(err => {
-        if (!cancelled) setPdfFetchError(String(err?.message ?? 'error'));
-      })
-      .finally(() => {
-        if (!cancelled) setPdfFetching(false);
-      });
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      setPdfBlobUrl(null);
-    };
   }, [selectedChapter?.id, readMode]);
 
   const handleTextSelection = useCallback(() => {
@@ -418,50 +385,41 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
               <div className="bg-amber-50 rounded-2xl border border-amber-100 p-6 text-center">
                 <FileText className="w-8 h-8 text-amber-300 mx-auto mb-2" />
                 <p className="text-sm font-bold text-amber-700 mb-1">PDF 다시 업로드 필요</p>
-                <p className="text-xs text-amber-600 mb-3">이 챕터는 이전 방식으로 저장된 파일이라 열 수 없습니다.</p>
+                <p className="text-xs text-amber-600 mb-3">이전 방식으로 저장된 파일입니다. 수정에서 PDF를 다시 업로드해 주세요.</p>
                 {isAdmin && (
                   <button
                     onClick={() => handleEditChapter(selectedChapter)}
                     className="text-sm font-bold text-white px-5 py-2 rounded-xl"
                     style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
                   >
-                    수정에서 PDF 다시 업로드
+                    수정에서 다시 업로드
                   </button>
                 )}
               </div>
-            ) : pdfFetchError ? (
-              <div className="bg-red-50 rounded-2xl border border-red-100 p-6 text-center">
-                <FileText className="w-8 h-8 text-red-200 mx-auto mb-2" />
-                <p className="text-sm font-bold text-red-600 mb-1">PDF를 불러올 수 없습니다</p>
-                <p className="text-xs text-red-400 mb-3">오류: {pdfFetchError}</p>
-                {isAdmin && (
-                  <button
-                    onClick={() => handleEditChapter(selectedChapter)}
-                    className="text-sm font-bold text-white px-5 py-2 rounded-xl"
-                    style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-                  >
-                    수정에서 PDF 다시 업로드
-                  </button>
-                )}
-              </div>
-            ) : pdfFetching ? (
-              <div className="bg-gray-50 rounded-2xl border border-gray-100 p-10 text-center">
-                <p className="text-sm text-gray-400">PDF 불러오는 중...</p>
-              </div>
-            ) : pdfBlobUrl ? (
+            ) : (
               <>
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="w-4 h-4 text-red-400 shrink-0" />
-                  <span className="text-xs text-gray-500 truncate">{selectedChapter.pdfFileName ?? 'PDF 파일'}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-red-400 shrink-0" />
+                    <span className="text-xs text-gray-500 truncate">{selectedChapter.pdfFileName ?? 'PDF 파일'}</span>
+                  </div>
+                  <a
+                    href={selectedChapter.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-primary-500 underline shrink-0"
+                  >
+                    새 탭으로 열기
+                  </a>
                 </div>
                 <iframe
-                  src={pdfBlobUrl}
+                  src={selectedChapter.pdfUrl}
                   title={selectedChapter.pdfFileName ?? 'PDF'}
                   className="w-full rounded-2xl border border-gray-100 shadow-sm"
                   style={{ height: '70vh', border: 'none' }}
                 />
               </>
-            ) : null}
+            )}
           </div>
         )}
 
