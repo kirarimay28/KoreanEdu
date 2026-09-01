@@ -139,7 +139,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
         const formData = new FormData();
         formData.append('file', formPdfFile);
         formData.append('upload_preset', UPLOAD_PRESET);
-        formData.append('folder', 'korean-edu-chapters');
+        formData.append('folder', 'korean-edu-library');
 
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
