@@ -75,7 +75,10 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
 
   const weekKey = useMemo(() => thisWeekKey(), []);
   const rounds = useMemo(() => getEduRounds(), [tick]);
-  const currentRound = useMemo(() => rounds.find(r => r.weekKey === weekKey) ?? null, [rounds, weekKey]);
+  const currentRound = useMemo(() =>
+    rounds.find(r => r.weekKey === weekKey) ?? (rounds.length > 0 ? rounds[0] : null),
+    [rounds, weekKey]
+  );
   const roundQs = useMemo(() =>
     currentRound ? getEduQuestionsForRound(currentRound.id) : [], [currentRound, tick]);
   const myQs = useMemo(() =>
