@@ -216,8 +216,12 @@ export async function refreshData(): Promise<void> {
   await fetchFromFirestore();
 }
 
+function stripUndefined(obj: object): object {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+}
+
 function persist(coll: string, id: string, data: object): void {
-  setDoc(doc(db, coll, id), data).catch(err => console.error('Firestore write error:', err));
+  setDoc(doc(db, coll, id), stripUndefined(data)).catch(err => console.error('Firestore write error:', err));
 }
 
 function remove(coll: string, id: string): void {
