@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { User, StudySubTab } from '../../types';
 import VocabTestTab from './VocabTestTab';
 import VocabExamTab from './VocabExamTab';
-import PeerFeedbackTab from './PeerFeedbackTab';
 import { Lock } from 'lucide-react';
 
 interface Props {
@@ -11,9 +10,8 @@ interface Props {
 }
 
 const TABS: { id: StudySubTab; label: string }[] = [
-  { id: 'vocab',    label: '고어 시험' },
-  { id: 'exam',     label: '시험 응시' },
-  { id: 'feedback', label: '상호 피드백' },
+  { id: 'vocab', label: '고어 시험' },
+  { id: 'exam',  label: '시험 응시' },
 ];
 
 export default function StudyTab({ date, currentUser }: Props) {
@@ -43,9 +41,8 @@ export default function StudyTab({ date, currentUser }: Props) {
         ))}
       </div>
 
-      {subTab === 'vocab'    && <VocabTestTab    date={date} currentUser={currentUser} />}
-      {subTab === 'exam'     && <VocabExamTab    currentUser={currentUser} />}
-      {subTab === 'feedback' && <PeerFeedbackTab date={date} currentUser={currentUser} />}
+      {subTab === 'vocab' && <VocabTestTab date={date} currentUser={currentUser} />}
+      {subTab === 'exam'  && <VocabExamTab currentUser={currentUser} />}
     </div>
   );
 }

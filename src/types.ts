@@ -464,7 +464,7 @@ export interface AssignmentCheck {
 }
 
 export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu';
-export type StudySubTab = 'vocab' | 'feedback' | 'exam';
+export type StudySubTab = 'vocab' | 'exam';
 
 export interface VocabExamRecord {
   id: string;
