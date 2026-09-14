@@ -34,7 +34,6 @@ import { initializeData, refreshData, getPendingRequestsForUser, getUserById } f
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
-import StudyLogWarningBanner from './components/Admin/StudyLogWarningBanner';
 import StudyRoomPanel from './components/StudyRoom/StudyRoomPanel';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
 
@@ -552,8 +551,7 @@ export default function App() {
               </a>
             </div>
             {currentUser && <StudyRoomPanel currentUser={currentUser} />}
-            <StudyLogWarningBanner />
-            {activeTab === 'study' && (
+{activeTab === 'study' && (
               <DateNavigator date={date} onChange={setDate} />
             )}
 
