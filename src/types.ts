@@ -577,7 +577,9 @@ export interface MedievalBlankExam {
   lessonNum: number;
   pdfUrl: string;
   pdfFileName: string;
-  blanks: string[]; // correct answers for each blank
+  answerPdfUrl?: string;
+  answerPdfFileName?: string;
+  blanks: string[];
   createdAt: string;
   createdById: string;
   createdByName: string;

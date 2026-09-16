@@ -21,10 +21,11 @@ function BlankExamForm({
 }) {
   const [lessonNum, setLessonNum] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [answerFile, setAnswerFile] = useState<File | null>(null);
+  const [answerPdfFile, setAnswerPdfFile] = useState<File | null>(null);
   const [blanks, setBlanks] = useState<string[]>(['']);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [answerProgress, setAnswerProgress] = useState(0);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const answerFileRef = useRef<HTMLInputElement>(null);
@@ -33,47 +34,44 @@ function BlankExamForm({
   function removeBlank(i: number) { setBlanks(prev => prev.filter((_, idx) => idx !== i)); }
   function updateBlank(i: number, val: string) { setBlanks(prev => prev.map((b, idx) => idx === i ? val : b)); }
 
-  function handleAnswerFile(file: File | null) {
-    if (!file) return;
-    setAnswerFile(file);
-    const reader = new FileReader();
-    reader.onload = e => {
-      const text = e.target?.result as string;
-      const parsed = text.split('\n').map(l => l.trim()).filter(Boolean);
-      if (parsed.length > 0) setBlanks(parsed);
-    };
-    reader.readAsText(file, 'UTF-8');
+  async function uploadPdf(file: File, onProgress: (p: number) => void): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('folder', 'korean-edu-library');
+    return new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        if (xhr.status === 200) resolve(JSON.parse(xhr.responseText).secure_url);
+        else reject(new Error(`업로드 실패 (${xhr.status})`));
+      };
+      xhr.onerror = () => reject(new Error('네트워크 오류'));
+      xhr.send(formData);
+    });
   }
 
   async function handleSave() {
     const num = Number(lessonNum);
     if (!num || num < 1) { setError('차시 번호를 입력해 주세요.'); return; }
     if (existingNums.includes(num)) { setError(`${num}차시 빈칸 시험이 이미 있습니다.`); return; }
-    if (!pdfFile) { setError('PDF 파일을 선택해 주세요.'); return; }
+    if (!pdfFile) { setError('시험지 PDF 파일을 선택해 주세요.'); return; }
 
     setUploading(true);
     setProgress(0);
+    setAnswerProgress(0);
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', pdfFile);
-      formData.append('upload_preset', UPLOAD_PRESET);
-      formData.append('folder', 'korean-edu-library');
+      const pdfUrl = await uploadPdf(pdfFile, setProgress);
 
-      const pdfUrl = await new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`);
-        xhr.upload.onprogress = e => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-        };
-        xhr.onload = () => {
-          if (xhr.status === 200) resolve(JSON.parse(xhr.responseText).secure_url);
-          else reject(new Error(`업로드 실패 (${xhr.status})`));
-        };
-        xhr.onerror = () => reject(new Error('네트워크 오류'));
-        xhr.send(formData);
-      });
+      let answerPdfUrl: string | undefined;
+      if (answerPdfFile) {
+        answerPdfUrl = await uploadPdf(answerPdfFile, setAnswerProgress);
+      }
 
       const now = new Date().toISOString();
       onSave({
@@ -81,6 +79,8 @@ function BlankExamForm({
         lessonNum: num,
         pdfUrl,
         pdfFileName: pdfFile.name,
+        answerPdfUrl,
+        answerPdfFileName: answerPdfFile?.name,
         blanks: blanks.filter(b => b.trim()),
         createdAt: now,
         createdById: '',
@@ -118,18 +118,18 @@ function BlankExamForm({
             <span className="text-xs text-gray-400 truncate">{pdfFile?.name ?? '선택된 파일 없음'}</span>
           </div>
           <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => setPdfFile(e.target.files?.[0] ?? null)} />
-          {uploading && (
+          {uploading && progress < 100 && (
             <div className="mt-2">
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }} />
               </div>
-              <p className="text-[11px] text-gray-400 mt-1 text-center">{progress}%</p>
+              <p className="text-[11px] text-gray-400 mt-1 text-center">시험지 {progress}%</p>
             </div>
           )}
         </div>
         <div>
           <label className="text-[11px] text-gray-400 font-bold mb-1 block">
-            답지 파일 <span className="text-gray-300 font-normal">(.txt — 한 줄에 정답 하나)</span>
+            답지 PDF <span className="text-gray-300 font-normal">(선택 — 채점 후 공개)</span>
           </label>
           <div className="flex items-center gap-2">
             <button
@@ -138,10 +138,17 @@ function BlankExamForm({
             >
               <Upload className="w-3.5 h-3.5" /> 파일 선택
             </button>
-            <span className="text-xs text-gray-400 truncate">{answerFile?.name ?? '선택된 파일 없음'}</span>
+            <span className="text-xs text-gray-400 truncate">{answerPdfFile?.name ?? '선택된 파일 없음'}</span>
           </div>
-          <input ref={answerFileRef} type="file" accept=".txt" className="hidden" onChange={e => handleAnswerFile(e.target.files?.[0] ?? null)} />
-          {answerFile && <p className="text-[11px] text-primary-500 mt-1">✓ {blanks.filter(b => b.trim()).length}개 정답 불러옴 — 아래에서 직접 수정 가능</p>}
+          <input ref={answerFileRef} type="file" accept=".pdf" className="hidden" onChange={e => setAnswerPdfFile(e.target.files?.[0] ?? null)} />
+          {uploading && answerPdfFile && answerProgress < 100 && answerProgress > 0 && (
+            <div className="mt-2">
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-200" style={{ width: `${answerProgress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }} />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1 text-center">답지 {answerProgress}%</p>
+            </div>
+          )}
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
@@ -149,7 +156,7 @@ function BlankExamForm({
       {/* 빈칸 정답 */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-bold text-gray-600">빈칸 정답 <span className="text-gray-400 font-normal">(순서대로 — 직접 입력 또는 답지 파일로 자동 입력)</span></p>
+          <p className="text-xs font-bold text-gray-600">빈칸 정답 <span className="text-gray-400 font-normal">(순서대로 — 자동 채점용)</span></p>
           <button onClick={addBlank} className="flex items-center gap-1 text-[11px] text-primary-600 border border-primary-200 rounded-lg px-2 py-1 hover:bg-primary-50 transition">
             <Plus className="w-3 h-3" /> 추가
           </button>
@@ -182,7 +189,7 @@ function BlankExamForm({
           className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition"
           style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
         >
-          {uploading ? `업로드 중 ${progress}%` : '업로드'}
+          {uploading ? '업로드 중...' : '업로드'}
         </button>
       </div>
     </div>
@@ -253,32 +260,48 @@ function BlankExamView({ exam, onBack }: { exam: MedievalBlankExam; onBack: () =
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-          <div className="text-center py-3">
-            <p className="text-3xl font-black text-primary-600">{score} / {exam.blanks.length}</p>
-            <p className="text-xs text-gray-400 mt-1">정답 수</p>
-          </div>
-          <div className="space-y-2">
-            {results.map((r, i) => (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${r.isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
-                {r.isCorrect
-                  ? <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                  : <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs text-gray-500 font-bold">({i + 1}) </span>
-                  <span className="text-sm font-semibold text-gray-700">{r.user || '—'}</span>
-                  {!r.isCorrect && <p className="text-xs text-red-500 mt-0.5">정답: {r.correct}</p>}
+        <>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <div className="text-center py-3">
+              <p className="text-3xl font-black text-primary-600">{score} / {exam.blanks.length}</p>
+              <p className="text-xs text-gray-400 mt-1">정답 수</p>
+            </div>
+            <div className="space-y-2">
+              {results.map((r, i) => (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${r.isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                  {r.isCorrect
+                    ? <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                    : <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs text-gray-500 font-bold">({i + 1}) </span>
+                    <span className="text-sm font-semibold text-gray-700">{r.user || '—'}</span>
+                    {!r.isCorrect && <p className="text-xs text-red-500 mt-0.5">정답: {r.correct}</p>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <button
+              onClick={() => { setPhase('exam'); setAnswers({}); }}
+              className="w-full py-3 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
+            >
+              다시 풀기
+            </button>
           </div>
-          <button
-            onClick={() => { setPhase('exam'); setAnswers({}); }}
-            className="w-full py-3 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
-          >
-            다시 풀기
-          </button>
-        </div>
+
+          {exam.answerPdfUrl && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary-400" />
+                  <span className="text-xs font-bold text-primary-600">답지</span>
+                  <span className="text-xs text-gray-400 truncate">{exam.answerPdfFileName}</span>
+                </div>
+                <a href={exam.answerPdfUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-primary-500 underline">새 탭으로 열기</a>
+              </div>
+              <iframe src={exam.answerPdfUrl} title="답지" className="w-full" style={{ height: '55vh', border: 'none' }} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
