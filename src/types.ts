@@ -423,6 +423,8 @@ export interface AppData {
   eduChapters: EduChapter[];
   eduReaderBookmarks: EduReaderBookmark[];
   eduExamDrafts: EduExamDraft[];
+  medievalLessons: MedievalLesson[];
+  medievalBlankExams: MedievalBlankExam[];
 }
 
 export interface LibraryItem {
@@ -463,7 +465,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu' | 'medieval';
 export type StudySubTab = 'vocab' | 'exam';
 
 export interface VocabExamRecord {
@@ -545,4 +547,38 @@ export interface ResourceRequest {
 
 export function isPrivileged(user: User): boolean {
   return user.role === 'admin' || user.role === 'subadmin';
+}
+
+// ── 중세국어 ─────────────────────────────────────────────
+export interface MedievalSubjectiveQ {
+  q: string;
+  answer: string;
+}
+
+export interface MedievalMCQ {
+  q: string;
+  options: string[];
+  answer: number; // 0-indexed correct option
+}
+
+export interface MedievalLesson {
+  id: string;
+  lessonNum: number;
+  date: string;
+  subjectiveQuestions: MedievalSubjectiveQ[];
+  mcQuestions: MedievalMCQ[];
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
+}
+
+export interface MedievalBlankExam {
+  id: string;
+  lessonNum: number;
+  pdfUrl: string;
+  pdfFileName: string;
+  blanks: string[]; // correct answers for each blank
+  createdAt: string;
+  createdById: string;
+  createdByName: string;
 }

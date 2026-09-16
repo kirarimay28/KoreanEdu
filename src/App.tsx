@@ -20,11 +20,12 @@ import EduTab from './components/Edu/EduTab';
 import AssignmentTab from './components/Assignment/AssignmentTab';
 import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
+import MedievalTab from './components/Medieval/MedievalTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
@@ -74,6 +75,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'settings',   label: '설정',     icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
   { id: 'curriculum', label: '커리큘럼', icon: GraduationCap,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'edu',        label: '국교론',   icon: ClipboardList,  iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
+  { id: 'medieval',   label: '중세국어', icon: Scroll,         iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,            iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
 ];
 
@@ -502,6 +504,7 @@ export default function App() {
               {activeTab === 'library'    && <LibraryTab currentUser={currentUser} />}
               {activeTab === 'curriculum' && <CurriculumTab currentUser={currentUser} />}
               {activeTab === 'edu'        && <EduTab currentUser={currentUser} />}
+              {activeTab === 'medieval'   && <MedievalTab currentUser={currentUser} />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab

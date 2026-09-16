@@ -12,6 +12,7 @@ import type {
   AssignmentSubjectConfig, AssignmentNoticeConfig,
   FineType, FineExemptionRequest, FineExemptionStatus,
   EduChapter, EduReaderBookmark, EduExamDraft,
+  MedievalLesson, MedievalBlankExam,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -52,6 +53,8 @@ const defaultData: AppData = {
   eduChapters: [],
   eduReaderBookmarks: [],
   eduExamDrafts: [],
+  medievalLessons: [],
+  medievalBlankExams: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -1367,6 +1370,59 @@ export function saveEduExamDraft(draft: EduExamDraft): void {
 export function deleteEduExamDraft(id: string): void {
   mem.eduExamDrafts = mem.eduExamDrafts.filter(d => d.id !== id);
   remove('eduExamDrafts', id);
+  saveCache();
+}
+
+// ── 중세국어 ─────────────────────────────────────────────
+export function subscribeMedievalData(callback: () => void): () => void {
+  const unsubs = [
+    onSnapshot(
+      collection(db, 'medievalLessons'),
+      snap => { mem.medievalLessons = snap.docs.map(d => d.data() as MedievalLesson); saveCache(); callback(); },
+      err => console.warn('medievalLessons listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'medievalBlankExams'),
+      snap => { mem.medievalBlankExams = snap.docs.map(d => d.data() as MedievalBlankExam); saveCache(); callback(); },
+      err => console.warn('medievalBlankExams listener error:', err)
+    ),
+  ];
+  return () => unsubs.forEach(u => u());
+}
+
+export function getMedievalLessons(): MedievalLesson[] {
+  return [...mem.medievalLessons].sort((a, b) => a.lessonNum - b.lessonNum);
+}
+
+export function saveMedievalLesson(lesson: MedievalLesson): void {
+  const idx = mem.medievalLessons.findIndex(l => l.id === lesson.id);
+  if (idx >= 0) mem.medievalLessons[idx] = lesson;
+  else mem.medievalLessons.push(lesson);
+  persist('medievalLessons', lesson.id, lesson);
+  saveCache();
+}
+
+export function deleteMedievalLesson(id: string): void {
+  mem.medievalLessons = mem.medievalLessons.filter(l => l.id !== id);
+  remove('medievalLessons', id);
+  saveCache();
+}
+
+export function getMedievalBlankExams(): MedievalBlankExam[] {
+  return [...mem.medievalBlankExams].sort((a, b) => a.lessonNum - b.lessonNum);
+}
+
+export function saveMedievalBlankExam(exam: MedievalBlankExam): void {
+  const idx = mem.medievalBlankExams.findIndex(e => e.id === exam.id);
+  if (idx >= 0) mem.medievalBlankExams[idx] = exam;
+  else mem.medievalBlankExams.push(exam);
+  persist('medievalBlankExams', exam.id, exam);
+  saveCache();
+}
+
+export function deleteMedievalBlankExam(id: string): void {
+  mem.medievalBlankExams = mem.medievalBlankExams.filter(e => e.id !== id);
+  remove('medievalBlankExams', id);
   saveCache();
 }
 
