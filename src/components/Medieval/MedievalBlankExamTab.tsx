@@ -255,7 +255,7 @@ function BlankExamView({ exam, onBack }: { exam: MedievalBlankExam; onBack: () =
 }
 
 /* ── 메인 ── */
-export default function MedievalBlankExamTab({ currentUser, tick }: Props) {
+export default function MedievalBlankExamTab({ currentUser }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<MedievalBlankExam | null>(null);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { User, MedievalLesson, MedievalSubjectiveQ, MedievalMCQ } from '../../types';
 import { isPrivileged } from '../../types';
 import { getMedievalLessons, saveMedievalLesson, deleteMedievalLesson } from '../../store';
-import { Plus, Trash2, ChevronDown, ChevronUp, Edit2, ArrowLeft, Check } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, Edit2, ArrowLeft, Check } from 'lucide-react';
 
 interface Props { currentUser: User; tick: number; }
 
@@ -306,11 +306,10 @@ function LessonDetail({ lesson, isAdmin, onBack, onEdit, onDelete }: {
 }
 
 /* ── 메인 ── */
-export default function MedievalReviewTab({ currentUser, tick }: Props) {
+export default function MedievalReviewTab({ currentUser }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<MedievalLesson | null>(null);
   const [selected, setSelected] = useState<MedievalLesson | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
 
   const isAdmin = isPrivileged(currentUser);
   const lessons = getMedievalLessons();

@@ -196,6 +196,8 @@ async function fetchFromFirestore(): Promise<void> {
     eduChapters:              ec.docs.map(d => d.data() as EduChapter),
     eduReaderBookmarks:       erb.docs.map(d => d.data() as EduReaderBookmark),
     eduExamDrafts:            eed.docs.map(d => d.data() as EduExamDraft),
+    medievalLessons:          mem.medievalLessons,
+    medievalBlankExams:       mem.medievalBlankExams,
   };
   bootstrapAdmin();
   saveCache();
