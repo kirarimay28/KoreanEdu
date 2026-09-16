@@ -21,15 +21,29 @@ function BlankExamForm({
 }) {
   const [lessonNum, setLessonNum] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [answerFile, setAnswerFile] = useState<File | null>(null);
   const [blanks, setBlanks] = useState<string[]>(['']);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const answerFileRef = useRef<HTMLInputElement>(null);
 
   function addBlank() { setBlanks(prev => [...prev, '']); }
   function removeBlank(i: number) { setBlanks(prev => prev.filter((_, idx) => idx !== i)); }
   function updateBlank(i: number, val: string) { setBlanks(prev => prev.map((b, idx) => idx === i ? val : b)); }
+
+  function handleAnswerFile(file: File | null) {
+    if (!file) return;
+    setAnswerFile(file);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target?.result as string;
+      const parsed = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (parsed.length > 0) setBlanks(parsed);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
 
   async function handleSave() {
     const num = Number(lessonNum);
@@ -113,13 +127,29 @@ function BlankExamForm({
             </div>
           )}
         </div>
+        <div>
+          <label className="text-[11px] text-gray-400 font-bold mb-1 block">
+            답지 파일 <span className="text-gray-300 font-normal">(.txt — 한 줄에 정답 하나)</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => answerFileRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition"
+            >
+              <Upload className="w-3.5 h-3.5" /> 파일 선택
+            </button>
+            <span className="text-xs text-gray-400 truncate">{answerFile?.name ?? '선택된 파일 없음'}</span>
+          </div>
+          <input ref={answerFileRef} type="file" accept=".txt" className="hidden" onChange={e => handleAnswerFile(e.target.files?.[0] ?? null)} />
+          {answerFile && <p className="text-[11px] text-primary-500 mt-1">✓ {blanks.filter(b => b.trim()).length}개 정답 불러옴 — 아래에서 직접 수정 가능</p>}
+        </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
 
       {/* 빈칸 정답 */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-bold text-gray-600">빈칸 정답 <span className="text-gray-400 font-normal">(순서대로)</span></p>
+          <p className="text-xs font-bold text-gray-600">빈칸 정답 <span className="text-gray-400 font-normal">(순서대로 — 직접 입력 또는 답지 파일로 자동 입력)</span></p>
           <button onClick={addBlank} className="flex items-center gap-1 text-[11px] text-primary-600 border border-primary-200 rounded-lg px-2 py-1 hover:bg-primary-50 transition">
             <Plus className="w-3 h-3" /> 추가
           </button>
