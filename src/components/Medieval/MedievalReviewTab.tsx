@@ -208,6 +208,7 @@ function LessonDetail({ lesson, isAdmin, onBack, onEdit, onDelete }: {
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [subjAnswers, setSubjAnswers] = useState<Record<number, string>>({});
   const [mcAnswers, setMcAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
 
@@ -242,11 +243,30 @@ function LessonDetail({ lesson, isAdmin, onBack, onEdit, onDelete }: {
       {/* 주관식 */}
       {lesson.subjectiveQuestions.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">주관식 <span className="text-gray-300 font-normal normal-case">참고용 정답 포함</span></p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            주관식 <span className="text-gray-300 font-normal normal-case">{submitted ? '참고 답안 포함' : '직접 답변 작성'}</span>
+          </p>
           {lesson.subjectiveQuestions.map((sq, i) => (
-            <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+            <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0 space-y-2">
               <p className="text-sm font-semibold text-gray-700"><span className="text-primary-500 mr-1">Q{i + 1}.</span>{sq.q}</p>
-              <p className="text-xs text-gray-400 mt-1">→ {sq.answer}</p>
+              {!submitted ? (
+                <textarea
+                  value={subjAnswers[i] ?? ''}
+                  onChange={e => setSubjAnswers(prev => ({ ...prev, [i]: e.target.value }))}
+                  placeholder="답변을 입력하세요"
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400 resize-none"
+                />
+              ) : (
+                <div className="space-y-1.5">
+                  {subjAnswers[i]?.trim() && (
+                    <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">{subjAnswers[i]}</p>
+                  )}
+                  <p className="text-xs text-primary-600 bg-primary-50 rounded-lg px-3 py-2">
+                    <span className="font-bold">참고 답안</span> → {sq.answer}
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
