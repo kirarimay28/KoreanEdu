@@ -286,15 +286,12 @@ export default function ExamPeriodTab({ currentUser }: Props) {
       {/* 공부 계획 섹션 (시험기간 있을 때) */}
       {period && (
         <>
-          {isAdmin ? (
-            <AdminScheduleView schedules={schedules} />
-          ) : (
-            <MemberScheduleForm
-              currentUser={currentUser}
-              existing={mySchedule}
-              onSave={() => setTick(t => t + 1)}
-            />
-          )}
+          <MemberScheduleForm
+            currentUser={currentUser}
+            existing={mySchedule}
+            onSave={() => setTick(t => t + 1)}
+          />
+          {isAdmin && <AdminScheduleView schedules={schedules} />}
         </>
       )}
     </div>
