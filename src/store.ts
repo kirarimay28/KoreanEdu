@@ -13,6 +13,7 @@ import type {
   FineType, FineExemptionRequest, FineExemptionStatus,
   EduChapter, EduReaderBookmark, EduExamDraft,
   MedievalLesson, MedievalBlankExam,
+  ExamPeriod, ExamStudySchedule,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -55,6 +56,8 @@ const defaultData: AppData = {
   eduExamDrafts: [],
   medievalLessons: [],
   medievalBlankExams: [],
+  examPeriod: null,
+  examStudySchedules: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -198,6 +201,8 @@ async function fetchFromFirestore(): Promise<void> {
     eduExamDrafts:            eed.docs.map(d => d.data() as EduExamDraft),
     medievalLessons:          mem.medievalLessons,
     medievalBlankExams:       mem.medievalBlankExams,
+    examPeriod:               mem.examPeriod,
+    examStudySchedules:       mem.examStudySchedules,
   };
   bootstrapAdmin();
   saveCache();
@@ -1425,6 +1430,47 @@ export function saveMedievalBlankExam(exam: MedievalBlankExam): void {
 export function deleteMedievalBlankExam(id: string): void {
   mem.medievalBlankExams = mem.medievalBlankExams.filter(e => e.id !== id);
   remove('medievalBlankExams', id);
+  saveCache();
+}
+
+// ── 시험기간 ─────────────────────────────────────────────
+export function subscribeExamPeriodData(callback: () => void): () => void {
+  const unsubs = [
+    onSnapshot(
+      doc(db, 'appSettings', 'examPeriod'),
+      snap => { mem.examPeriod = snap.exists() ? (snap.data() as ExamPeriod) : null; saveCache(); callback(); },
+      err => console.warn('examPeriod listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'examStudySchedules'),
+      snap => { mem.examStudySchedules = snap.docs.map(d => d.data() as ExamStudySchedule); saveCache(); callback(); },
+      err => console.warn('examStudySchedules listener error:', err)
+    ),
+  ];
+  return () => unsubs.forEach(u => u());
+}
+
+export function getExamPeriod(): ExamPeriod | null { return mem.examPeriod; }
+
+export function setExamPeriod(period: ExamPeriod): void {
+  mem.examPeriod = period;
+  persist('appSettings', 'examPeriod', period);
+  saveCache();
+}
+
+export function clearExamPeriod(): void {
+  mem.examPeriod = null;
+  remove('appSettings', 'examPeriod');
+  saveCache();
+}
+
+export function getExamStudySchedules(): ExamStudySchedule[] { return [...mem.examStudySchedules]; }
+
+export function saveExamStudySchedule(schedule: ExamStudySchedule): void {
+  const idx = mem.examStudySchedules.findIndex(s => s.userId === schedule.userId);
+  if (idx >= 0) mem.examStudySchedules[idx] = schedule;
+  else mem.examStudySchedules.push(schedule);
+  persist('examStudySchedules', schedule.userId, schedule);
   saveCache();
 }
 

@@ -2,11 +2,12 @@ import { useState } from 'react';
 import type { User, StudySubTab } from '../../types';
 import VocabTestTab from './VocabTestTab';
 import VocabExamTab from './VocabExamTab';
-import { Lock } from 'lucide-react';
+import { Lock, PauseCircle } from 'lucide-react';
 
 interface Props {
   date: string;
   currentUser: User;
+  isExamPeriod?: boolean;
 }
 
 const TABS: { id: StudySubTab; label: string }[] = [
@@ -14,7 +15,7 @@ const TABS: { id: StudySubTab; label: string }[] = [
   { id: 'exam',  label: '시험 응시' },
 ];
 
-export default function StudyTab({ date, currentUser }: Props) {
+export default function StudyTab({ date, currentUser, isExamPeriod }: Props) {
   const [subTab, setSubTab] = useState<StudySubTab>('vocab');
 
   if (currentUser.restrictions?.noStudyView) {
@@ -42,7 +43,17 @@ export default function StudyTab({ date, currentUser }: Props) {
       </div>
 
       {subTab === 'vocab' && <VocabTestTab date={date} currentUser={currentUser} />}
-      {subTab === 'exam'  && <VocabExamTab currentUser={currentUser} />}
+      {subTab === 'exam' && (
+        <>
+          {isExamPeriod && (
+            <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4">
+              <PauseCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-700 font-semibold">시험기간 중 — 고어 시험 의무가 일시 정지됩니다.</p>
+            </div>
+          )}
+          <VocabExamTab currentUser={currentUser} />
+        </>
+      )}
     </div>
   );
 }

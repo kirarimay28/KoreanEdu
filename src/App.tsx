@@ -21,17 +21,19 @@ import AssignmentTab from './components/Assignment/AssignmentTab';
 import SettingsTab from './components/Settings/SettingsTab';
 import VocabStudyTab from './components/Study/VocabStudyTab';
 import MedievalTab from './components/Medieval/MedievalTab';
+import ExamPeriodTab from './components/ExamPeriod/ExamPeriodTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
 import DailyVocab from './components/common/DailyVocab';
 import Avatar from './components/common/Avatar';
-import { initializeData, refreshData, getPendingRequestsForUser, getUserById } from './store';
+import { initializeData, refreshData, getPendingRequestsForUser, getUserById, subscribeExamPeriodData, getExamPeriod } from './store';
+import type { ExamPeriod } from './types';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
@@ -75,8 +77,9 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'settings',   label: '설정',     icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
   { id: 'curriculum', label: '커리큘럼', icon: GraduationCap,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'edu',        label: '국교론',   icon: ClipboardList,  iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
-  { id: 'medieval',   label: '중세국어', icon: Scroll,         iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
-  { id: 'tutorial',   label: '튜토리얼', icon: Map,            iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
+  { id: 'medieval',    label: '중세국어', icon: Scroll,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
+  { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
+  { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
 ];
 
 const isMenuTab = (tab: MainTab) => MENU_TABS.some(t => t.id === tab);
@@ -93,6 +96,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [sideOpen, setSideOpen] = useState(false);
+  const [examPeriod, setExamPeriodState] = useState<ExamPeriod | null>(null);
   const dailyQuote = getDailyQuote();
 
   useEffect(() => {
@@ -108,6 +112,11 @@ export default function App() {
     if (currentUser) localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
     else localStorage.removeItem(SESSION_KEY);
   }, [currentUser]);
+
+  useEffect(() => {
+    const unsub = subscribeExamPeriodData(() => setExamPeriodState(getExamPeriod()));
+    return unsub;
+  }, []);
 
   // Lock body scroll when side panel is open
   useEffect(() => {
@@ -134,6 +143,9 @@ export default function App() {
   function handleMainNav(id: MainTab) {
     setActiveTab(id);
   }
+
+  const today = getKSTToday();
+  const isExamPeriodActive = examPeriod !== null && today >= examPeriod.startDate && today <= examPeriod.endDate;
 
   const jadeBg = { background: '#fff0f5' } as React.CSSProperties;
 
@@ -504,7 +516,8 @@ export default function App() {
               {activeTab === 'library'    && <LibraryTab currentUser={currentUser} />}
               {activeTab === 'curriculum' && <CurriculumTab currentUser={currentUser} />}
               {activeTab === 'edu'        && <EduTab currentUser={currentUser} />}
-              {activeTab === 'medieval'   && <MedievalTab currentUser={currentUser} />}
+              {activeTab === 'medieval'    && <MedievalTab currentUser={currentUser} />}
+              {activeTab === 'examperiod' && <ExamPeriodTab currentUser={currentUser} />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab
@@ -578,13 +591,13 @@ export default function App() {
             </div>
 
             <div key={activeTab} className="jade-enter">
-              {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} />}
+              {activeTab === 'study'       && <StudyTab date={date} currentUser={currentUser} isExamPeriod={isExamPeriodActive} />}
               {activeTab === 'personal'    && <PersonalStudyTab date={date} currentUser={currentUser} />}
               {activeTab === 'fine'        && <FineTab currentUser={currentUser} />}
               {activeTab === 'wallet'      && <WalletTab currentUser={currentUser} />}
               {activeTab === 'qna'         && <QnATab currentUser={currentUser} />}
               {activeTab === 'calendar'    && <CalendarTab currentUser={currentUser} />}
-              {activeTab === 'assignment'  && <AssignmentTab currentUser={currentUser} />}
+              {activeTab === 'assignment'  && <AssignmentTab currentUser={currentUser} isExamPeriod={isExamPeriodActive} />}
               {activeTab === 'vocab_study' && <VocabStudyTab />}
             </div>
           </>

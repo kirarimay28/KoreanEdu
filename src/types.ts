@@ -425,6 +425,8 @@ export interface AppData {
   eduExamDrafts: EduExamDraft[];
   medievalLessons: MedievalLesson[];
   medievalBlankExams: MedievalBlankExam[];
+  examPeriod: ExamPeriod | null;
+  examStudySchedules: ExamStudySchedule[];
 }
 
 export interface LibraryItem {
@@ -465,7 +467,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu' | 'medieval';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu' | 'medieval' | 'examperiod';
 export type StudySubTab = 'vocab' | 'exam';
 
 export interface VocabExamRecord {
@@ -583,4 +585,28 @@ export interface MedievalBlankExam {
   createdAt: string;
   createdById: string;
   createdByName: string;
+}
+
+export interface ExamPeriod {
+  startDate: string;
+  endDate: string;
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+}
+
+export type Weekday = '월' | '화' | '수' | '목' | '금' | '토' | '일';
+
+export interface ExamDayPlan {
+  day: Weekday;
+  willCome: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ExamStudySchedule {
+  userId: string;
+  username: string;
+  days: ExamDayPlan[];
+  updatedAt: string;
 }
