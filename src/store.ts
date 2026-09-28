@@ -14,6 +14,7 @@ import type {
   EduChapter, EduReaderBookmark, EduExamDraft,
   MedievalLesson, MedievalBlankExam,
   ExamPeriod, ExamStudySchedule,
+  AttendanceCheckIn,
 } from './types';
 
 const ADMIN_USERNAME = '서연';
@@ -58,6 +59,7 @@ const defaultData: AppData = {
   medievalBlankExams: [],
   examPeriod: null,
   examStudySchedules: [],
+  attendanceCheckIns: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -203,6 +205,7 @@ async function fetchFromFirestore(): Promise<void> {
     medievalBlankExams:       mem.medievalBlankExams,
     examPeriod:               mem.examPeriod,
     examStudySchedules:       mem.examStudySchedules,
+    attendanceCheckIns:       mem.attendanceCheckIns,
   };
   bootstrapAdmin();
   saveCache();
@@ -1489,4 +1492,51 @@ export async function deleteEduChapterPdf(storagePath: string): Promise<void> {
   } catch (e) {
     console.warn('PDF delete failed:', e);
   }
+}
+
+// ── 출석 체크인 ─────────────────────────────────────────────
+export function subscribeAttendanceData(callback: () => void): () => void {
+  const unsubs = [
+    onSnapshot(
+      collection(db, 'attendanceCheckIns'),
+      snap => { mem.attendanceCheckIns = snap.docs.map(d => d.data() as AttendanceCheckIn); saveCache(); callback(); },
+      err => console.warn('attendanceCheckIns listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'attendanceEntries'),
+      snap => { mem.attendanceEntries = snap.docs.map(d => d.data() as AttendanceEntry); saveCache(); callback(); },
+      err => console.warn('attendanceEntries listener error:', err)
+    ),
+  ];
+  return () => unsubs.forEach(u => u());
+}
+
+export function getAttendanceCheckIns(): AttendanceCheckIn[] {
+  return mem.attendanceCheckIns;
+}
+
+export function submitAttendanceCheckIn(userId: string, username: string, date: string): void {
+  const id = `${userId}_${date}`;
+  const existing = mem.attendanceCheckIns.find(c => c.id === id);
+  if (existing) return;
+  const checkIn: AttendanceCheckIn = {
+    id, userId, username, date,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  mem.attendanceCheckIns.push(checkIn);
+  persist('attendanceCheckIns', id, checkIn);
+  saveCache();
+}
+
+export function confirmAttendanceCheckIn(id: string, confirmerId: string, confirmerName: string): void {
+  const checkIn = mem.attendanceCheckIns.find(c => c.id === id);
+  if (!checkIn) return;
+  checkIn.status = 'confirmed';
+  checkIn.confirmedById = confirmerId;
+  checkIn.confirmedByName = confirmerName;
+  checkIn.confirmedAt = new Date().toISOString();
+  persist('attendanceCheckIns', id, checkIn);
+  markAttendance(checkIn.date, checkIn.userId, checkIn.username, 'regular');
+  saveCache();
 }

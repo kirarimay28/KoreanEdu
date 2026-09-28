@@ -1,9 +1,13 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle2, PlusCircle, MinusCircle, Star } from 'lucide-react';
-import { getAttendanceEntries, getUsers, markAttendance, removeAttendance, getApprovedVacations } from '../../store';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Check } from 'lucide-react';
+import {
+  getAttendanceEntries, getUsers, markAttendance, removeAttendance, getApprovedVacations,
+  subscribeAttendanceData, getAttendanceCheckIns, submitAttendanceCheckIn, confirmAttendanceCheckIn,
+} from '../../store';
 import { getKSTToday } from '../common/DateNavigator';
 import NameWithCrown from '../common/NameWithCrown';
 import type { User } from '../../types';
+import { isPrivileged } from '../../types';
 
 interface Props {
   currentUser: User;
@@ -11,21 +15,31 @@ interface Props {
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+const WEEKDAYS_KR = ['일', '월', '화', '수', '목', '금', '토'];
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
+
+function formatDateFull(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS_KR[d.getDay()]})`;
+}
 
 export default function AttendanceTab({ currentUser }: Props) {
   const today = getKSTToday();
   const [viewYear, setViewYear] = useState(() => parseInt(today.split('-')[0]));
   const [viewMonth, setViewMonth] = useState(() => parseInt(today.split('-')[1]) - 1);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
-  const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'subadmin';
+  useEffect(() => {
+    const unsub = subscribeAttendanceData(() => setTick(t => t + 1));
+    return unsub;
+  }, []);
 
+  const isAdmin = isPrivileged(currentUser);
   const users = getUsers();
   const allAttendance = getAttendanceEntries();
-  // makeupDate set of approved vacations, keyed by userId
-  const approvedVacations = getApprovedVacations();
+  const approvedAbsences = getApprovedVacations();
+  const checkIns = getAttendanceCheckIns();
 
   const todayYear = parseInt(today.split('-')[0]);
   const todayMonth = parseInt(today.split('-')[1]) - 1;
@@ -51,59 +65,42 @@ export default function AttendanceTab({ currentUser }: Props) {
     return allAttendance.find(e => e.userId === userId && e.date === dateStr) ?? null;
   }
 
-  // Returns the approved vacation whose makeupDate is dateStr for this user.
-  // Works for both Monday and non-Monday makeupDates.
-  function getMakeupVacation(userId: string, dateStr: string) {
-    return approvedVacations.find(
-      v => v.requesterId === userId && !!v.vacationDate && !!v.makeupDate && v.makeupDate === dateStr
-    ) ?? null;
-  }
-
-  // Returns the approved vacation whose vacationDate (결석일) is dateStr for this user.
-  function getAbsenceVacation(userId: string, dateStr: string) {
-    return approvedVacations.find(
-      v => v.requesterId === userId && v.vacationDate === dateStr
-    ) ?? null;
+  function getApprovedAbsence(userId: string, dateStr: string) {
+    return approvedAbsences.find(v => v.requesterId === userId && v.vacationDate === dateStr) ?? null;
   }
 
   function getMonthStats(userId: string) {
     let total = 0;
     let attended = 0;
-    let makeup = 0;
+    let excused = 0;
     for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(viewYear, viewMonth, d);
       const dateStr = `${monthPrefix}-${pad(d)}`;
       if (dateStr > today) break;
-      if (date.getDay() === 1) {
-        // Monday: count in total unless it's a makeupDate (보강일로 사용되는 월요일은 별도 집계)
-        const isMakeup = getMakeupVacation(userId, dateStr) !== null;
-        if (isMakeup) {
-          if (getEntry(userId, dateStr)) makeup++;
-        } else {
-          total++;
-          // Absence day (승인된 휴가의 결석일): don't count as attended
-          const isAbsence = getAbsenceVacation(userId, dateStr) !== null;
-          if (!isAbsence && getEntry(userId, dateStr)) attended++;
-        }
-      } else {
-        // Non-Monday: only count explicitly typed 'makeup' entries
-        const e = getEntry(userId, dateStr);
-        if (e?.type === 'makeup') makeup++;
+      const date = new Date(viewYear, viewMonth, d);
+      if (date.getDay() !== 1) continue; // only Mondays
+      total++;
+      if (getEntry(userId, dateStr)) {
+        attended++;
+      } else if (getApprovedAbsence(userId, dateStr)) {
+        excused++;
       }
     }
-    return { total, attended, makeup, rate: total > 0 ? Math.round((attended / total) * 100) : 0 };
+    const denominator = total - excused;
+    return { total, attended, excused, rate: denominator > 0 ? Math.round((attended / denominator) * 100) : 100 };
   }
 
-  function handleToggle(user: User, dateStr: string, isMakeupCell: boolean) {
-    if (!isPrivileged) return;
+  function handleToggle(user: User, dateStr: string) {
+    if (!isAdmin) return;
     const existing = getEntry(user.id, dateStr);
-    if (existing) {
-      removeAttendance(dateStr, user.id);
-    } else {
-      markAttendance(dateStr, user.id, user.username, isMakeupCell ? 'makeup' : 'regular');
-    }
+    if (existing) removeAttendance(dateStr, user.id);
+    else markAttendance(dateStr, user.id, user.username, 'regular');
     setTick(t => t + 1);
   }
+
+  // Today's check-in data
+  const myCheckInToday = checkIns.find(c => c.userId === currentUser.id && c.date === today);
+  const pendingCheckInsToday = checkIns.filter(c => c.date === today && c.status === 'pending');
+  const myEntryToday = getEntry(currentUser.id, today);
 
   const cells: (number | null)[] = [
     ...Array(firstDayOfWeek).fill(null),
@@ -111,8 +108,65 @@ export default function AttendanceTab({ currentUser }: Props) {
   ];
 
   return (
-    <div className="space-y-4" key={tick}>
-      {/* Month navigator */}
+    <div className="space-y-4">
+      {/* 오늘 출석 체크 섹션 */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <p className="text-xs font-bold text-gray-500 mb-3">오늘 출석</p>
+        <p className="text-sm font-semibold text-gray-800 mb-4">{formatDateFull(today)}</p>
+
+        {myEntryToday ? (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+            <p className="text-sm font-semibold text-green-700">출석 완료</p>
+          </div>
+        ) : myCheckInToday ? (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <div className="w-4 h-4 rounded-full border-2 border-amber-400 animate-pulse shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700">확인 대기중</p>
+              <p className="text-xs text-amber-600 mt-0.5">방장/부방장이 확인 중입니다</p>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => submitAttendanceCheckIn(currentUser.id, currentUser.username, today)}
+            className="w-full py-3 rounded-xl text-sm font-bold text-white transition"
+            style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          >
+            출석 체크하기
+          </button>
+        )}
+      </div>
+
+      {/* 방장/부방장: 대기중 출석 체크 */}
+      {isAdmin && pendingCheckInsToday.length > 0 && (
+        <div className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
+          <p className="text-xs font-bold text-amber-600 mb-3">
+            대기중 출석 체크 ({pendingCheckInsToday.length}명)
+          </p>
+          <div className="space-y-2">
+            {pendingCheckInsToday.map(ci => (
+              <div key={ci.id} className="flex items-center justify-between bg-amber-50 rounded-xl px-3 py-2.5">
+                <NameWithCrown
+                  name={ci.username}
+                  className="text-sm font-semibold text-gray-800"
+                  showAvatar
+                  avatarSize="sm"
+                />
+                <button
+                  onClick={() => confirmAttendanceCheckIn(ci.id, currentUser.id, currentUser.username)}
+                  className="flex items-center gap-1 text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition"
+                >
+                  <Check className="w-3 h-3" />
+                  확인
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 월별 캘린더 */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
         <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-500">
           <ChevronLeft className="w-5 h-5" />
@@ -127,15 +181,6 @@ export default function AttendanceTab({ currentUser }: Props) {
         </button>
       </div>
 
-      {/* Admin hint */}
-      {isPrivileged && (
-        <div className="flex flex-col gap-1 px-1">
-          <span className="text-[11px] text-primary-400 bg-primary-50 border border-primary-100 rounded-lg px-2.5 py-1">
-            월요일 → 정규 출석 / ★ 날짜(승인된 휴가 보강일) → 보강 출석
-          </span>
-        </div>
-      )}
-
       {users.length === 0 && (
         <div className="card text-center py-10 text-gray-400 text-sm">
           등록된 스터디원이 없습니다.
@@ -143,17 +188,16 @@ export default function AttendanceTab({ currentUser }: Props) {
       )}
 
       {users.map(user => {
-        const { total, attended, makeup, rate } = getMonthStats(user.id);
+        const { total, attended, excused, rate } = getMonthStats(user.id);
 
         return (
           <div key={user.id} className="card">
-            {/* Member header */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {attended}/{total}주 출석
-                  {makeup > 0 && <span className="ml-1 text-amber-500">· 보강 {makeup}회</span>}
+                  {attended}/{total - excused}주 출석
+                  {excused > 0 && <span className="ml-1 text-amber-500">· 결석(승인) {excused}회</span>}
                 </p>
               </div>
               <span className={`text-sm font-bold px-3 py-1 rounded-full ${
@@ -165,7 +209,7 @@ export default function AttendanceTab({ currentUser }: Props) {
               </span>
             </div>
 
-            {/* Calendar grid */}
+            {/* 요일 헤더 */}
             <div className="grid grid-cols-7 mb-1">
               {DAY_LABELS.map((d, i) => (
                 <div
@@ -191,105 +235,69 @@ export default function AttendanceTab({ currentUser }: Props) {
                 const col = idx % 7;
                 const isMonday = col === 1;
 
-                // Check vacation relationships for this cell
-                const makeupVacation = !isFuture ? getMakeupVacation(user.id, dateStr) : null;
-                const absenceVacation = !isFuture && isMonday ? getAbsenceVacation(user.id, dateStr) : null;
-                const isMakeupDay = makeupVacation !== null;
-                // Absence day (결석일): don't show regular attendance even if entry exists
-                const isAbsenceDay = absenceVacation !== null && !isMakeupDay;
+                if (!isMonday) {
+                  return (
+                    <div key={day} className="flex items-center justify-center h-9">
+                      <span className="text-xs text-gray-150">{day}</span>
+                    </div>
+                  );
+                }
 
                 const hasEntry = !isFuture && getEntry(user.id, dateStr) !== null;
-
-                // Regular: Monday, not absence day, not makeup day, has any attendance entry
-                const showRegularCheck = isMonday && !isAbsenceDay && !isMakeupDay && hasEntry;
-                // Makeup attended: this date is a makeupDate and has an attendance entry
-                const showMakeupStar = isMakeupDay && hasEntry;
-                // Makeup pending: this date is a makeupDate but no entry yet
-                const showMakeupPending = isMakeupDay && !hasEntry;
-                // Absence indicator: this Monday is a vacation absence day
-                const showAbsence = isAbsenceDay;
-                const showSomething = showRegularCheck || showMakeupStar || showMakeupPending || showAbsence;
-
-                const isClickable = isPrivileged && !isFuture && (isMonday || isMakeupDay);
+                const approvedAbsence = !isFuture ? getApprovedAbsence(user.id, dateStr) : null;
+                const isExcusedAbsent = !hasEntry && approvedAbsence !== null;
+                const isUnexcusedAbsent = !isFuture && !hasEntry && !approvedAbsence;
+                const isClickable = isAdmin && !isFuture;
 
                 return (
                   <div
                     key={day}
-                    onClick={isClickable ? () => handleToggle(user, dateStr, isMakeupDay) : undefined}
+                    onClick={isClickable ? () => handleToggle(user, dateStr) : undefined}
                     className={[
                       'flex items-center justify-center h-9 rounded-lg text-xs font-medium relative group',
                       isClickable ? 'cursor-pointer' : '',
                       isFuture ? 'opacity-20' : '',
-                      showRegularCheck  ? 'bg-primary-100 hover:bg-primary-200' :
-                      showMakeupStar    ? 'bg-amber-50 hover:bg-amber-100' :
-                      showMakeupPending ? 'bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100' :
-                      showAbsence       ? 'bg-red-50' :
-                      isToday_ && isMonday ? 'bg-amber-50 ring-1 ring-amber-200' :
-                      isClickable       ? 'bg-gray-50 hover:bg-primary-50' :
+                      hasEntry           ? 'bg-primary-100 hover:bg-primary-200' :
+                      isExcusedAbsent    ? 'bg-amber-50' :
+                      isUnexcusedAbsent  ? 'bg-red-50' :
+                      isToday_           ? 'bg-amber-50 ring-1 ring-amber-200' :
+                      isClickable        ? 'bg-gray-50 hover:bg-primary-50' :
                       'bg-transparent',
                     ].join(' ')}
-                    title={
-                      makeupVacation ? `보강일 (결석: ${makeupVacation.vacationDate})` :
-                      absenceVacation ? `결석일 (보강: ${absenceVacation.makeupDate || '미정'})` :
-                      undefined
-                    }
                   >
-                    {showSomething ? (
-                      <>
-                        {showRegularCheck && <CheckCircle2 className="w-4 h-4 text-primary-500" />}
-                        {showMakeupStar && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />}
-                        {showMakeupPending && (
-                          <>
-                            <span className="text-amber-500 font-bold">{day}</span>
-                            <Star className="w-2 h-2 text-amber-400 fill-amber-300 absolute top-0.5 right-0.5" />
-                          </>
-                        )}
-                        {showAbsence && (
-                          <span className="text-[10px] font-bold text-red-300">결</span>
-                        )}
-                        {isClickable && (showRegularCheck || showMakeupStar) && (
-                          <MinusCircle className="w-4 h-4 text-red-400 absolute opacity-0 group-hover:opacity-100 transition" />
-                        )}
-                        {isClickable && showMakeupPending && (
-                          <PlusCircle className="w-4 h-4 text-amber-400 absolute opacity-0 group-hover:opacity-100 transition" />
-                        )}
-                      </>
+                    {hasEntry ? (
+                      <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                    ) : isExcusedAbsent ? (
+                      <span className="text-[10px] font-bold text-amber-500">결</span>
+                    ) : isUnexcusedAbsent ? (
+                      <span className="text-[10px] font-bold text-red-400">결</span>
                     ) : (
-                      <>
-                        <span className={
-                          isMonday
-                            ? (isFuture ? 'text-gray-300' : isToday_ ? 'text-amber-600 font-bold' : 'text-gray-500')
-                            : 'text-gray-200'
-                        }>
-                          {day}
-                        </span>
-                        {isClickable && !isFuture && (
-                          <PlusCircle className={`w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition ${isMakeupDay ? 'text-amber-400' : 'text-primary-400'}`} />
-                        )}
-                      </>
+                      <span className={
+                        isFuture ? 'text-gray-300' :
+                        isToday_ ? 'text-amber-600 font-bold' :
+                        'text-gray-500'
+                      }>
+                        {day}
+                      </span>
                     )}
                   </div>
                 );
               })}
             </div>
 
-            {/* Legend */}
+            {/* 범례 */}
             <div className="flex items-center gap-3 mt-3 pt-2 border-t border-gray-50 flex-wrap">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-primary-400" />
-                <span className="text-[10px] text-gray-400">정규</span>
+                <span className="text-[10px] text-gray-400">출석</span>
               </div>
               <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="text-[10px] text-gray-400">보강</span>
+                <span className="text-[10px] font-bold text-amber-500 w-3 text-center">결</span>
+                <span className="text-[10px] text-gray-400">결석(승인)</span>
               </div>
               <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 text-amber-300 fill-amber-200" />
-                <span className="text-[10px] text-gray-400">보강 예정</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] font-bold text-red-300 w-3 text-center">결</span>
-                <span className="text-[10px] text-gray-400">결석(휴가)</span>
+                <span className="text-[10px] font-bold text-red-400 w-3 text-center">결</span>
+                <span className="text-[10px] text-gray-400">결석(미승인)</span>
               </div>
             </div>
           </div>

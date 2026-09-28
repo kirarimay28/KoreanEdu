@@ -12,9 +12,9 @@ function formatDate(dateStr: string): string {
 function buildShareText(name: string, vacations: VacationRequest[]): string {
   const lines = vacations.map(v => {
     const reason = v.reason === '기타' ? v.customReason || '기타' : v.reason;
-    return `• 휴가일: ${formatDate(v.vacationDate)}\n  사유: ${reason}\n  보강일: ${formatDate(v.makeupDate)}`;
+    return `• 결석일: ${formatDate(v.vacationDate)}\n  사유: ${reason}`;
   }).join('\n\n');
-  return `[나랏말] ${name}님 휴가 일정\n\n${lines}`;
+  return `[나랏말] ${name}님 결석 일정\n\n${lines}`;
 }
 
 export default function VacationListTab() {
@@ -50,11 +50,11 @@ export default function VacationListTab() {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">승인된 휴가 명단</p>
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">승인된 결석 명단</p>
 
       {vacations.length === 0 ? (
         <div className="flex items-center justify-center py-12 rounded-2xl" style={{ background: 'rgba(255,255,255,0.45)' }}>
-          <p className="text-gray-400 text-sm">승인된 휴가가 없습니다</p>
+          <p className="text-gray-400 text-sm">승인된 결석이 없습니다</p>
         </div>
       ) : (
         <>
@@ -105,7 +105,7 @@ export default function VacationListTab() {
                 <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9 1.5C4.86 1.5 1.5 4.16 1.5 7.44c0 2.08 1.3 3.91 3.27 5.01l-.83 3.07a.3.3 0 0 0 .45.33L8.1 13.4c.29.03.59.05.9.05 4.14 0 7.5-2.66 7.5-5.94S13.14 1.5 9 1.5Z" fill="#1a1a1a"/>
                 </svg>
-                {selectedId ? `${selectedName}님 일정 카카오톡 공유` : '전체 휴가 일정 카카오톡 공유'}
+                {selectedId ? `${selectedName}님 결석 일정 카카오톡 공유` : '전체 결석 일정 카카오톡 공유'}
                 <Share2 className="w-3.5 h-3.5" />
               </>
             )}
@@ -123,14 +123,11 @@ export default function VacationListTab() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-600">
-                    <span className="font-medium">휴가 날짜:</span> {formatDate(v.vacationDate)}
+                    <span className="font-medium">결석 날짜:</span> {formatDate(v.vacationDate)}
                   </p>
                   <p className="text-xs text-gray-600">
                     <span className="font-medium">사유:</span>{' '}
                     {v.reason === '기타' ? v.customReason || '기타' : v.reason}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    <span className="font-medium">보강 날짜:</span> {formatDate(v.makeupDate)}
                   </p>
                   {v.reviewedByName && (
                     <p className="text-xs text-gray-400">

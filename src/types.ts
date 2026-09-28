@@ -134,7 +134,19 @@ export interface AttendanceEntry {
   userId: string;
   username: string;
   markedAt: string;
-  type?: 'regular' | 'makeup';  // undefined treated as 'regular' for backward compat
+  type?: 'regular' | 'makeup';
+}
+
+export interface AttendanceCheckIn {
+  id: string;
+  userId: string;
+  username: string;
+  date: string;
+  status: 'pending' | 'confirmed';
+  createdAt: string;
+  confirmedById?: string;
+  confirmedByName?: string;
+  confirmedAt?: string;
 }
 
 export interface Announcement {
@@ -197,7 +209,7 @@ export interface VacationRequest {
   vacationDate: string;
   reason: VacationReason;
   customReason: string;
-  makeupDate: string;
+  makeupDate?: string;
   status: VacationStatus;
   reviewedAt?: string;
   reviewedById?: string;
@@ -427,6 +439,7 @@ export interface AppData {
   medievalBlankExams: MedievalBlankExam[];
   examPeriod: ExamPeriod | null;
   examStudySchedules: ExamStudySchedule[];
+  attendanceCheckIns: AttendanceCheckIn[];
 }
 
 export interface LibraryItem {

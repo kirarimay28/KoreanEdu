@@ -40,12 +40,10 @@ export default function VacationRequestTab({ currentUser }: Props) {
   const today = getKSTToday();
   const tomorrow = addDays(today, 1);
 
-  const [vacationDate, setVacationDate] = useState<string>(tomorrow);
-  const [makeupDate, setMakeupDate] = useState<string>(addDays(tomorrow, 1));
+  const [absenceDate, setAbsenceDate] = useState<string>(tomorrow);
   const [reason, setReason] = useState<VacationReason>('질병');
   const [customReason, setCustomReason] = useState('');
-  const [showVacationCal, setShowVacationCal] = useState(false);
-  const [showMakeupCal, setShowMakeupCal] = useState(false);
+  const [showCal, setShowCal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [requests, setRequests] = useState<VacationRequest[]>(() => getVacationRequests());
 
@@ -54,16 +52,8 @@ export default function VacationRequestTab({ currentUser }: Props) {
   }
 
   function handleSubmit() {
-    if (hasVacationInWeek(currentUser.id, vacationDate)) {
-      alert('이미 해당 주에 휴가 신청이 있습니다.');
-      return;
-    }
-    if (makeupDate === vacationDate) {
-      alert('보강 날짜는 휴가 날짜와 달라야 합니다.');
-      return;
-    }
-    if (makeupDate <= today) {
-      alert('보강 날짜는 오늘 이후여야 합니다.');
+    if (hasVacationInWeek(currentUser.id, absenceDate)) {
+      alert('이미 해당 주에 결석 신청이 있습니다.');
       return;
     }
     const req: VacationRequest = {
@@ -71,10 +61,9 @@ export default function VacationRequestTab({ currentUser }: Props) {
       requesterId: currentUser.id,
       requesterName: currentUser.username,
       createdAt: new Date().toISOString(),
-      vacationDate,
+      vacationDate: absenceDate,
       reason,
       customReason: reason === '기타' ? customReason : '',
-      makeupDate,
       status: '대기중',
     };
     createVacationRequest(req);
@@ -96,54 +85,54 @@ export default function VacationRequestTab({ currentUser }: Props) {
     r => r.requesterId !== currentUser.id && r.status === '대기중'
   );
 
-  const alreadyHasThisWeek = hasVacationInWeek(currentUser.id, vacationDate);
+  const alreadyHasThisWeek = hasVacationInWeek(currentUser.id, absenceDate);
 
   if (currentUser.restrictions?.noVacationRequest && !isPrivileged(currentUser)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
         <Lock className="w-10 h-10 text-gray-200" />
         <p className="text-sm font-semibold text-gray-400">접근이 제한되었습니다</p>
-        <p className="text-xs text-gray-300">휴가 신청 권한이 없습니다.</p>
+        <p className="text-xs text-gray-300">결석 신청 권한이 없습니다.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* 휴가 신청 폼 */}
+      {/* 결석 신청 폼 */}
       <div className="card border border-gray-100">
-        <p className="section-title">휴가 신청</p>
+        <p className="section-title">결석 신청</p>
 
         {alreadyHasThisWeek && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-            <p className="text-sm text-amber-700">해당 주에 이미 휴가 신청이 있습니다.</p>
+            <p className="text-sm text-amber-700">해당 주에 이미 결석 신청이 있습니다.</p>
           </div>
         )}
 
         <div className="space-y-4">
-          {/* 신청 날짜 */}
+          {/* 결석 날짜 */}
           <div>
-            <label className="label">신청 날짜 (휴가 날짜)</label>
+            <label className="label">결석 날짜</label>
             <div className="relative">
               <button
                 type="button"
-                onClick={() => { setShowVacationCal(v => !v); setShowMakeupCal(false); }}
+                onClick={() => setShowCal(v => !v)}
                 className="flex items-center gap-2 w-full input-field text-left"
               >
                 <CalendarDays className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                <span>{formatDate(vacationDate)}</span>
+                <span>{formatDate(absenceDate)}</span>
               </button>
-              {showVacationCal && (
+              {showCal && (
                 <CalendarPopup
-                  selectedDate={vacationDate}
+                  selectedDate={absenceDate}
                   today={today}
                   allowFuture
                   minDate={tomorrow}
                   onSelect={d => {
-                    setVacationDate(d);
-                    setShowVacationCal(false);
+                    setAbsenceDate(d);
+                    setShowCal(false);
                   }}
-                  onClose={() => setShowVacationCal(false)}
+                  onClose={() => setShowCal(false)}
                 />
               )}
             </div>
@@ -151,7 +140,7 @@ export default function VacationRequestTab({ currentUser }: Props) {
 
           {/* 신청 사유 */}
           <div>
-            <label className="label">신청 사유</label>
+            <label className="label">결석 사유</label>
             <div className="flex flex-wrap gap-2">
               {REASONS.map(r => (
                 <button
@@ -176,34 +165,6 @@ export default function VacationRequestTab({ currentUser }: Props) {
                 onChange={e => setCustomReason(e.target.value)}
               />
             )}
-          </div>
-
-          {/* 보강 날짜 */}
-          <div>
-            <label className="label">보강 날짜</label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => { setShowMakeupCal(v => !v); setShowVacationCal(false); }}
-                className="flex items-center gap-2 w-full input-field text-left"
-              >
-                <CalendarDays className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                <span>{formatDate(makeupDate)}</span>
-              </button>
-              {showMakeupCal && (
-                <CalendarPopup
-                  selectedDate={makeupDate}
-                  today={today}
-                  allowFuture
-                  minDate={tomorrow}
-                  onSelect={d => {
-                    setMakeupDate(d);
-                    setShowMakeupCal(false);
-                  }}
-                  onClose={() => setShowMakeupCal(false)}
-                />
-              )}
-            </div>
           </div>
 
           <div className="flex justify-end">
@@ -234,7 +195,6 @@ export default function VacationRequestTab({ currentUser }: Props) {
                 <p className="text-xs text-gray-500">
                   사유: {req.reason === '기타' ? req.customReason || '기타' : req.reason}
                 </p>
-                <p className="text-xs text-gray-500">보강: {formatDate(req.makeupDate)}</p>
               </div>
             ))}
           </div>
@@ -244,7 +204,7 @@ export default function VacationRequestTab({ currentUser }: Props) {
       {/* 관리자: 대기중 신청 목록 */}
       {isPrivileged(currentUser) && pendingOthers.length > 0 && (
         <div className="card border border-gray-100">
-          <p className="section-title">대기중 신청 목록</p>
+          <p className="section-title">대기중 결석 신청</p>
           <div className="space-y-3">
             {pendingOthers.map(req => (
               <div key={req.id} className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 space-y-2">
@@ -265,11 +225,10 @@ export default function VacationRequestTab({ currentUser }: Props) {
                     </button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">휴가: {formatDate(req.vacationDate)}</p>
+                <p className="text-xs text-gray-600">결석: {formatDate(req.vacationDate)}</p>
                 <p className="text-xs text-gray-600">
                   사유: {req.reason === '기타' ? req.customReason || '기타' : req.reason}
                 </p>
-                <p className="text-xs text-gray-600">보강: {formatDate(req.makeupDate)}</p>
               </div>
             ))}
           </div>
