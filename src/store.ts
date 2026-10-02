@@ -17,7 +17,8 @@ import type {
   AttendanceCheckIn,
 } from './types';
 
-const ADMIN_USERNAME = '서연';
+const ADMIN_USERNAME = '박민성';
+const SUBADMIN_USERNAME = '서연';
 
 const defaultData: AppData = {
   users: [],
@@ -97,6 +98,12 @@ function bootstrapAdmin(): void {
   if (adminUser && adminUser.role !== 'admin') {
     adminUser.role = 'admin';
     persist('users', adminUser.id, adminUser);
+    saveCache();
+  }
+  const subadminUser = mem.users.find(u => u.username === SUBADMIN_USERNAME);
+  if (subadminUser && subadminUser.role !== 'subadmin') {
+    subadminUser.role = 'subadmin';
+    persist('users', subadminUser.id, subadminUser);
     saveCache();
   }
   // 테스트 계정은 자동으로 일지 제출 면제 처리
