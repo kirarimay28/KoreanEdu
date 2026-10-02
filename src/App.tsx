@@ -403,7 +403,7 @@ export default function App() {
 
             {/* Menu items */}
             <div className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-              {MENU_TABS.filter(tab => !tab.adminOnly || currentUser.role === 'admin').map(tab => {
+              {MENU_TABS.filter(tab => !tab.adminOnly || currentUser.role === 'admin' || currentUser.role === 'subadmin').map(tab => {
                 const Icon = tab.icon;
                 const count = tab.id === 'resource' ? pendingCount : 0;
                 const isActive = activeTab === tab.id;
