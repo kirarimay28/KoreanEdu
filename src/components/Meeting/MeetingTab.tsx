@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, ChevronLeft, ChevronDown, ChevronUp, Trash2, Edit3, FileText, X } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronDown, ChevronUp, Trash2, Edit3, FileText, X, Sparkles, Loader2 } from 'lucide-react';
 import type { User, MeetingRecord, MeetingRuleChange, MeetingRuleCategory } from '../../types';
 import {
   subscribeMeetingRecords,
@@ -12,22 +12,20 @@ interface Props {
   currentUser: User;
 }
 
-const CATEGORIES: { key: MeetingRuleCategory; label: string; color: string; dot: string }[] = [
-  { key: 'new',      label: '신규 규정',    color: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500' },
-  { key: 'modified', label: '수정된 규정',  color: 'bg-amber-50 text-amber-800 border-amber-200',       dot: 'bg-amber-500' },
-  { key: 'removed',  label: '삭제된 규정',  color: 'bg-red-50 text-red-800 border-red-200',             dot: 'bg-red-500' },
-  { key: 'other',    label: '기타 결정사항', color: 'bg-blue-50 text-blue-800 border-blue-200',          dot: 'bg-blue-500' },
+const CATEGORIES: { key: MeetingRuleCategory; label: string; color: string; dot: string; inputBg: string }[] = [
+  { key: 'new',      label: '신규 규정',    color: 'bg-emerald-50 text-emerald-800 border-emerald-200', dot: 'bg-emerald-500', inputBg: 'focus:ring-emerald-200' },
+  { key: 'modified', label: '수정된 규정',  color: 'bg-amber-50 text-amber-800 border-amber-200',       dot: 'bg-amber-500',   inputBg: 'focus:ring-amber-200' },
+  { key: 'removed',  label: '삭제된 규정',  color: 'bg-red-50 text-red-800 border-red-200',             dot: 'bg-red-500',     inputBg: 'focus:ring-red-200' },
+  { key: 'other',    label: '기타 결정사항', color: 'bg-blue-50 text-blue-800 border-blue-200',          dot: 'bg-blue-500',    inputBg: 'focus:ring-blue-200' },
 ];
 
 function getKSTToday() {
   return new Date(new Date().getTime() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
-
 function formatDate(d: string) {
   const dt = new Date(d + 'T00:00:00');
   return `${dt.getFullYear()}년 ${dt.getMonth() + 1}월 ${dt.getDate()}일`;
 }
-
 function isEditor(user: User) {
   return user.role === 'admin' || user.role === 'subadmin' || user.isTreasurer;
 }
@@ -37,18 +35,19 @@ interface FormState {
   date: string;
   transcript: string;
   ruleChanges: MeetingRuleChange[];
+  analyzed: boolean;
 }
 
 function emptyForm(): FormState {
-  return { roundNumber: '', date: getKSTToday(), transcript: '', ruleChanges: [] };
+  return { roundNumber: '', date: getKSTToday(), transcript: '', ruleChanges: [], analyzed: false };
 }
-
 function recordToForm(r: MeetingRecord): FormState {
   return {
     roundNumber: String(r.roundNumber),
     date: r.date,
     transcript: r.transcript,
     ruleChanges: r.ruleChanges.map(rc => ({ ...rc })),
+    analyzed: r.ruleChanges.length > 0,
   };
 }
 
@@ -56,9 +55,11 @@ export default function MeetingTab({ currentUser }: Props) {
   const [records, setRecords] = useState<MeetingRecord[]>(() => getMeetingRecords());
   const [view, setView] = useState<'list' | 'detail' | 'form'>('list');
   const [selected, setSelected] = useState<MeetingRecord | null>(null);
-  const [editing, setEditing] = useState<MeetingRecord | null>(null); // null = new
+  const [editing, setEditing] = useState<MeetingRecord | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState('');
 
   useEffect(() => {
     const unsub = subscribeMeetingRecords(() => setRecords(getMeetingRecords()));
@@ -72,13 +73,11 @@ export default function MeetingTab({ currentUser }: Props) {
     setForm(emptyForm());
     setView('form');
   }
-
   function openEdit(r: MeetingRecord) {
     setEditing(r);
     setForm(recordToForm(r));
     setView('form');
   }
-
   function openDetail(r: MeetingRecord) {
     setSelected(r);
     setTranscriptOpen(false);
@@ -91,23 +90,44 @@ export default function MeetingTab({ currentUser }: Props) {
       ruleChanges: [...f.ruleChanges, { id: crypto.randomUUID(), category: cat, content: '' }],
     }));
   }
-
   function updateRuleChange(id: string, content: string) {
-    setForm(f => ({
-      ...f,
-      ruleChanges: f.ruleChanges.map(rc => rc.id === id ? { ...rc, content } : rc),
-    }));
+    setForm(f => ({ ...f, ruleChanges: f.ruleChanges.map(rc => rc.id === id ? { ...rc, content } : rc) }));
   }
-
   function removeRuleChange(id: string) {
     setForm(f => ({ ...f, ruleChanges: f.ruleChanges.filter(rc => rc.id !== id) }));
+  }
+
+  async function handleAnalyze() {
+    if (!form.transcript.trim()) return;
+    setAnalyzing(true);
+    setAnalyzeError('');
+    try {
+      const res = await fetch('/api/analyze-meeting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: form.transcript }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? '분석 실패');
+
+      const newChanges: MeetingRuleChange[] = [
+        ...(data.new ?? []).map((c: string) => ({ id: crypto.randomUUID(), category: 'new' as MeetingRuleCategory, content: c })),
+        ...(data.modified ?? []).map((c: string) => ({ id: crypto.randomUUID(), category: 'modified' as MeetingRuleCategory, content: c })),
+        ...(data.removed ?? []).map((c: string) => ({ id: crypto.randomUUID(), category: 'removed' as MeetingRuleCategory, content: c })),
+        ...(data.other ?? []).map((c: string) => ({ id: crypto.randomUUID(), category: 'other' as MeetingRuleCategory, content: c })),
+      ];
+      setForm(f => ({ ...f, ruleChanges: newChanges, analyzed: true }));
+    } catch (e) {
+      setAnalyzeError(e instanceof Error ? e.message : '분석 중 오류가 발생했습니다.');
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   function handleSave() {
     const round = parseInt(form.roundNumber, 10);
     if (isNaN(round) || round < 1) { alert('회차 번호를 올바르게 입력해 주세요.'); return; }
     if (!form.date) { alert('날짜를 입력해 주세요.'); return; }
-
     const now = new Date().toISOString();
     const record: MeetingRecord = {
       id: editing?.id ?? crypto.randomUUID(),
@@ -132,20 +152,17 @@ export default function MeetingTab({ currentUser }: Props) {
     setView('list');
   }
 
-  // ── List view ─────────────────────────────────────────────────────────────
+  // ── List ────────────────────────────────────────────────────────────────
   if (view === 'list') {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">전체 회의록</p>
           {canEdit && (
-            <button
-              onClick={openNew}
+            <button onClick={openNew}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-white transition"
-              style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 8px rgba(222,78,128,0.25)' }}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              새 회의록
+              style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 8px rgba(222,78,128,0.25)' }}>
+              <Plus className="w-3.5 h-3.5" />새 회의록
             </button>
           )}
         </div>
@@ -158,16 +175,14 @@ export default function MeetingTab({ currentUser }: Props) {
         ) : (
           <div className="space-y-3">
             {records.map(r => {
-              const newCount = r.ruleChanges.filter(rc => rc.category === 'new').length;
-              const modCount = r.ruleChanges.filter(rc => rc.category === 'modified').length;
-              const remCount = r.ruleChanges.filter(rc => rc.category === 'removed').length;
-              const othCount = r.ruleChanges.filter(rc => rc.category === 'other').length;
+              const counts = {
+                new: r.ruleChanges.filter(rc => rc.category === 'new').length,
+                modified: r.ruleChanges.filter(rc => rc.category === 'modified').length,
+                removed: r.ruleChanges.filter(rc => rc.category === 'removed').length,
+                other: r.ruleChanges.filter(rc => rc.category === 'other').length,
+              };
               return (
-                <button
-                  key={r.id}
-                  onClick={() => openDetail(r)}
-                  className="w-full card text-left hover:shadow-md transition-shadow"
-                >
+                <button key={r.id} onClick={() => openDetail(r)} className="w-full card text-left hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-bold text-gray-800">{r.roundNumber}회차 회의록</p>
@@ -176,10 +191,10 @@ export default function MeetingTab({ currentUser }: Props) {
                     <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    {newCount > 0 && <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">신규 {newCount}</span>}
-                    {modCount > 0 && <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">수정 {modCount}</span>}
-                    {remCount > 0 && <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">삭제 {remCount}</span>}
-                    {othCount > 0 && <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">기타 {othCount}</span>}
+                    {counts.new > 0      && <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">신규 {counts.new}</span>}
+                    {counts.modified > 0 && <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">수정 {counts.modified}</span>}
+                    {counts.removed > 0  && <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">삭제 {counts.removed}</span>}
+                    {counts.other > 0    && <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">기타 {counts.other}</span>}
                     {r.ruleChanges.length === 0 && <span className="text-[10px] text-gray-400">변경사항 없음</span>}
                   </div>
                 </button>
@@ -191,42 +206,31 @@ export default function MeetingTab({ currentUser }: Props) {
     );
   }
 
-  // ── Detail view ───────────────────────────────────────────────────────────
+  // ── Detail ───────────────────────────────────────────────────────────────
   if (view === 'detail' && selected) {
     const r = records.find(x => x.id === selected.id) ?? selected;
     return (
       <div className="space-y-4">
-        {/* Back */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => setView('list')}
+          <button onClick={() => setView('list')}
             className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            목록으로
+            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}>
+            <ChevronLeft className="w-4 h-4" />목록으로
           </button>
           {canEdit && (
             <div className="flex gap-2">
-              <button
-                onClick={() => openEdit(r)}
-                className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                수정
+              <button onClick={() => openEdit(r)}
+                className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition">
+                <Edit3 className="w-3.5 h-3.5" />수정
               </button>
-              <button
-                onClick={() => handleDelete(r.id)}
-                className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                삭제
+              <button onClick={() => handleDelete(r.id)}
+                className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition">
+                <Trash2 className="w-3.5 h-3.5" />삭제
               </button>
             </div>
           )}
         </div>
 
-        {/* Header card */}
         <div className="card">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -240,13 +244,9 @@ export default function MeetingTab({ currentUser }: Props) {
           </div>
         </div>
 
-        {/* Transcript */}
         {r.transcript && (
           <div className="card">
-            <button
-              onClick={() => setTranscriptOpen(v => !v)}
-              className="w-full flex items-center justify-between gap-2"
-            >
+            <button onClick={() => setTranscriptOpen(v => !v)} className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-gray-400" />
                 <span className="text-sm font-semibold text-gray-700">회의 스크립트</span>
@@ -261,7 +261,6 @@ export default function MeetingTab({ currentUser }: Props) {
           </div>
         )}
 
-        {/* Rule changes by category */}
         {CATEGORIES.map(cat => {
           const items = r.ruleChanges.filter(rc => rc.category === cat.key);
           return (
@@ -270,15 +269,14 @@ export default function MeetingTab({ currentUser }: Props) {
                 <span className={`w-2 h-2 rounded-full ${cat.dot}`} />
                 <p className="text-xs font-bold">{cat.label}</p>
               </div>
-              {items.length === 0 ? (
-                <p className="text-xs opacity-50 pl-4">해당 없음</p>
-              ) : (
-                <ul className="space-y-1 pl-4">
-                  {items.map(rc => (
-                    <li key={rc.id} className="text-xs leading-relaxed before:content-['•'] before:mr-1.5">{rc.content}</li>
-                  ))}
-                </ul>
-              )}
+              {items.length === 0
+                ? <p className="text-xs opacity-50 pl-4">해당 없음</p>
+                : <ul className="space-y-1 pl-4">
+                    {items.map(rc => (
+                      <li key={rc.id} className="text-xs leading-relaxed before:content-['•'] before:mr-1.5">{rc.content}</li>
+                    ))}
+                  </ul>
+              }
             </div>
           );
         })}
@@ -286,111 +284,115 @@ export default function MeetingTab({ currentUser }: Props) {
     );
   }
 
-  // ── Form view ─────────────────────────────────────────────────────────────
+  // ── Form ─────────────────────────────────────────────────────────────────
   if (view === 'form') {
+    const hasTranscript = form.transcript.trim().length > 0;
     return (
       <div className="space-y-4">
-        {/* Back */}
-        <button
-          onClick={() => setView(selected ? 'detail' : 'list')}
+        <button onClick={() => setView(selected ? 'detail' : 'list')}
           className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium px-3 py-1.5 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}
-        >
-          <ChevronLeft className="w-4 h-4" />
-          취소
+          style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}>
+          <ChevronLeft className="w-4 h-4" />취소
         </button>
 
         <p className="text-sm font-bold text-gray-800">{editing ? '회의록 수정' : '새 회의록 작성'}</p>
 
-        {/* Basic info */}
+        {/* 기본 정보 */}
         <div className="card space-y-3">
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <label className="text-xs font-semibold text-gray-500 mb-1 block">회차 번호</label>
               <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  value={form.roundNumber}
+                <input type="number" min={1} value={form.roundNumber}
                   onChange={e => setForm(f => ({ ...f, roundNumber: e.target.value }))}
                   placeholder="1"
-                  className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary-200"
-                />
+                  className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary-200" />
                 <span className="text-sm text-gray-500 font-medium">회차</span>
               </div>
             </div>
             <div className="flex-1">
               <label className="text-xs font-semibold text-gray-500 mb-1 block">날짜</label>
-              <input
-                type="date"
-                value={form.date}
+              <input type="date" value={form.date}
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
-              />
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200" />
             </div>
           </div>
         </div>
 
-        {/* Transcript */}
-        <div className="card space-y-2">
-          <label className="text-xs font-semibold text-gray-500 block">회의 스크립트 (선택)</label>
+        {/* 스크립트 입력 + AI 분석 */}
+        <div className="card space-y-3">
+          <label className="text-xs font-semibold text-gray-500 block">회의 스크립트</label>
           <textarea
             value={form.transcript}
-            onChange={e => setForm(f => ({ ...f, transcript: e.target.value }))}
-            placeholder="회의 녹음 스크립트를 붙여넣거나 직접 입력하세요..."
-            rows={6}
+            onChange={e => setForm(f => ({ ...f, transcript: e.target.value, analyzed: false }))}
+            placeholder="회의 녹음 스크립트를 붙여넣으세요..."
+            rows={7}
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary-200 resize-none"
           />
+
+          {analyzeError && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{analyzeError}</p>
+          )}
+
+          <button
+            onClick={handleAnalyze}
+            disabled={!hasTranscript || analyzing}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-40"
+            style={hasTranscript && !analyzing
+              ? { background: 'linear-gradient(135deg,#e0d0ff,#c084fc)', color: '#5b21b6', boxShadow: '0 2px 8px rgba(192,132,252,0.3)' }
+              : { background: '#f3f4f6', color: '#9ca3af' }}
+          >
+            {analyzing
+              ? <><Loader2 className="w-4 h-4 animate-spin" />분석 중...</>
+              : <><Sparkles className="w-4 h-4" />{form.analyzed ? 'AI 재분석' : 'AI로 규정 변경사항 자동 분류'}</>
+            }
+          </button>
         </div>
 
-        {/* Rule changes per category */}
-        {CATEGORIES.map(cat => {
-          const items = form.ruleChanges.filter(rc => rc.category === cat.key);
-          return (
-            <div key={cat.key} className="card space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${cat.dot}`} />
-                  <p className="text-xs font-bold text-gray-700">{cat.label}</p>
-                </div>
-                <button
-                  onClick={() => addRuleChange(cat.key)}
-                  className="flex items-center gap-1 text-[10px] font-semibold text-primary-600 hover:text-primary-800 transition px-2 py-1 bg-primary-50 rounded-lg"
-                >
-                  <Plus className="w-3 h-3" />
-                  추가
-                </button>
-              </div>
-              {items.length === 0 && (
-                <p className="text-[11px] text-gray-400 pl-4">항목 없음</p>
-              )}
-              {items.map(rc => (
-                <div key={rc.id} className="flex items-start gap-2">
-                  <input
-                    type="text"
-                    value={rc.content}
-                    onChange={e => updateRuleChange(rc.id, e.target.value)}
-                    placeholder="내용을 입력하세요"
-                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary-200"
-                  />
-                  <button
-                    onClick={() => removeRuleChange(rc.id)}
-                    className="mt-1 text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
+        {/* 분석 결과 (편집 가능) */}
+        {(form.analyzed || form.ruleChanges.length > 0) && (
+          <>
+            <div className="flex items-center gap-2 px-1">
+              <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+              <p className="text-xs font-semibold text-violet-600">AI 분류 결과 — 수정 후 저장하세요</p>
             </div>
-          );
-        })}
+            {CATEGORIES.map(cat => {
+              const items = form.ruleChanges.filter(rc => rc.category === cat.key);
+              return (
+                <div key={cat.key} className="card space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${cat.dot}`} />
+                      <p className="text-xs font-bold text-gray-700">{cat.label}</p>
+                    </div>
+                    <button onClick={() => addRuleChange(cat.key)}
+                      className="flex items-center gap-1 text-[10px] font-semibold text-primary-600 hover:text-primary-800 px-2 py-1 bg-primary-50 rounded-lg transition">
+                      <Plus className="w-3 h-3" />추가
+                    </button>
+                  </div>
+                  {items.length === 0 && <p className="text-[11px] text-gray-400 pl-4">해당 없음</p>}
+                  {items.map(rc => (
+                    <div key={rc.id} className="flex items-start gap-2">
+                      <input type="text" value={rc.content}
+                        onChange={e => updateRuleChange(rc.id, e.target.value)}
+                        placeholder="내용을 입력하세요"
+                        className={`flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 ${cat.inputBg}`} />
+                      <button onClick={() => removeRuleChange(rc.id)}
+                        className="mt-1 text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </>
+        )}
 
-        {/* Save */}
-        <button
-          onClick={handleSave}
+        {/* 저장 */}
+        <button onClick={handleSave}
           className="w-full py-3 rounded-2xl text-sm font-bold text-white transition"
-          style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 12px rgba(222,78,128,0.25)' }}
-        >
+          style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 12px rgba(222,78,128,0.25)' }}>
           {editing ? '수정 완료' : '회의록 저장'}
         </button>
       </div>
