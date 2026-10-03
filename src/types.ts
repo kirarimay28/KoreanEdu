@@ -17,6 +17,7 @@ export interface User {
   role?: UserRole;
   restrictions?: UserRestrictions;
   avatarUrl?: string;
+  isTreasurer?: boolean;
 }
 
 export type ExamStatus = 'O' | '△' | 'X' | '';
@@ -440,6 +441,27 @@ export interface AppData {
   examPeriod: ExamPeriod | null;
   examStudySchedules: ExamStudySchedule[];
   attendanceCheckIns: AttendanceCheckIn[];
+  meetingRecords: MeetingRecord[];
+}
+
+export type MeetingRuleCategory = 'new' | 'modified' | 'removed' | 'other';
+
+export interface MeetingRuleChange {
+  id: string;
+  category: MeetingRuleCategory;
+  content: string;
+}
+
+export interface MeetingRecord {
+  id: string;
+  roundNumber: number;
+  date: string;
+  transcript: string;
+  ruleChanges: MeetingRuleChange[];
+  createdById: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface LibraryItem {
@@ -480,7 +502,7 @@ export interface AssignmentCheck {
   updatedAt: string;
 }
 
-export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu' | 'medieval' | 'examperiod' | 'adminmanual';
+export type MainTab = 'study' | 'personal' | 'reflection' | 'fine' | 'wallet' | 'qna' | 'calendar' | 'attendance' | 'resource' | 'member' | 'vacation' | 'vaclist' | 'messages' | 'library' | 'tutorial' | 'assignment' | 'settings' | 'vocab_study' | 'curriculum' | 'edu' | 'medieval' | 'examperiod' | 'adminmanual' | 'meeting';
 export type StudySubTab = 'vocab' | 'exam';
 
 export interface VocabExamRecord {

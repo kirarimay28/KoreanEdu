@@ -3,8 +3,9 @@ import type { User, Warning, UserRestrictions } from '../../types';
 import {
   getUsers, getAttendanceEntries, setUserRole, deleteUser,
   issueWarning, getWarningsForUser, clearWarning, setUserRestrictions,
+  setUserTreasurer,
 } from '../../store';
-import { UserCircle2, CalendarCheck, Trophy, Star, Shield, ShieldCheck, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { UserCircle2, CalendarCheck, Trophy, Star, Shield, ShieldCheck, Trash2, AlertTriangle, X, ChevronDown, ChevronUp, Lock, Wallet } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
@@ -71,6 +72,11 @@ function MemberCard({ user, rank, currentUser, onAction }: {
     onAction();
   }
 
+  function handleToggleTreasurer() {
+    setUserTreasurer(user.id, !user.isTreasurer);
+    onAction();
+  }
+
   function handleDelete() {
     if (!window.confirm(`'${user.username}' 멤버를 탈퇴 처리할까요?\n해당 계정으로 더 이상 로그인할 수 없습니다.`)) return;
     deleteUser(user.id);
@@ -121,6 +127,11 @@ function MemberCard({ user, rank, currentUser, onAction }: {
             <NameWithCrown name={user.username} className="font-semibold text-gray-800 text-sm" showAvatar avatarSize="md" />
             {isMe && <span className="text-[10px] font-semibold bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">나</span>}
             <RoleBadge role={user.role} />
+            {user.isTreasurer && (
+              <span className="text-[10px] font-bold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                <Wallet className="w-2.5 h-2.5" />총무
+              </span>
+            )}
             {warnings.length > 0 && (
               <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                 <AlertTriangle className="w-2.5 h-2.5" />경고 {warnings.length}
@@ -185,6 +196,19 @@ function MemberCard({ user, rank, currentUser, onAction }: {
               >
                 <Shield className="w-3.5 h-3.5" />
                 {user.role === 'subadmin' ? '부방장 해제' : '부방장 지정'}
+              </button>
+            )}
+            {isPrivileged && user.role !== 'admin' && (
+              <button
+                onClick={handleToggleTreasurer}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl transition ${
+                  user.isTreasurer
+                    ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                {user.isTreasurer ? '총무 해제' : '총무 지정'}
               </button>
             )}
             <button

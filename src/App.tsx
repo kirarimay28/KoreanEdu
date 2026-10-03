@@ -23,11 +23,12 @@ import VocabStudyTab from './components/Study/VocabStudyTab';
 import MedievalTab from './components/Medieval/MedievalTab';
 import ExamPeriodTab from './components/ExamPeriod/ExamPeriodTab';
 import AdminManualTab from './components/Admin/AdminManualTab';
+import MeetingTab from './components/Meeting/MeetingTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown, NotebookPen,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
@@ -64,6 +65,7 @@ interface MenuTabDef {
   iconBg: string;
   iconColor: string;
   adminOnly?: boolean;
+  treasurerVisible?: boolean; // 방장+부방장+총무 열람 가능
 }
 
 const MENU_TABS: MenuTabDef[] = [
@@ -81,7 +83,8 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'edu',        label: '국교론',   icon: ClipboardList,  iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
   { id: 'medieval',    label: '중세국어', icon: Scroll,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
   { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
-  { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown, iconBg: 'bg-rose-50', iconColor: 'text-rose-600', adminOnly: true },
+  { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-rose-50',   iconColor: 'text-rose-600',   adminOnly: true },
+  { id: 'meeting',     label: '회의록',     icon: NotebookPen,  iconBg: 'bg-violet-50', iconColor: 'text-violet-600', treasurerVisible: true },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
 ];
 
@@ -403,7 +406,12 @@ export default function App() {
 
             {/* Menu items */}
             <div className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-              {MENU_TABS.filter(tab => !tab.adminOnly || currentUser.role === 'admin' || currentUser.role === 'subadmin').map(tab => {
+              {MENU_TABS.filter(tab => {
+                const isPriv = currentUser.role === 'admin' || currentUser.role === 'subadmin';
+                if (tab.adminOnly && !isPriv) return false;
+                if (tab.treasurerVisible && !isPriv && !currentUser.isTreasurer) return false;
+                return true;
+              }).map(tab => {
                 const Icon = tab.icon;
                 const count = tab.id === 'resource' ? pendingCount : 0;
                 const isActive = activeTab === tab.id;
@@ -522,6 +530,7 @@ export default function App() {
               {activeTab === 'medieval'    && <MedievalTab currentUser={currentUser} />}
               {activeTab === 'examperiod' && <ExamPeriodTab currentUser={currentUser} />}
               {activeTab === 'adminmanual' && <AdminManualTab />}
+              {activeTab === 'meeting'    && <MeetingTab currentUser={currentUser} />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab

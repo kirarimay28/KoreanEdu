@@ -15,6 +15,7 @@ import type {
   MedievalLesson, MedievalBlankExam,
   ExamPeriod, ExamStudySchedule,
   AttendanceCheckIn,
+  MeetingRecord,
 } from './types';
 
 const ADMIN_USERNAME = '박민성';
@@ -61,6 +62,7 @@ const defaultData: AppData = {
   examPeriod: null,
   examStudySchedules: [],
   attendanceCheckIns: [],
+  meetingRecords: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -124,7 +126,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer, ec, erb, eed] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer, ec, erb, eed, mr] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -160,6 +162,7 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('eduChapters'),
     safeGet('eduReaderBookmarks'),
     safeGet('eduExamDrafts'),
+    safeGet('meetingRecords'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -213,6 +216,7 @@ async function fetchFromFirestore(): Promise<void> {
     examPeriod:               mem.examPeriod,
     examStudySchedules:       mem.examStudySchedules,
     attendanceCheckIns:       mem.attendanceCheckIns,
+    meetingRecords:           mr.docs.map(d => d.data() as MeetingRecord),
   };
   bootstrapAdmin();
   saveCache();
@@ -1546,4 +1550,44 @@ export function confirmAttendanceCheckIn(id: string, confirmerId: string, confir
   persist('attendanceCheckIns', id, checkIn);
   markAttendance(checkIn.date, checkIn.userId, checkIn.username, 'regular');
   saveCache();
+}
+
+// ── Meeting Records ────────────────────────────────────────────────────────
+
+export function subscribeMeetingRecords(callback: () => void): () => void {
+  return onSnapshot(
+    collection(db, 'meetingRecords'),
+    snap => { mem.meetingRecords = snap.docs.map(d => d.data() as MeetingRecord); saveCache(); callback(); },
+    err => console.warn('meetingRecords listener error:', err)
+  );
+}
+
+export function getMeetingRecords(): MeetingRecord[] {
+  return [...mem.meetingRecords].sort((a, b) => b.roundNumber - a.roundNumber);
+}
+
+export function saveMeetingRecord(record: MeetingRecord): void {
+  const idx = mem.meetingRecords.findIndex(r => r.id === record.id);
+  if (idx >= 0) mem.meetingRecords[idx] = record;
+  else mem.meetingRecords.push(record);
+  persist('meetingRecords', record.id, record);
+  saveCache();
+}
+
+export function deleteMeetingRecord(id: string): void {
+  mem.meetingRecords = mem.meetingRecords.filter(r => r.id !== id);
+  remove('meetingRecords', id);
+  saveCache();
+}
+
+// ── Treasurer ─────────────────────────────────────────────────────────────
+
+export function setUserTreasurer(userId: string, isTreasurer: boolean): void {
+  const user = mem.users.find(u => u.id === userId);
+  if (user) {
+    if (isTreasurer) user.isTreasurer = true;
+    else delete user.isTreasurer;
+    persist('users', userId, user);
+    saveCache();
+  }
 }
