@@ -198,7 +198,7 @@ function MemberCard({ user, rank, currentUser, onAction }: {
                 {user.role === 'subadmin' ? '부방장 해제' : '부방장 지정'}
               </button>
             )}
-            {isPrivileged && user.role !== 'admin' && (
+            {isAdmin && user.role !== 'admin' && (
               <button
                 onClick={handleToggleTreasurer}
                 className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl transition ${
