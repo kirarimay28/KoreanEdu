@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { User, Announcement } from '../../types';
-import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, getAllUserIds } from '../../store';
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, getAllUserIds, subscribeAnnouncements } from '../../store';
 import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check, Share2 } from 'lucide-react';
 import { shareAnnouncement } from '../../kakao';
 import { sendPush } from '../../notifications';
@@ -17,6 +17,10 @@ function formatDate(iso: string): string {
 export default function AnnouncementBar({ currentUser }: Props) {
   const [announcements, setAnnouncements] = useState<Announcement[]>(getAnnouncements);
   const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    return subscribeAnnouncements(() => setAnnouncements(getAnnouncements()));
+  }, []);
   const [writing, setWriting] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftContent, setDraftContent] = useState('');

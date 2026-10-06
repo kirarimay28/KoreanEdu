@@ -533,6 +533,14 @@ export function completeResourceRequest(id: string): void {
 }
 
 // ── Announcements ────────────────────────────────────────
+export function subscribeAnnouncements(callback: () => void): () => void {
+  return onSnapshot(
+    collection(db, 'announcements'),
+    snap => { mem.announcements = snap.docs.map(d => d.data() as Announcement); saveCache(); callback(); },
+    err => console.warn('announcements listener error:', err)
+  );
+}
+
 export function getAnnouncements(): Announcement[] {
   return mem.announcements.slice().sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
