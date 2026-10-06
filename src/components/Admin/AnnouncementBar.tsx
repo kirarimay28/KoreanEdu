@@ -25,7 +25,7 @@ export default function AnnouncementBar({ currentUser }: Props) {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
-  const isAdmin = currentUser.role === 'admin';
+  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'subadmin';
   const canWrite = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
   function reload() { setAnnouncements(getAnnouncements()); }
