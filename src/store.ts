@@ -218,6 +218,13 @@ async function fetchFromFirestore(): Promise<void> {
     attendanceCheckIns:       mem.attendanceCheckIns,
     meetingRecords:           mr.docs.map(d => d.data() as MeetingRecord),
   };
+  for (const d of cfg.docs) {
+    const tagData = d.data() as { tags?: string[] };
+    if (Array.isArray(tagData.tags)) {
+      (mem as unknown as Record<string, unknown>)['libraryTags'] = tagData.tags;
+      break;
+    }
+  }
   bootstrapAdmin();
   saveCache();
 }
@@ -787,6 +794,20 @@ export function createCalendarEvent(event: CalendarEvent): void {
 export function deleteCalendarEvent(id: string): void {
   mem.calendarEvents = mem.calendarEvents.filter(e => e.id !== id);
   remove('calendarEvents', id);
+  saveCache();
+}
+
+// ── Library Tags ─────────────────────────────────────────────────
+const DEFAULT_LIBRARY_TAGS = ['작품 목록', '어휘', '학습지', '기출 문제', '문법', '기타'];
+
+export function getLibraryTags(): string[] {
+  const stored = (mem as unknown as Record<string, unknown>)['libraryTags'] as string[] | undefined;
+  return stored && stored.length > 0 ? stored : DEFAULT_LIBRARY_TAGS.slice();
+}
+
+export function saveLibraryTags(tags: string[]): void {
+  (mem as unknown as Record<string, unknown>)['libraryTags'] = tags;
+  persist('appSettings', 'libraryTags', { tags });
   saveCache();
 }
 
