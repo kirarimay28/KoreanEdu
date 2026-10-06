@@ -3,6 +3,7 @@ import type { User, Message } from '../../types';
 import {
   getReceivedMessages, getSentMessages, sendMessage, markMessageRead, deleteMessage, getUsers, getUserByName,
 } from '../../store';
+import { sendPush } from '../../notifications';
 import { ChevronLeft, Send, Pencil, Trash2, MessageCircle } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 
@@ -103,15 +104,21 @@ export default function MessagesTab({ currentUser }: Props) {
     const recipient = allUsers.find(u => u.id === toId);
     if (!recipient) return;
 
+    const msgContent = input.trim();
     sendMessage({
       id: crypto.randomUUID(),
       senderId: currentUser.id,
       senderName: currentUser.username,
       receiverId: recipient.id,
       receiverName: recipient.username,
-      content: input.trim(),
+      content: msgContent,
       createdAt: new Date().toISOString(),
       read: false,
+    });
+    sendPush({
+      userIds: [recipient.id],
+      title: `✉️ ${currentUser.username}님의 쪽지`,
+      body: msgContent.length > 60 ? msgContent.slice(0, 60) + '…' : msgContent,
     });
 
     setInput('');

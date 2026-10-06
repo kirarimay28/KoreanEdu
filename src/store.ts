@@ -291,6 +291,14 @@ export function getUsers(): User[] {
   return mem.users;
 }
 
+export function getAllUserIds(): string[] {
+  return mem.users.map(u => u.id);
+}
+
+export function getPrivilegedUserIds(): string[] {
+  return mem.users.filter(u => u.role === 'admin' || u.role === 'subadmin').map(u => u.id);
+}
+
 export function getUserByName(username: string): User | undefined {
   return mem.users.find(u => u.username === username);
 }

@@ -4,6 +4,7 @@ import {
   getAttendanceEntries, getUsers, markAttendance, removeAttendance, getApprovedVacations,
   subscribeAttendanceData, getAttendanceCheckIns, submitAttendanceCheckIn, confirmAttendanceCheckIn,
 } from '../../store';
+import { sendPush } from '../../notifications';
 import { getKSTToday } from '../common/DateNavigator';
 import NameWithCrown from '../common/NameWithCrown';
 import type { User } from '../../types';
@@ -154,7 +155,14 @@ export default function AttendanceTab({ currentUser }: Props) {
                   avatarSize="sm"
                 />
                 <button
-                  onClick={() => confirmAttendanceCheckIn(ci.id, currentUser.id, currentUser.username)}
+                  onClick={() => {
+                    confirmAttendanceCheckIn(ci.id, currentUser.id, currentUser.username);
+                    sendPush({
+                      userIds: [ci.userId],
+                      title: '✅ 출석 확인',
+                      body: `${ci.date} 출석이 확인되었습니다.`,
+                    });
+                  }}
                   className="flex items-center gap-1 text-xs font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition"
                 >
                   <Check className="w-3 h-3" />

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { User, Announcement } from '../../types';
-import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store';
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, getAllUserIds } from '../../store';
 import { Megaphone, X, Plus, ChevronDown, ChevronUp, Pin, Pencil, Check, Share2 } from 'lucide-react';
 import { shareAnnouncement } from '../../kakao';
+import { sendPush } from '../../notifications';
 import NameWithCrown from '../common/NameWithCrown';
 interface Props {
   currentUser: User;
@@ -48,6 +49,11 @@ export default function AnnouncementBar({ currentUser }: Props) {
       authorName: currentUser.username,
     };
     createAnnouncement(ann);
+    sendPush({
+      userIds: getAllUserIds().filter(id => id !== currentUser.id),
+      title: '📢 새 공지사항',
+      body: ann.title,
+    });
     setDraftTitle('');
     setDraftContent('');
     setWriting(false);

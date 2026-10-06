@@ -8,6 +8,7 @@ import {
   reviewVacation,
   hasVacationInWeek,
 } from '../../store';
+import { sendPush } from '../../notifications';
 import { getKSTToday } from '../common/DateNavigator';
 import CalendarPopup from '../common/CalendarPopup';
 import { CalendarDays } from 'lucide-react';
@@ -73,7 +74,15 @@ export default function VacationRequestTab({ currentUser }: Props) {
   }
 
   function handleReview(id: string, status: '승인' | '거절') {
+    const req = requests.find(r => r.id === id);
     reviewVacation(id, status, currentUser.id, currentUser.username);
+    if (req) {
+      sendPush({
+        userIds: [req.requesterId],
+        title: '결석 신청 ' + status,
+        body: `${req.vacationDate} 결석 신청이 ${status}되었습니다.`,
+      });
+    }
     reload();
   }
 
