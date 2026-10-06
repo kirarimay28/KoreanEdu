@@ -204,37 +204,6 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
         })}
       </div>
 
-      {/* Push notifications */}
-      {notifStatus !== 'unsupported' && (
-        <div className="card flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notifStatus === 'granted' ? 'bg-primary-50' : 'bg-gray-100'}`}>
-            {notifStatus === 'granted'
-              ? <Bell className="w-4 h-4 text-primary-500" />
-              : <BellOff className="w-4 h-4 text-gray-400" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800">푸시 알림</p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {notifStatus === 'granted' ? '알림 켜짐 — 공지·쪽지·출석 등 수신 중' :
-               notifStatus === 'denied'  ? '브라우저에서 차단됨 — 브라우저 설정에서 허용해 주세요' :
-               '버튼을 눌러 알림을 허용하세요'}
-            </p>
-          </div>
-          {notifStatus === 'default' && (
-            <button
-              onClick={handleEnableNotifications}
-              disabled={notifLoading}
-              className="flex-shrink-0 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition"
-            >
-              {notifLoading ? '...' : '켜기'}
-            </button>
-          )}
-          {notifStatus === 'granted' && (
-            <span className="flex-shrink-0 text-xs text-primary-500 font-semibold">✓ 켜짐</span>
-          )}
-        </div>
-      )}
-
       {/* Delete account */}
       <button
         onClick={() => openSection('delete')}
@@ -337,6 +306,37 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
           >
             {section === 'username' ? '아이디 변경하기' : section === 'password' ? '비밀번호 변경하기' : '탈퇴하기'}
           </button>
+        </div>
+      )}
+
+      {/* Push notifications */}
+      {notifStatus !== 'unsupported' && (
+        <div className="card flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notifStatus === 'granted' ? 'bg-primary-50' : 'bg-gray-100'}`}>
+            {notifStatus === 'granted'
+              ? <Bell className="w-4 h-4 text-primary-500" />
+              : <BellOff className="w-4 h-4 text-gray-400" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-800">푸시 알림</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {notifStatus === 'granted' ? '알림 켜짐 — 공지·쪽지·출석 등 수신 중' :
+               notifStatus === 'denied'  ? '브라우저에서 차단됨 — 브라우저 설정에서 허용해 주세요' :
+               '버튼을 눌러 알림을 허용하세요'}
+            </p>
+          </div>
+          {notifStatus === 'default' && (
+            <button
+              onClick={handleEnableNotifications}
+              disabled={notifLoading}
+              className="flex-shrink-0 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition"
+            >
+              {notifLoading ? '...' : '켜기'}
+            </button>
+          )}
+          {notifStatus === 'granted' && (
+            <span className="flex-shrink-0 text-xs text-primary-500 font-semibold">✓ 켜짐</span>
+          )}
         </div>
       )}
     </div>
