@@ -5,6 +5,7 @@ import {
   getUsers, getFinesForWeek, addFine, markFinePaid, deleteFine,
   getStudySessionNotesForWeek, getStudyLogsForWeek,
 } from '../../store';
+import { sendPush } from '../../notifications';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props { currentUser: User }
@@ -107,51 +108,24 @@ export default function FineTab({ currentUser }: Props) {
       const amount = calcLatenessFine(arrivalTime);
       if (amount === 0) return alert('18:05 이전은 지각비가 없습니다.');
       const target = allUsers.find(u => u.id === targetUserId)!;
-      addFine({
-        type: '지각',
-        targetUserId: target.id,
-        targetUsername: target.username,
-        amount,
-        reason: `${arrivalTime} 도착${extraNote ? ` · ${extraNote}` : ''}`,
-        weekKey,
-        issuedAt: now,
-        issuedById: currentUser.id,
-        issuedByName: currentUser.username,
-        paid: false,
-      });
+      const reason1 = `${arrivalTime} 도착${extraNote ? ` · ${extraNote}` : ''}`;
+      addFine({ type: '지각', targetUserId: target.id, targetUsername: target.username, amount, reason: reason1, weekKey, issuedAt: now, issuedById: currentUser.id, issuedByName: currentUser.username, paid: false });
+      sendPush({ userIds: [target.id], title: '💸 벌금 부과', body: `지각비 ${formatWon(amount)} 부과 — ${reason1}` });
     } else if (fineType === '과제') {
       if (!targetUserId) return alert('멤버를 선택하세요.');
       const amount = workCount * 5000;
       const target = allUsers.find(u => u.id === targetUserId)!;
-      addFine({
-        type: '과제',
-        targetUserId: target.id,
-        targetUsername: target.username,
-        amount,
-        reason: `미수행 ${workCount}작품${extraNote ? ` · ${extraNote}` : ''}`,
-        weekKey,
-        issuedAt: now,
-        issuedById: currentUser.id,
-        issuedByName: currentUser.username,
-        paid: false,
-      });
+      const reason2 = `미수행 ${workCount}작품${extraNote ? ` · ${extraNote}` : ''}`;
+      addFine({ type: '과제', targetUserId: target.id, targetUsername: target.username, amount, reason: reason2, weekKey, issuedAt: now, issuedById: currentUser.id, issuedByName: currentUser.username, paid: false });
+      sendPush({ userIds: [target.id], title: '💸 벌금 부과', body: `과제 벌금 ${formatWon(amount)} 부과 — ${reason2}` });
     } else {
       // 일지
       if (logTargets.length === 0) return alert('대상 멤버를 선택하세요.');
       for (const uid of logTargets) {
         const target = allUsers.find(u => u.id === uid)!;
-        addFine({
-          type: '일지',
-          targetUserId: target.id,
-          targetUsername: target.username,
-          amount: 10000,
-          reason: `일지 미업로드${extraNote ? ` · ${extraNote}` : ''}`,
-          weekKey,
-          issuedAt: now,
-          issuedById: currentUser.id,
-          issuedByName: currentUser.username,
-          paid: false,
-        });
+        const reason3 = `일지 미업로드${extraNote ? ` · ${extraNote}` : ''}`;
+        addFine({ type: '일지', targetUserId: target.id, targetUsername: target.username, amount: 10000, reason: reason3, weekKey, issuedAt: now, issuedById: currentUser.id, issuedByName: currentUser.username, paid: false });
+        sendPush({ userIds: [target.id], title: '💸 벌금 부과', body: `일지 벌금 ${formatWon(10000)} 부과 — ${reason3}` });
       }
     }
     resetForm();

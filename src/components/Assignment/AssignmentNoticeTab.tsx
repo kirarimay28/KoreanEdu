@@ -7,6 +7,8 @@ import {
   getAssignmentNoticeConfig, saveAssignmentNoticeConfig,
 } from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
+import { sendPush } from '../../notifications';
+import { getAllUserIds } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
@@ -152,6 +154,7 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
       createdById: currentUser.id,
       createdByName: currentUser.username,
     });
+    sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📚 과제 공지', body: '새 과제가 등록되었습니다.' });
     setEditing(false);
     setTick(t => t + 1);
   }
