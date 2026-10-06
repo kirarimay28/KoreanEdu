@@ -44,6 +44,8 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [notifStatus, setNotifStatus] = useState<'granted' | 'denied' | 'default' | 'unsupported'>('default');
   const [notifLoading, setNotifLoading] = useState(false);
+  const [mySub, setMySub] = useState<PushSubscriptionJSON | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -54,10 +56,29 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   async function handleEnableNotifications() {
     if (notifLoading) return;
     setNotifLoading(true);
-    const ok = await registerAndSubscribe(currentUser.id);
+    const result = await registerAndSubscribe(currentUser.id);
     if ('Notification' in window) setNotifStatus(Notification.permission as 'granted' | 'denied' | 'default');
     setNotifLoading(false);
-    if (ok) setSuccess('알림이 활성화되었습니다.');
+    if (result.ok && result.subscription) {
+      setMySub(result.subscription);
+      setSuccess('알림 등록 완료! 아래 테스트 버튼으로 확인해 보세요.');
+    } else {
+      setError('알림 등록 실패: ' + (result.error ?? '알 수 없는 오류'));
+    }
+  }
+
+  async function handleTestNotification() {
+    if (!mySub || testLoading) return;
+    setTestLoading(true);
+    const res = await fetch('/api/send-push-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: mySub, title: '✅ 테스트 알림', body: '푸시 알림이 정상 작동합니다!' }),
+    });
+    const data = await res.json();
+    setTestLoading(false);
+    if (res.ok) setSuccess('테스트 알림 전송됨! 앱을 닫고 확인해 보세요.');
+    else setError('전송 실패: ' + JSON.stringify(data));
   }
 
   function resetForm() {
@@ -311,27 +332,38 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
 
       {/* Push notifications */}
       {notifStatus !== 'unsupported' && (
-        <div className="card flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notifStatus === 'granted' ? 'bg-primary-50' : 'bg-gray-100'}`}>
-            {notifStatus === 'granted'
-              ? <Bell className="w-4 h-4 text-primary-500" />
-              : <BellOff className="w-4 h-4 text-gray-400" />}
+        <div className="card space-y-2">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notifStatus === 'granted' ? 'bg-primary-50' : 'bg-gray-100'}`}>
+              {notifStatus === 'granted'
+                ? <Bell className="w-4 h-4 text-primary-500" />
+                : <BellOff className="w-4 h-4 text-gray-400" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-800">푸시 알림</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {notifStatus === 'granted' ? '알림 켜짐 — 공지·쪽지·출석 등 수신 중' :
+                 notifStatus === 'denied'  ? '브라우저에서 차단됨 — 브라우저 설정에서 허용해 주세요' :
+                 '버튼을 눌러 알림을 허용하세요'}
+              </p>
+            </div>
+            {(notifStatus === 'default' || notifStatus === 'granted') && (
+              <button
+                onClick={handleEnableNotifications}
+                disabled={notifLoading}
+                className={`flex-shrink-0 text-xs font-semibold disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition ${notifStatus === 'granted' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-primary-600 hover:bg-primary-700'}`}
+              >
+                {notifLoading ? '...' : notifStatus === 'granted' ? '재등록' : '켜기'}
+              </button>
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800">푸시 알림</p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {notifStatus === 'granted' ? '알림 켜짐 — 공지·쪽지·출석 등 수신 중' :
-               notifStatus === 'denied'  ? '브라우저에서 차단됨 — 브라우저 설정에서 허용해 주세요' :
-               '버튼을 눌러 알림을 허용하세요'}
-            </p>
-          </div>
-          {(notifStatus === 'default' || notifStatus === 'granted') && (
+          {mySub && (
             <button
-              onClick={handleEnableNotifications}
-              disabled={notifLoading}
-              className={`flex-shrink-0 text-xs font-semibold disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition ${notifStatus === 'granted' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-primary-600 hover:bg-primary-700'}`}
+              onClick={handleTestNotification}
+              disabled={testLoading}
+              className="w-full text-xs font-semibold bg-violet-500 hover:bg-violet-600 disabled:bg-gray-300 text-white py-2 rounded-xl transition"
             >
-              {notifLoading ? '...' : notifStatus === 'granted' ? '재등록' : '켜기'}
+              {testLoading ? '전송 중...' : '테스트 알림 보내기 (앱 닫고 확인)'}
             </button>
           )}
         </div>

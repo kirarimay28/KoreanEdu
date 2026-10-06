@@ -12,25 +12,29 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return arr.buffer;
 }
 
-export async function registerAndSubscribe(userId: string): Promise<boolean> {
-  if (!VAPID_PUBLIC_KEY) return false;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+export async function registerAndSubscribe(userId: string): Promise<{ ok: boolean; subscription?: PushSubscriptionJSON; error?: string }> {
+  if (!VAPID_PUBLIC_KEY) return { ok: false, error: 'VAPID key missing' };
+  if (!('serviceWorker' in navigator)) return { ok: false, error: 'ServiceWorker not supported' };
+  if (!('PushManager' in window)) return { ok: false, error: 'PushManager not supported' };
   try {
     const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return false;
+    if (permission !== 'granted') return { ok: false, error: 'Permission: ' + permission };
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
-    await setDoc(doc(db, 'pushSubscriptions', userId + '_' + btoa(sub.endpoint).slice(0, 24)), {
+    const subJson = sub.toJSON();
+    const docId = userId + '_' + String(Date.now());
+    await setDoc(doc(db, 'pushSubscriptions', docId), {
       userId,
-      subscription: sub.toJSON(),
+      subscription: subJson,
       createdAt: new Date().toISOString(),
     });
-    return true;
-  } catch {
-    return false;
+    return { ok: true, subscription: subJson };
+  } catch (e: any) {
+    return { ok: false, error: String(e?.message ?? e) };
   }
 }
 
