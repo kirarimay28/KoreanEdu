@@ -325,17 +325,14 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
                '버튼을 눌러 알림을 허용하세요'}
             </p>
           </div>
-          {notifStatus === 'default' && (
+          {(notifStatus === 'default' || notifStatus === 'granted') && (
             <button
               onClick={handleEnableNotifications}
               disabled={notifLoading}
-              className="flex-shrink-0 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition"
+              className={`flex-shrink-0 text-xs font-semibold disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition ${notifStatus === 'granted' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-primary-600 hover:bg-primary-700'}`}
             >
-              {notifLoading ? '...' : '켜기'}
+              {notifLoading ? '...' : notifStatus === 'granted' ? '재등록' : '켜기'}
             </button>
-          )}
-          {notifStatus === 'granted' && (
-            <span className="flex-shrink-0 text-xs text-primary-500 font-semibold">✓ 켜짐</span>
           )}
         </div>
       )}
