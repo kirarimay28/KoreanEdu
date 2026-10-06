@@ -79,7 +79,6 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'vaclist',    label: '결석 명단', icon: ListChecks,    iconBg: 'bg-orange-50',  iconColor: 'text-orange-500' },
   { id: 'messages',   label: '쪽지',     icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
   { id: 'library',    label: '도서관',   icon: BookMarked,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
-  { id: 'settings',   label: '설정',     icon: Settings,      iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
   { id: 'curriculum', label: '커리큘럼', icon: GraduationCap,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'edu',        label: '국교론',   icon: ClipboardList,  iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
   { id: 'medieval',    label: '중세국어', icon: Scroll,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
@@ -87,6 +86,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-rose-50',   iconColor: 'text-rose-600',   adminOnly: true },
   { id: 'meeting',     label: '회의록',     icon: NotebookPen,  iconBg: 'bg-violet-50', iconColor: 'text-violet-600', treasurerVisible: true },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
+  { id: 'settings',   label: '설정',     icon: Settings,  iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
 ];
 
 const isMenuTab = (tab: MainTab) => MENU_TABS.some(t => t.id === tab);
