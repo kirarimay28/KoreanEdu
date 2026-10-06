@@ -71,7 +71,7 @@ export default function MessagesTab({ currentUser }: Props) {
   const [tick, setTick] = useState(0);
   const [view, setView] = useState<'list' | 'chat' | 'compose'>('list');
   const [partnerId, setPartnerId] = useState<string | null>(null);
-  const [newRecipId, setNewRecipId] = useState('');
+  const [newRecipIds, setNewRecipIds] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -99,12 +99,46 @@ export default function MessagesTab({ currentUser }: Props) {
   }
 
   function handleSend() {
-    const toId = view === 'compose' ? newRecipId : partnerId;
-    if (!toId || !input.trim()) return;
-    const recipient = allUsers.find(u => u.id === toId);
-    if (!recipient) return;
-
     const msgContent = input.trim();
+    if (!msgContent) return;
+
+    if (view === 'compose') {
+      if (newRecipIds.length === 0) return;
+      const recipients = allUsers.filter(u => newRecipIds.includes(u.id));
+      const now = new Date().toISOString();
+      for (const recipient of recipients) {
+        sendMessage({
+          id: crypto.randomUUID(),
+          senderId: currentUser.id,
+          senderName: currentUser.username,
+          receiverId: recipient.id,
+          receiverName: recipient.username,
+          content: msgContent,
+          createdAt: now,
+          read: false,
+        });
+      }
+      sendPush({
+        userIds: recipients.map(r => r.id),
+        title: `✉️ ${currentUser.username}님의 쪽지`,
+        body: msgContent.length > 60 ? msgContent.slice(0, 60) + '…' : msgContent,
+      });
+      setInput('');
+      if (newRecipIds.length === 1) {
+        setPartnerId(newRecipIds[0]);
+        setNewRecipIds([]);
+        setView('chat');
+      } else {
+        setNewRecipIds([]);
+        setView('list');
+      }
+      reload();
+      return;
+    }
+
+    if (!partnerId) return;
+    const recipient = allUsers.find(u => u.id === partnerId);
+    if (!recipient) return;
     sendMessage({
       id: crypto.randomUUID(),
       senderId: currentUser.id,
@@ -120,13 +154,7 @@ export default function MessagesTab({ currentUser }: Props) {
       title: `✉️ ${currentUser.username}님의 쪽지`,
       body: msgContent.length > 60 ? msgContent.slice(0, 60) + '…' : msgContent,
     });
-
     setInput('');
-    if (view === 'compose') {
-      setPartnerId(toId);
-      setView('chat');
-      setNewRecipId('');
-    }
     reload();
   }
 
@@ -230,7 +258,7 @@ export default function MessagesTab({ currentUser }: Props) {
         {/* Header */}
         <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100 flex-shrink-0">
           <button
-            onClick={() => { setView('list'); setNewRecipId(''); setInput(''); }}
+            onClick={() => { setView('list'); setNewRecipIds([]); setInput(''); }}
             className="p-1.5 -ml-1 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -238,20 +266,36 @@ export default function MessagesTab({ currentUser }: Props) {
           <p className="text-sm font-bold text-gray-800">새 쪽지</p>
         </div>
 
-        {/* To: selector */}
-        <div className="flex items-center gap-2 py-3 border-b border-gray-100 flex-shrink-0">
-          <span className="text-xs font-semibold text-gray-400 flex-shrink-0 w-8">받는이</span>
-          <select
-            className="flex-1 text-sm text-gray-700 bg-transparent focus:outline-none"
-            value={newRecipId}
-            onChange={e => setNewRecipId(e.target.value)}
-            autoFocus
-          >
-            <option value="">선택...</option>
-            {allUsers.map(u => (
-              <option key={u.id} value={u.id}>{u.username}</option>
-            ))}
-          </select>
+        {/* Recipients */}
+        <div className="flex-shrink-0 py-2 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-gray-400">받는이</span>
+            {newRecipIds.length > 0 && (
+              <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                {newRecipIds.length}명 선택
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+            {allUsers.map(u => {
+              const selected = newRecipIds.includes(u.id);
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => setNewRecipIds(prev =>
+                    selected ? prev.filter(id => id !== u.id) : [...prev, u.id]
+                  )}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition ${
+                    selected
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'
+                  }`}
+                >
+                  {u.username}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex-1" />
@@ -270,7 +314,7 @@ export default function MessagesTab({ currentUser }: Props) {
           />
           <button
             onClick={handleSend}
-            disabled={!newRecipId || !input.trim()}
+            disabled={newRecipIds.length === 0 || !input.trim()}
             className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-primary-600 hover:bg-primary-700 disabled:bg-gray-200 text-white rounded-2xl transition"
           >
             <Send className="w-4 h-4" />
