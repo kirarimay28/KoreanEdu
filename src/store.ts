@@ -1,6 +1,6 @@
 import { db, storage } from './firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
   PersonalStudyEntry, ReflectionEntry, Feedback, AttendanceEntry, ResourceRequest,
@@ -1526,12 +1526,25 @@ export function saveExamStudySchedule(schedule: ExamStudySchedule): void {
 }
 
 // ── Edu Chapter PDF ─────────────────────────────────────
-export async function uploadLibraryPdf(itemId: string, file: File): Promise<{ url: string; storagePath: string }> {
-  const path = `library/${itemId}/${file.name}`;
-  const sRef = storageRef(storage, path);
-  await uploadBytes(sRef, file);
-  const url = await getDownloadURL(sRef);
-  return { url, storagePath: path };
+export function uploadLibraryPdf(
+  itemId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<{ url: string; storagePath: string }> {
+  return new Promise((resolve, reject) => {
+    const path = `library/${itemId}/${file.name}`;
+    const sRef = storageRef(storage, path);
+    const task = uploadBytesResumable(sRef, file);
+    task.on(
+      'state_changed',
+      snap => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      reject,
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        resolve({ url, storagePath: path });
+      },
+    );
+  });
 }
 
 export async function deleteLibraryPdf(storagePath: string): Promise<void> {

@@ -152,12 +152,10 @@ export default function LibraryTab({ currentUser }: Props) {
     if (!tag) { setError('카테고리를 선택해 주세요.'); return; }
     if (!file) { setError('PDF 파일을 선택해 주세요.'); return; }
 
-    setUploading(true); setError(''); setProgress(20);
+    setUploading(true); setError(''); setProgress(0);
     try {
       const itemId = crypto.randomUUID();
-      setProgress(40);
-      const { url, storagePath } = await uploadLibraryPdf(itemId, file);
-      setProgress(90);
+      const { url, storagePath } = await uploadLibraryPdf(itemId, file, pct => setProgress(pct));
       const item: LibraryItem = {
         id: itemId,
         title: title.trim(), description: description.trim(), tag,
