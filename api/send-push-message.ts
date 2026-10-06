@@ -3,8 +3,8 @@ import webpush from 'web-push';
 
 webpush.setVapidDetails(
   'mailto:lil146588@gmail.com',
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!,
+  process.env.VAPID_PUBLIC_KEY || 'BBeATcMUNmkXIHG4wE3R_POt4_l6cuVCFBWi_qf99B90ivyyi8al2E7K4UVWp9mw3RllPZ6z7pEoyODFh0LJOMQ',
+  process.env.VAPID_PRIVATE_KEY || 'BsYS40Uw3E8vnsnOpghen5AfVzeMxRUpnVrswKxntZ4',
 );
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

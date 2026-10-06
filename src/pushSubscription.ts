@@ -1,7 +1,7 @@
 import { collection, doc, setDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || 'BBeATcMUNmkXIHG4wE3R_POt4_l6cuVCFBWi_qf99B90ivyyi8al2E7K4UVWp9mw3RllPZ6z7pEoyODFh0LJOMQ';
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
