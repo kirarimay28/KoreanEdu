@@ -1526,6 +1526,22 @@ export function saveExamStudySchedule(schedule: ExamStudySchedule): void {
 }
 
 // ── Edu Chapter PDF ─────────────────────────────────────
+export async function uploadLibraryPdf(itemId: string, file: File): Promise<{ url: string; storagePath: string }> {
+  const path = `library/${itemId}/${file.name}`;
+  const sRef = storageRef(storage, path);
+  await uploadBytes(sRef, file);
+  const url = await getDownloadURL(sRef);
+  return { url, storagePath: path };
+}
+
+export async function deleteLibraryPdf(storagePath: string): Promise<void> {
+  try {
+    await deleteObject(storageRef(storage, storagePath));
+  } catch (e) {
+    console.warn('Library PDF delete failed:', e);
+  }
+}
+
 export async function uploadEduChapterPdf(chapterId: string, file: File): Promise<{ url: string; storagePath: string }> {
   const path = `eduChapters/${chapterId}/textbook.pdf`;
   const sRef = storageRef(storage, path);

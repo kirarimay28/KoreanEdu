@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileText, Download, Lock, Plus, X, Trash2, Upload, Loader2, BookOpen, BookText, ClipboardList, Bookmark, Book, FolderOpen, Settings } from 'lucide-react';
 import type { User, LibraryItem } from '../../types';
-import { getLibraryItems, addLibraryItem, removeLibraryItem, getLibraryTags, saveLibraryTags } from '../../store';
+import { getLibraryItems, addLibraryItem, removeLibraryItem, getLibraryTags, saveLibraryTags, uploadLibraryPdf, deleteLibraryPdf } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
@@ -43,8 +43,6 @@ function getTagIcon(tags: string[], tag: string) {
   return TAG_ICONS[Math.max(0, idx)];
 }
 
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
 
 type AnyItem = LibraryItem & { href?: string; size?: string; isStatic?: boolean };
 
@@ -153,32 +151,23 @@ export default function LibraryTab({ currentUser }: Props) {
     if (!title.trim()) { setError('제목을 입력해 주세요.'); return; }
     if (!tag) { setError('카테고리를 선택해 주세요.'); return; }
     if (!file) { setError('PDF 파일을 선택해 주세요.'); return; }
-    if (!CLOUD_NAME || !UPLOAD_PRESET) { setError('Cloudinary 환경 변수가 설정되지 않았습니다.'); return; }
 
-    setUploading(true); setError(''); setProgress(10);
+    setUploading(true); setError(''); setProgress(20);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', UPLOAD_PRESET);
-      formData.append('folder', 'korean-edu-library');
-      setProgress(30);
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, { method: 'POST', body: formData });
-      setProgress(80);
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error((json as { error?: { message?: string } }).error?.message ?? '업로드 실패');
-      }
-      const data = await res.json() as { secure_url: string; public_id: string; bytes: number };
-      setProgress(100);
+      const itemId = crypto.randomUUID();
+      setProgress(40);
+      const { url, storagePath } = await uploadLibraryPdf(itemId, file);
+      setProgress(90);
       const item: LibraryItem = {
-        id: crypto.randomUUID(),
+        id: itemId,
         title: title.trim(), description: description.trim(), tag,
-        downloadUrl: data.secure_url, storagePath: data.public_id,
-        fileName: file.name, fileSize: data.bytes,
+        downloadUrl: url, storagePath,
+        fileName: file.name, fileSize: file.size,
         uploadedAt: new Date().toISOString(),
         uploadedById: currentUser.id, uploadedByName: currentUser.username,
       };
       addLibraryItem(item);
+      setProgress(100);
       setItems(getLibraryItems());
       refreshTags();
       resetForm();
@@ -193,6 +182,7 @@ export default function LibraryTab({ currentUser }: Props) {
   function handleDelete(item: LibraryItem) {
     if (!window.confirm(`'${item.title}' 을(를) 삭제할까요?`)) return;
     removeLibraryItem(item.id);
+    if (item.storagePath) deleteLibraryPdf(item.storagePath);
     setItems(getLibraryItems());
   }
 
