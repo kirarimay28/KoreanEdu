@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { User, MainTab } from './types';
 import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
@@ -28,13 +28,14 @@ import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown, NotebookPen,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown, NotebookPen, Bell,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
 import DailyVocab from './components/common/DailyVocab';
 import Avatar from './components/common/Avatar';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById, subscribeExamPeriodData, getExamPeriod } from './store';
+import { subscribeNotifications, markAllNotificationsRead, type AppNotification } from './notifications';
 import type { ExamPeriod } from './types';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
@@ -103,6 +104,9 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sideOpen, setSideOpen] = useState(false);
   const [examPeriod, setExamPeriodState] = useState<ExamPeriod | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const dailyQuote = getDailyQuote();
 
   useEffect(() => {
@@ -123,6 +127,23 @@ export default function App() {
     const unsub = subscribeExamPeriodData(() => setExamPeriodState(getExamPeriod()));
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const unsub = subscribeNotifications(currentUser.id, setNotifications);
+    return unsub;
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!showNotifPanel) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifPanel(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifPanel]);
 
   // Lock body scroll when side panel is open
   useEffect(() => {
@@ -493,8 +514,58 @@ export default function App() {
             </p>
           </div>
 
-          {/* Right: avatar + name */}
+          {/* Right: bell + avatar */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Notification bell */}
+            <div ref={notifRef} className="relative">
+              <button
+                onClick={() => {
+                  setShowNotifPanel(v => !v);
+                  if (!showNotifPanel && notifications.some(n => !n.read)) {
+                    markAllNotificationsRead(notifications);
+                  }
+                }}
+                className="relative p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                )}
+              </button>
+
+              {showNotifPanel && (
+                <div className="absolute right-0 top-full mt-1 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-gray-50 flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-700">알림</p>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => markAllNotificationsRead(notifications)}
+                        className="text-[10px] text-primary-500 hover:text-primary-700 font-medium"
+                      >
+                        모두 읽음
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-8">알림이 없습니다</p>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n.id}
+                          className={`px-4 py-3 border-b border-gray-50 last:border-0 ${!n.read ? 'bg-primary-50' : ''}`}
+                        >
+                          <p className="text-xs font-semibold text-gray-800">{n.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>
+                          <p className="text-[10px] text-gray-300 mt-1">{new Date(n.createdAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <Avatar user={currentUser} size="sm" />
             <NameWithCrown name={currentUser.username} className="text-sm font-semibold text-gray-700" />
           </div>
