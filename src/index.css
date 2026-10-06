@@ -161,3 +161,9 @@ textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+@keyframes slide {
+  0%   { transform: translateX(-150%); }
+  50%  { transform: translateX(150%); }
+  100% { transform: translateX(150%); }
+}

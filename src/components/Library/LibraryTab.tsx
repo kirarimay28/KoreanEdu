@@ -295,9 +295,14 @@ export default function LibraryTab({ currentUser }: Props) {
           {uploading && (
             <div className="space-y-1">
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-primary-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                {progress > 0
+                  ? <div className="h-full bg-primary-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                  : <div className="h-full bg-primary-400 rounded-full animate-[slide_1.4s_ease-in-out_infinite]" style={{ width: '40%' }} />
+                }
               </div>
-              <p className="text-[11px] text-gray-400 text-center">업로드 중... {progress}%</p>
+              <p className="text-[11px] text-gray-400 text-center">
+                {progress > 0 ? `업로드 중... ${progress}%` : '업로드 중...'}
+              </p>
             </div>
           )}
           {error && <p className="text-xs text-red-500">{error}</p>}
