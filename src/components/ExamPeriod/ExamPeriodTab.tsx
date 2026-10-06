@@ -3,8 +3,9 @@ import type { User, ExamPeriod, ExamStudySchedule, ExamDayPlan, Weekday } from '
 import { isPrivileged } from '../../types';
 import {
   subscribeExamPeriodData, getExamPeriod, setExamPeriod, clearExamPeriod,
-  getExamStudySchedules, saveExamStudySchedule,
+  getExamStudySchedules, saveExamStudySchedule, getAllUserIds,
 } from '../../store';
+import { sendPush } from '../../notifications';
 import { CalendarDays, Trash2, Check, Users, Clock } from 'lucide-react';
 import { getKSTToday } from '../common/DateNavigator';
 
@@ -236,6 +237,7 @@ export default function ExamPeriodTab({ currentUser }: Props) {
       createdByName: currentUser.username,
       createdAt: new Date().toISOString(),
     });
+    sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간', body: `시험기간이 ${start} ~ ${end}으로 설정되었습니다.` });
   }
 
   return (
@@ -257,7 +259,7 @@ export default function ExamPeriodTab({ currentUser }: Props) {
             </div>
             {isAdmin && (
               <button
-                onClick={() => { if (confirm('시험기간을 삭제하시겠습니까?')) clearExamPeriod(); }}
+                onClick={() => { if (confirm('시험기간을 삭제하시겠습니까?')) { clearExamPeriod(); sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간 종료', body: '시험기간이 종료되었습니다.' }); } }}
                 className="text-xs text-red-400 border border-red-100 rounded-lg px-2.5 py-1 hover:bg-red-50 transition flex items-center gap-1"
               >
                 <Trash2 className="w-3 h-3" /> 삭제
