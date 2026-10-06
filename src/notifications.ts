@@ -1,5 +1,6 @@
 import { collection, addDoc, onSnapshot, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from './firebase';
+import { getSubscriptionsForUsers } from './pushSubscription';
 
 export interface AppNotification {
   id: string;
@@ -10,6 +11,23 @@ export interface AppNotification {
   createdAt: string;
 }
 
+async function sendWebPush(userIds: string[], title: string, body: string) {
+  try {
+    const subs = await getSubscriptionsForUsers(userIds);
+    await Promise.all(
+      subs.map(({ subscription }) =>
+        fetch('/api/send-push-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription, title, body }),
+        }).catch(() => null)
+      )
+    );
+  } catch {
+    // web push is best-effort
+  }
+}
+
 export async function sendPush(params: {
   userIds: string[];
   title: string;
@@ -17,8 +35,8 @@ export async function sendPush(params: {
   data?: Record<string, string>;
 }): Promise<void> {
   const now = new Date().toISOString();
-  await Promise.all(
-    params.userIds.map(userId =>
+  await Promise.all([
+    ...params.userIds.map(userId =>
       addDoc(collection(db, 'notifications'), {
         userId,
         title: params.title,
@@ -26,8 +44,9 @@ export async function sendPush(params: {
         read: false,
         createdAt: now,
       })
-    )
-  );
+    ),
+    sendWebPush(params.userIds, params.title, params.body),
+  ]);
 }
 
 export function subscribeNotifications(
