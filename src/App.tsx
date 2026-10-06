@@ -36,7 +36,6 @@ import DailyVocab from './components/common/DailyVocab';
 import Avatar from './components/common/Avatar';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById, subscribeExamPeriodData, getExamPeriod } from './store';
 import { subscribeNotifications, markAllNotificationsRead, type AppNotification } from './notifications';
-import { registerAndSubscribe } from './pushSubscription';
 import type { ExamPeriod } from './types';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
 import LocationNoticeBar from './components/Admin/LocationNoticeBar';
@@ -132,7 +131,6 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
     const unsub = subscribeNotifications(currentUser.id, setNotifications);
-    registerAndSubscribe(currentUser.id).catch(() => null);
     return unsub;
   }, [currentUser?.id]);
 

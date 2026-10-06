@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { User } from '../../types';
 import { changeUsername, changePassword, deleteAccount, updateAvatar } from '../../store';
-import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff } from 'lucide-react';
+import { registerAndSubscribe } from '../../pushSubscription';
+import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, Bell, BellOff } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 import Avatar from '../common/Avatar';
 
@@ -41,7 +42,23 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [notifStatus, setNotifStatus] = useState<'granted' | 'denied' | 'default' | 'unsupported'>('default');
+  const [notifLoading, setNotifLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!('Notification' in window)) { setNotifStatus('unsupported'); return; }
+    setNotifStatus(Notification.permission as 'granted' | 'denied' | 'default');
+  }, []);
+
+  async function handleEnableNotifications() {
+    if (notifLoading) return;
+    setNotifLoading(true);
+    const ok = await registerAndSubscribe(currentUser.id);
+    if ('Notification' in window) setNotifStatus(Notification.permission as 'granted' | 'denied' | 'default');
+    setNotifLoading(false);
+    if (ok) setSuccess('알림이 활성화되었습니다.');
+  }
 
   function resetForm() {
     setCurrentPw(''); setNewValue(''); setConfirmPw(''); setError('');
@@ -186,6 +203,37 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
           );
         })}
       </div>
+
+      {/* Push notifications */}
+      {notifStatus !== 'unsupported' && (
+        <div className="card flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notifStatus === 'granted' ? 'bg-primary-50' : 'bg-gray-100'}`}>
+            {notifStatus === 'granted'
+              ? <Bell className="w-4 h-4 text-primary-500" />
+              : <BellOff className="w-4 h-4 text-gray-400" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-800">푸시 알림</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {notifStatus === 'granted' ? '알림 켜짐 — 공지·쪽지·출석 등 수신 중' :
+               notifStatus === 'denied'  ? '브라우저에서 차단됨 — 브라우저 설정에서 허용해 주세요' :
+               '버튼을 눌러 알림을 허용하세요'}
+            </p>
+          </div>
+          {notifStatus === 'default' && (
+            <button
+              onClick={handleEnableNotifications}
+              disabled={notifLoading}
+              className="flex-shrink-0 text-xs font-semibold bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 py-1.5 rounded-lg transition"
+            >
+              {notifLoading ? '...' : '켜기'}
+            </button>
+          )}
+          {notifStatus === 'granted' && (
+            <span className="flex-shrink-0 text-xs text-primary-500 font-semibold">✓ 켜짐</span>
+          )}
+        </div>
+      )}
 
       {/* Delete account */}
       <button
