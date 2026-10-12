@@ -161,7 +161,7 @@ export default function MeetingTab({ currentUser }: Props) {
           {canEdit && (
             <button onClick={openNew}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-white transition"
-              style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 8px rgba(222,78,128,0.25)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
               <Plus className="w-3.5 h-3.5" />새 회의록
             </button>
           )}
@@ -214,7 +214,7 @@ export default function MeetingTab({ currentUser }: Props) {
         <div className="flex items-center justify-between">
           <button onClick={() => setView('list')}
             className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}>
+            style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid var(--theme-border-tint)' }}>
             <ChevronLeft className="w-4 h-4" />목록으로
           </button>
           {canEdit && (
@@ -290,7 +290,7 @@ export default function MeetingTab({ currentUser }: Props) {
       <div className="space-y-4">
         <button onClick={() => setView(selected ? 'detail' : 'list')}
           className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium px-3 py-1.5 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}>
+          style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid var(--theme-border-tint)' }}>
           <ChevronLeft className="w-4 h-4" />취소
         </button>
 
@@ -391,7 +391,7 @@ export default function MeetingTab({ currentUser }: Props) {
         {/* 저장 */}
         <button onClick={handleSave}
           className="w-full py-3 rounded-2xl text-sm font-bold text-white transition"
-          style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 12px rgba(222,78,128,0.25)' }}>
+          style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}>
           {editing ? '수정 완료' : '회의록 저장'}
         </button>
       </div>

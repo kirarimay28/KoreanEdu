@@ -73,17 +73,17 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'qna',        label: '질의응답', icon: HelpCircle,   iconBg: 'bg-blue-50',    iconColor: 'text-blue-500' },
   { id: 'calendar',   label: '캘린더',   icon: CalendarDays, iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'attendance', label: '출석부',    icon: CalendarCheck, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
-  { id: 'member',     label: '멤버',     icon: Users,         iconBg: 'bg-pink-50',    iconColor: 'text-pink-500' },
+  { id: 'member',     label: '멤버',     icon: Users,         iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'resource',   label: '자료요청', icon: Inbox,         iconBg: 'bg-primary-50',  iconColor: 'text-primary-500' },
-  { id: 'vacation',   label: '결석 신청', icon: Plane,         iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
+  { id: 'vacation',   label: '결석 신청', icon: Plane,         iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
   { id: 'vaclist',    label: '결석 명단', icon: ListChecks,    iconBg: 'bg-orange-50',  iconColor: 'text-orange-500' },
   { id: 'messages',   label: '쪽지',     icon: Mail,          iconBg: 'bg-sky-50',     iconColor: 'text-sky-500' },
   { id: 'library',    label: '도서관',   icon: BookMarked,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-500' },
   { id: 'curriculum', label: '커리큘럼', icon: GraduationCap,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'edu',        label: '국교론',   icon: ClipboardList,  iconBg: 'bg-violet-50',  iconColor: 'text-violet-500' },
   { id: 'medieval',    label: '중세국어', icon: Scroll,    iconBg: 'bg-amber-50',   iconColor: 'text-amber-600' },
-  { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-rose-50',    iconColor: 'text-rose-500' },
-  { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-rose-50',   iconColor: 'text-rose-600',   adminOnly: true },
+  { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
+  { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-amber-50',  iconColor: 'text-amber-600',  adminOnly: true },
   { id: 'meeting',     label: '회의록',     icon: NotebookPen,  iconBg: 'bg-violet-50', iconColor: 'text-violet-600', treasurerVisible: true },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
   { id: 'settings',   label: '설정',     icon: Settings,  iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
@@ -232,117 +232,117 @@ export default function App() {
         </defs>
 
         {/* ── Top-left cluster ── */}
-        <g transform="translate(8,13)" opacity="0.22" fill="#de4e80">
+        <g transform="translate(8,13)" opacity="0.22" fill="var(--p-600)">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
           <use href="#petal" transform="rotate(216)"/>
           <use href="#petal" transform="rotate(288)"/>
-          <circle r="1.1" fill="#ffc9e0"/>
+          <circle r="1.1" fill="var(--p-200)"/>
         </g>
-        <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="#f890bc">
+        <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="var(--p-400)">
           <use href="#petal" transform="rotate(36)"/>
           <use href="#petal" transform="rotate(108)"/>
           <use href="#petal" transform="rotate(180)"/>
           <use href="#petal" transform="rotate(252)"/>
           <use href="#petal" transform="rotate(324)"/>
-          <circle r="1" fill="#ffe4ef"/>
+          <circle r="1" fill="var(--p-100)"/>
         </g>
-        <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="#de4e80">
+        <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="var(--p-600)">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(14,27) scale(0.45)" opacity="0.14" fill="#ffa3c7">
+        <g transform="translate(14,27) scale(0.45)" opacity="0.14" fill="var(--p-300)">
           <use href="#heart"/>
         </g>
 
         {/* ── Top-center scatter ── */}
-        <g transform="translate(38,5) scale(0.55)" opacity="0.20" fill="#ffa3c7">
+        <g transform="translate(38,5) scale(0.55)" opacity="0.20" fill="var(--p-300)">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="#de4e80">
+        <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="var(--p-600)">
           <use href="#star"/>
         </g>
-        <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="#f890bc">
+        <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="var(--p-400)">
           <use href="#sparkle"/>
         </g>
 
         {/* ── Top-right cluster ── */}
-        <g transform="translate(91,11)" opacity="0.22" fill="#de4e80">
+        <g transform="translate(91,11)" opacity="0.22" fill="var(--p-600)">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
           <use href="#petal" transform="rotate(234)"/>
           <use href="#petal" transform="rotate(306)"/>
-          <circle r="1.1" fill="#ffc9e0"/>
+          <circle r="1.1" fill="var(--p-200)"/>
         </g>
-        <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="#f890bc">
+        <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="var(--p-400)">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
           <use href="#petal" transform="rotate(216)"/>
           <use href="#petal" transform="rotate(288)"/>
-          <circle r="1" fill="#ffe4ef"/>
+          <circle r="1" fill="var(--p-100)"/>
         </g>
-        <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="#de4e80">
+        <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="var(--p-600)">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(83,27) scale(0.5)" opacity="0.15" fill="#ffa3c7">
+        <g transform="translate(83,27) scale(0.5)" opacity="0.15" fill="var(--p-300)">
           <use href="#heart"/>
         </g>
 
         {/* ── Mid-left ── */}
-        <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="#de4e80">
+        <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="var(--p-600)">
           <use href="#heart"/>
         </g>
-        <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="#f890bc">
+        <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="var(--p-400)">
           <use href="#star"/>
         </g>
-        <g transform="translate(2,72) scale(0.45)" opacity="0.13" fill="#ffa3c7">
+        <g transform="translate(2,72) scale(0.45)" opacity="0.13" fill="var(--p-300)">
           <use href="#sparkle"/>
         </g>
 
         {/* ── Mid-right ── */}
-        <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="#de4e80">
+        <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="var(--p-600)">
           <use href="#heart"/>
         </g>
-        <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="#f890bc">
+        <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="var(--p-400)">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(95,70) scale(0.45)" opacity="0.13" fill="#ffa3c7">
+        <g transform="translate(95,70) scale(0.45)" opacity="0.13" fill="var(--p-300)">
           <use href="#star"/>
         </g>
 
         {/* ── Bottom cluster ── */}
-        <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="#de4e80">
+        <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="var(--p-600)">
           <use href="#petal" transform="rotate(18)"/>
           <use href="#petal" transform="rotate(90)"/>
           <use href="#petal" transform="rotate(162)"/>
           <use href="#petal" transform="rotate(234)"/>
           <use href="#petal" transform="rotate(306)"/>
-          <circle r="1.1" fill="#ffc9e0"/>
+          <circle r="1.1" fill="var(--p-200)"/>
         </g>
-        <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="#f890bc">
+        <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="var(--p-400)">
           <use href="#petal" transform="rotate(0)"/>
           <use href="#petal" transform="rotate(72)"/>
           <use href="#petal" transform="rotate(144)"/>
           <use href="#petal" transform="rotate(216)"/>
           <use href="#petal" transform="rotate(288)"/>
-          <circle r="1" fill="#ffe4ef"/>
+          <circle r="1" fill="var(--p-100)"/>
         </g>
-        <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="#de4e80">
+        <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="var(--p-600)">
           <use href="#sparkle"/>
         </g>
-        <g transform="translate(50,90) scale(0.55)" opacity="0.15" fill="#ffa3c7">
+        <g transform="translate(50,90) scale(0.55)" opacity="0.15" fill="var(--p-300)">
           <use href="#heart"/>
         </g>
-        <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="#f890bc">
+        <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="var(--p-400)">
           <use href="#star"/>
         </g>
 
         {/* ── Bottom wave bands ── */}
         <g opacity="0.13">
-          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="#de4e80" fillOpacity="0.22"/>
-          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="#de4e80" fillOpacity="0.40"/>
+          <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="var(--p-600)" fillOpacity="0.22" />
+          <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="var(--p-600)" fillOpacity="0.40"/>
           <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.25" strokeWidth="0.4" fill="none"/>
         </g>
       </svg>
@@ -373,7 +373,7 @@ export default function App() {
               style={{
                 background: `
                   radial-gradient(ellipse at 22% 20%, rgba(255,255,255,0.82) 0%, rgba(224,242,238,0.4) 30%, transparent 54%),
-                  radial-gradient(ellipse at 76% 82%, var(--theme-sidebar-radial, rgba(255,163,199,0.28)) 0%, transparent 50%),
+                  radial-gradient(ellipse at 76% 82%, color-mix(in srgb, var(--p-300) 28%, transparent) 0%, transparent 50%),
                   linear-gradient(148deg, var(--p-100) 0%, var(--p-200) 30%, var(--p-300) 62%, var(--p-100) 100%)
                 `,
               }}
@@ -579,7 +579,7 @@ export default function App() {
             <button
               onClick={() => handleMainNav('study')}
               className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-800 transition font-medium mb-4 px-3 py-1.5 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,163,199,0.20)' }}
+              style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid var(--theme-border-tint)' }}
             >
               <ChevronLeft className="w-4 h-4" />
               로비로 돌아가기

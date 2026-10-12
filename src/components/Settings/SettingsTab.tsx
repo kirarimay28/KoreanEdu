@@ -146,7 +146,7 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
       </div>
 
       {/* Profile card */}
-      <div className="card bg-gradient-to-br from-primary-50 to-pink-50 border-primary-100">
+      <div className="card bg-gradient-to-br from-primary-50 to-primary-100 border-primary-100">
         <div className="flex items-center gap-4">
           {/* Avatar with edit button */}
           <div className="relative flex-shrink-0">

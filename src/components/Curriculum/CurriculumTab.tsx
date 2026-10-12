@@ -172,7 +172,7 @@ function TextbookBadge({
       className="mt-3 rounded-xl px-3 py-2.5 flex items-start gap-2.5"
       style={{
         background: 'rgba(255,255,255,0.55)',
-        border: '1px solid rgba(255,163,199,0.22)',
+        border: '1px solid var(--theme-border-tint)',
       }}
     >
       <BookText className="w-3.5 h-3.5 text-primary-500 flex-shrink-0 mt-0.5" />
@@ -208,7 +208,7 @@ function TextbookBadge({
               <button
                 onClick={onToggle}
                 className="ml-auto flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition"
-                style={{ background: 'rgba(222,78,128,0.10)', color: '#de4e80', border: '1px solid rgba(222,78,128,0.22)' }}
+                style={{ background: 'color-mix(in srgb, var(--p-600) 10%, transparent)', color: 'var(--p-600)', border: '1px solid color-mix(in srgb, var(--p-600) 22%, transparent)' }}
               >
                 <Lock className="w-2.5 h-2.5" />비공개로 전환
               </button>
@@ -228,7 +228,7 @@ function StructuredTextbookDisplay({ data, gradient }: { data: StructuredTextboo
       className="mt-3 rounded-xl px-3 py-3 space-y-3"
       style={{
         background: 'rgba(255,255,255,0.55)',
-        border: '1px solid rgba(255,163,199,0.22)',
+        border: '1px solid var(--theme-border-tint)',
       }}
     >
       <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ function SectionCard({
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid rgba(255,255,255,0.58)',
-        boxShadow: '0 2px 16px rgba(222,78,128,0.07), 0 0 0 1px rgba(255,255,255,0.42) inset',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.42) inset',
       }}
     >
       {/* Header — always visible, tap to toggle */}
@@ -337,7 +337,7 @@ function SectionCard({
           <div className="flex items-center gap-2 mb-0.5">
             <span
               className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded-md"
-              style={{ background: 'rgba(222,78,128,0.10)', color: '#de4e80' }}
+              style={{ background: 'color-mix(in srgb, var(--p-600) 10%, transparent)', color: 'var(--p-600)' }}
             >
               {section.badge}
             </span>
@@ -377,7 +377,7 @@ function SectionCard({
                     {step.note && (
                       <span
                         className="text-[11px] font-medium mt-1 px-2 py-0.5 rounded-md inline-block"
-                        style={{ background: 'rgba(222,78,128,0.08)', color: '#de4e80' }}
+                        style={{ background: 'color-mix(in srgb, var(--p-600) 8%, transparent)', color: 'var(--p-600)' }}
                       >
                         ※ {step.note}
                       </span>
@@ -421,8 +421,8 @@ export default function CurriculumTab({ currentUser }: Props) {
       <div
         className="rounded-2xl px-4 py-4"
         style={{
-          background: 'linear-gradient(135deg, rgba(222,78,128,0.18) 0%, rgba(255,112,168,0.12) 100%)',
-          border: '1px solid rgba(255,163,199,0.28)',
+          background: 'color-mix(in srgb, var(--p-400) 15%, rgba(255,255,255,0.6))',
+          border: '1px solid var(--theme-border-tint)',
         }}
       >
         <p className="text-[10px] font-semibold text-primary-500 uppercase tracking-widest mb-1">Study Curriculum</p>

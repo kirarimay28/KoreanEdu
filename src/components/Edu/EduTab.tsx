@@ -741,7 +741,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
               <button
                 onClick={() => setView('solve')}
                 className="w-full py-3 rounded-2xl text-sm font-bold border"
-                style={{ borderColor: '#f9a8c9', color: '#de4e80', background: 'rgba(249,168,201,0.07)' }}
+                style={{ borderColor: 'var(--p-300)', color: 'var(--p-600)', background: 'color-mix(in srgb, var(--p-300) 7%, transparent)' }}
               >
                 {myAnswer ? '풀이 수정하기' : '풀이하기'}
               </button>

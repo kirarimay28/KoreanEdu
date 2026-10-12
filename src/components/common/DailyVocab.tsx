@@ -23,8 +23,8 @@ export default function DailyVocab({ date }: Props) {
         background: 'rgba(255,255,255,0.62)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,163,199,0.30)',
-        boxShadow: '0 2px 12px rgba(222,78,128,0.07), 0 0 0 1px rgba(255,255,255,0.55) inset',
+        border: '1px solid var(--theme-border-tint)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.05), 0 0 0 1px rgba(255,255,255,0.55) inset',
       }}
     >
       <div

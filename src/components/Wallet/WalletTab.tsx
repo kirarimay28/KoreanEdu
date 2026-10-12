@@ -181,7 +181,7 @@ function OverviewSection({ weekKey, currentUser, onRefresh }: FormProps) {
 // ── MyWalletSection ───────────────────────────────────────────────────────────
 
 const RECEIPT_BG = '#fffef9';
-const PAGE_BG = '#fff0f5';
+const PAGE_BG = 'var(--theme-bg)';
 
 function ReceiptEdge({ pos }: { pos: 'top' | 'bottom' }) {
   const r = 9;
