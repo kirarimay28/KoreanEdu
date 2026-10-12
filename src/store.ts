@@ -13,7 +13,7 @@ import type {
   FineType, FineExemptionRequest, FineExemptionStatus,
   EduChapter, EduReaderBookmark, EduExamDraft,
   MedievalLesson, MedievalBlankExam,
-  ExamPeriod, ExamStudySchedule,
+  ExamPeriod, ExamStudySchedule, ExamStudyResource, ExamMaterialRequest,
   AttendanceCheckIn,
   MeetingRecord,
 } from './types';
@@ -61,6 +61,8 @@ const defaultData: AppData = {
   medievalBlankExams: [],
   examPeriod: null,
   examStudySchedules: [],
+  examStudyResources: [],
+  examMaterialRequests: [],
   attendanceCheckIns: [],
   meetingRecords: [],
 };
@@ -126,7 +128,7 @@ async function safeGet(name: string) {
 }
 
 async function fetchFromFirestore(): Promise<void> {
-  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer, ec, erb, eed, mr] = await Promise.all([
+  const [u, cl, mo, ps, re, at, rr, an, wa, va, ea, qp, qc, ms, ac, ce, li, vt, pf, sl, ln, an2, ver, sn, fi, cfg, er, eq, eaw, clcfg, ancfg, fer, ec, erb, eed, mr, esr, emr] = await Promise.all([
     safeGet('users'),
     safeGet('classicalEntries'),
     safeGet('modernEntries'),
@@ -163,6 +165,8 @@ async function fetchFromFirestore(): Promise<void> {
     safeGet('eduReaderBookmarks'),
     safeGet('eduExamDrafts'),
     safeGet('meetingRecords'),
+    safeGet('examStudyResources'),
+    safeGet('examMaterialRequests'),
   ]);
   // 로컬에서 더 최신인 항목은 Firestore 데이터로 덮어쓰지 않음
   function mergeById<T extends { id: string; updatedAt?: string }>(remote: T[], local: T[]): T[] {
@@ -215,6 +219,8 @@ async function fetchFromFirestore(): Promise<void> {
     medievalBlankExams:       mem.medievalBlankExams,
     examPeriod:               mem.examPeriod,
     examStudySchedules:       mem.examStudySchedules,
+    examStudyResources:       esr.docs.map(d => d.data() as ExamStudyResource),
+    examMaterialRequests:     emr.docs.map(d => d.data() as ExamMaterialRequest),
     attendanceCheckIns:       mem.attendanceCheckIns,
     meetingRecords:           mr.docs.map(d => d.data() as MeetingRecord),
   };
@@ -1497,6 +1503,16 @@ export function subscribeExamPeriodData(callback: () => void): () => void {
       snap => { mem.examStudySchedules = snap.docs.map(d => d.data() as ExamStudySchedule); saveCache(); callback(); },
       err => console.warn('examStudySchedules listener error:', err)
     ),
+    onSnapshot(
+      collection(db, 'examStudyResources'),
+      snap => { mem.examStudyResources = snap.docs.map(d => d.data() as ExamStudyResource); saveCache(); callback(); },
+      err => console.warn('examStudyResources listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'examMaterialRequests'),
+      snap => { mem.examMaterialRequests = snap.docs.map(d => d.data() as ExamMaterialRequest); saveCache(); callback(); },
+      err => console.warn('examMaterialRequests listener error:', err)
+    ),
   ];
   return () => unsubs.forEach(u => u());
 }
@@ -1523,6 +1539,74 @@ export function saveExamStudySchedule(schedule: ExamStudySchedule): void {
   else mem.examStudySchedules.push(schedule);
   persist('examStudySchedules', schedule.userId, schedule);
   saveCache();
+}
+
+export function getExamStudyResources(): ExamStudyResource[] { return [...mem.examStudyResources]; }
+
+export function saveExamStudyResource(resource: ExamStudyResource): void {
+  const idx = mem.examStudyResources.findIndex(r => r.id === resource.id);
+  if (idx >= 0) mem.examStudyResources[idx] = resource;
+  else mem.examStudyResources.push(resource);
+  persist('examStudyResources', resource.id, resource);
+  saveCache();
+}
+
+export function deleteExamStudyResource(id: string): void {
+  mem.examStudyResources = mem.examStudyResources.filter(r => r.id !== id);
+  remove('examStudyResources', id);
+  saveCache();
+}
+
+export async function deleteExamStudyResourceFile(storagePath: string): Promise<void> {
+  try { await deleteObject(storageRef(storage, storagePath)); } catch (e) { console.warn(e); }
+}
+
+export function uploadExamStudyResourcePdf(
+  resourceId: string, file: File, onProgress?: (pct: number) => void,
+): Promise<{ url: string; storagePath: string }> {
+  return new Promise((resolve, reject) => {
+    const path = `examStudyResources/${resourceId}/${file.name}`;
+    const sRef = storageRef(storage, path);
+    const task = uploadBytesResumable(sRef, file);
+    task.on(
+      'state_changed',
+      snap => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      reject,
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        resolve({ url, storagePath: path });
+      },
+    );
+  });
+}
+
+export function getExamMaterialRequests(): ExamMaterialRequest[] { return [...mem.examMaterialRequests]; }
+
+export function saveExamMaterialRequest(req: ExamMaterialRequest): void {
+  const idx = mem.examMaterialRequests.findIndex(r => r.id === req.id);
+  if (idx >= 0) mem.examMaterialRequests[idx] = req;
+  else mem.examMaterialRequests.push(req);
+  persist('examMaterialRequests', req.id, req);
+  saveCache();
+}
+
+export function uploadExamRequestRefPdf(
+  requestId: string, file: File, onProgress?: (pct: number) => void,
+): Promise<{ url: string; storagePath: string }> {
+  return new Promise((resolve, reject) => {
+    const path = `examMaterialRequests/${requestId}/${file.name}`;
+    const sRef = storageRef(storage, path);
+    const task = uploadBytesResumable(sRef, file);
+    task.on(
+      'state_changed',
+      snap => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      reject,
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        resolve({ url, storagePath: path });
+      },
+    );
+  });
 }
 
 // ── Edu Chapter PDF ─────────────────────────────────────
