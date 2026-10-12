@@ -192,7 +192,7 @@ function LessonForm({
         <button onClick={onCancel} className="flex-1 py-3 rounded-xl text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
           취소
         </button>
-        <button onClick={handleSave} className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition" style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}>
+        <button onClick={handleSave} className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition theme-gradient">
           {initial ? '수정 완료' : '업로드'}
         </button>
       </div>
@@ -308,8 +308,7 @@ function LessonDetail({ lesson, isAdmin, onBack, onEdit, onDelete }: {
           {!submitted ? (
             <button
               onClick={() => setSubmitted(true)}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white transition"
-              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition theme-gradient"
             >
               채점하기
             </button>

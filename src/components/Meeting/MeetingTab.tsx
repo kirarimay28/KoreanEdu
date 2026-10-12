@@ -161,7 +161,7 @@ export default function MeetingTab({ currentUser }: Props) {
           {canEdit && (
             <button onClick={openNew}
               className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-white transition"
-              style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 8px rgba(222,78,128,0.25)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 8px rgba(222,78,128,0.25)' }}>
               <Plus className="w-3.5 h-3.5" />새 회의록
             </button>
           )}
@@ -233,8 +233,7 @@ export default function MeetingTab({ currentUser }: Props) {
 
         <div className="card">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#ffc9e0,#de4e80)' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 theme-gradient">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -392,7 +391,7 @@ export default function MeetingTab({ currentUser }: Props) {
         {/* 저장 */}
         <button onClick={handleSave}
           className="w-full py-3 rounded-2xl text-sm font-bold text-white transition"
-          style={{ background: 'linear-gradient(135deg,#f890bc,#de4e80)', boxShadow: '0 2px 12px rgba(222,78,128,0.25)' }}>
+          style={{ background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)', boxShadow: '0 2px 12px rgba(222,78,128,0.25)' }}>
           {editing ? '수정 완료' : '회의록 저장'}
         </button>
       </div>

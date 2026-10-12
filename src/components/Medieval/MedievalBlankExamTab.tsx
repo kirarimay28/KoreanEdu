@@ -121,7 +121,7 @@ function BlankExamForm({
           {uploading && progress < 100 && (
             <div className="mt-2">
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }} />
+                <div className="h-full rounded-full transition-all duration-200 theme-gradient" style={{ width: `${progress}%` }} />
               </div>
               <p className="text-[11px] text-gray-400 mt-1 text-center">시험지 {progress}%</p>
             </div>
@@ -144,7 +144,7 @@ function BlankExamForm({
           {uploading && answerPdfFile && answerProgress < 100 && answerProgress > 0 && (
             <div className="mt-2">
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-200" style={{ width: `${answerProgress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }} />
+                <div className="h-full rounded-full transition-all duration-200 theme-gradient" style={{ width: `${answerProgress}%` }} />
               </div>
               <p className="text-[11px] text-gray-400 mt-1 text-center">답지 {answerProgress}%</p>
             </div>
@@ -186,8 +186,7 @@ function BlankExamForm({
         <button
           onClick={handleSave}
           disabled={uploading}
-          className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 transition theme-gradient"
         >
           {uploading ? '업로드 중...' : '업로드'}
         </button>
@@ -253,8 +252,7 @@ function BlankExamView({ exam, onBack }: { exam: MedievalBlankExam; onBack: () =
           ))}
           <button
             onClick={() => setPhase('result')}
-            className="w-full mt-3 py-3.5 rounded-2xl text-sm font-bold text-white transition"
-            style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+            className="w-full mt-3 py-3.5 rounded-2xl text-sm font-bold text-white transition theme-gradient"
           >
             채점하기
           </button>

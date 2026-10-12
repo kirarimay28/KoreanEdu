@@ -28,8 +28,7 @@ export default function DailyVocab({ date }: Props) {
       }}
     >
       <div
-        className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black"
-        style={{ background: 'linear-gradient(135deg, #f890bc 0%, #de4e80 100%)' }}
+        className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black theme-gradient"
       >
         {idx + 1}
       </div>

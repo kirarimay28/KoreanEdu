@@ -273,8 +273,7 @@ function AnalysisModal({ analysis, date, onClose }: { analysis: StudyAnalysis; d
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl overflow-hidden"
         style={{ maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 px-5 pt-5 pb-4"
-          style={{ background: 'linear-gradient(135deg,#de4e80 0%,#f890bc 55%,#ffa3c7 100%)' }}>
+        <div className="sticky top-0 z-10 px-5 pt-5 pb-4 theme-gradient">
           <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -523,7 +522,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     return (
       <>
       <div className="space-y-4">
-        <div className="rounded-2xl p-5 text-white" style={{ background:'linear-gradient(135deg,#de4e80 0%,#f890bc 100%)' }}>
+        <div className="rounded-2xl p-5 text-white theme-gradient">
           <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">학습 계획</p>
           <p className="text-base font-bold">{formatKoreanDate(date)}</p>
           <p className="text-xs opacity-60 mt-1">오늘 공부할 목록을 미리 작성하세요. 학습 시작 후 목록은 잠금됩니다.</p>
@@ -661,7 +660,7 @@ export default function PersonalStudyTab({ date, currentUser }: Props) {
     <div className="space-y-4">
 
       {/* Header */}
-      <div className="rounded-2xl px-5 py-4 text-white" style={{ background:'linear-gradient(135deg,#de4e80 0%,#f890bc 100%)' }}>
+      <div className="rounded-2xl px-5 py-4 text-white theme-gradient">
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Study Planner</p>

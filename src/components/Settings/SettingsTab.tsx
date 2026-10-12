@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import type { User } from '../../types';
 import { changeUsername, changePassword, deleteAccount, updateAvatar } from '../../store';
 import { registerAndSubscribe } from '../../pushSubscription';
-import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, Bell, BellOff } from 'lucide-react';
+import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, Bell, BellOff, Palette } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 import Avatar from '../common/Avatar';
+import { THEMES, getTheme, applyTheme, type ThemeId } from '../../theme';
 
 interface Props {
   currentUser: User;
@@ -46,7 +47,13 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   const [notifLoading, setNotifLoading] = useState(false);
   const [mySub, setMySub] = useState<PushSubscriptionJSON | null>(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<ThemeId>(getTheme);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleThemeChange(id: ThemeId) {
+    applyTheme(id);
+    setCurrentTheme(id);
+  }
 
   useEffect(() => {
     if (!('Notification' in window)) { setNotifStatus('unsupported'); return; }
@@ -329,6 +336,37 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
           </button>
         </div>
       )}
+
+      {/* 테마 설정 */}
+      <div className="card space-y-3">
+        <div className="flex items-center gap-2">
+          <Palette className="w-4 h-4 text-primary-500" />
+          <p className="text-sm font-bold text-gray-800">테마</p>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {THEMES.map(t => {
+            const active = currentTheme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => handleThemeChange(t.id)}
+                className={`flex flex-col items-center gap-1.5 p-2 rounded-2xl border-2 transition ${
+                  active ? 'border-primary-500 bg-primary-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                }`}
+              >
+                <div
+                  className="w-8 h-8 rounded-xl shadow-sm"
+                  style={{ background: `linear-gradient(135deg, ${t.previewFrom} 0%, ${t.previewTo} 100%)` }}
+                />
+                <span className="text-[9px] font-bold text-gray-600 leading-tight text-center">{t.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-gray-400 text-center">
+          {THEMES.find(t => t.id === currentTheme)?.emoji} {THEMES.find(t => t.id === currentTheme)?.desc}
+        </p>
+      </div>
 
       {/* Push notifications */}
       {notifStatus !== 'unsupported' && (
