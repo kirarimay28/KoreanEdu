@@ -30,6 +30,7 @@ export function getTheme(): ThemeId {
 export function applyTheme(id: ThemeId): void {
   document.documentElement.setAttribute('data-theme', id);
   try { localStorage.setItem(STORAGE_KEY, id); } catch {}
+  window.dispatchEvent(new CustomEvent('themechange', { detail: id }));
 }
 
 export function initTheme(): void {

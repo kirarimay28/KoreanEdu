@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useReducer } from 'react';
 import type { User, MainTab } from './types';
 import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
@@ -92,6 +92,12 @@ const MENU_TABS: MenuTabDef[] = [
 const isMenuTab = (tab: MainTab) => MENU_TABS.some(t => t.id === tab);
 
 export default function App() {
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
+  useEffect(() => {
+    window.addEventListener('themechange', forceUpdate);
+    return () => window.removeEventListener('themechange', forceUpdate);
+  }, []);
+
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
