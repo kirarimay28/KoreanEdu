@@ -118,6 +118,37 @@
   --theme-shimmer-hi: #f0f0f0;
 }
 
+/* 고려청자 */
+[data-theme="celadon"] {
+  --p-50:  #f0faf6;
+  --p-100: #d6f0e6;
+  --p-200: #a8d8c4;
+  --p-300: #72b8a0;
+  --p-400: #4a9e86;
+  --p-500: #2d8570;
+  --p-600: #1a6b58;
+  --p-700: #0f5244;
+  --p-800: #083b30;
+  --p-900: #042620;
+  --theme-bg: #eef8f3;
+  --theme-text: #0a2e24;
+  --theme-grad-from: #72b8a0;
+  --theme-grad-to: #0f5244;
+  --theme-border-tint: rgba(45,133,112,0.18);
+  --theme-shimmer-start: #083b30;
+  --theme-shimmer-mid: #1a6b58;
+  --theme-shimmer-hi: #d6f0e6;
+}
+
+/* 고려청자: 은은한 비색 배경 */
+[data-theme="celadon"] body,
+[data-theme="celadon"] .theme-bg-wrap {
+  background-color: #eef8f3;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(114,184,160,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(74,158,134,0.14) 0%, transparent 45%);
+}
+
 /* ── 전역 ──────────────────────────────────────────── */
 
 * {

@@ -1,4 +1,4 @@
-export type ThemeId = 'pink' | 'notebook' | 'chick' | 'lofi' | 'mono';
+export type ThemeId = 'pink' | 'notebook' | 'chick' | 'lofi' | 'mono' | 'celadon';
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -15,6 +15,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'chick',    name: '병아리',    emoji: '🐣', desc: '선샤인 옐로우',  previewFrom: '#ffe050', previewTo: '#d49600' },
   { id: 'lofi',     name: '로우파이',  emoji: '🎧', desc: '더스티 퍼플',   previewFrom: '#bba5d8', previewTo: '#6b4d9e' },
   { id: 'mono',     name: '모노',      emoji: '🖤', desc: '블랙 & 화이트', previewFrom: '#bababa', previewTo: '#555555' },
+  { id: 'celadon', name: '고려청자',   emoji: '🏺', desc: '비색 청록',     previewFrom: '#72b8a0', previewTo: '#0f5244' },
 ];
 
 const STORAGE_KEY = 'theme';
