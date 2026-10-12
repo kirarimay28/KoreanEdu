@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { User, ExamPeriod, ExamDayPlan, Weekday, ExamStudyCheckAssignment, ExamStudyResource, ExamMaterialRequest, ExamResourceCategory } from '../../types';
+import type { User, ExamPeriod, ExamDayPlan, Weekday, ExamStudyCheckAssignment, ExamStudyResource, ExamMaterialRequest, ExamResourceCategory, ExamPlanSubject, ExamPlanCategory, ExamPlanCheckMark, ExamPlanItem } from '../../types';
 import { isPrivileged } from '../../types';
 import {
   subscribeExamPeriodData, getExamPeriod, setExamPeriod, clearExamPeriod,
@@ -7,6 +7,7 @@ import {
   getExamStudyCheckAssignments, setExamStudyCheckAssignments,
   getExamStudyResources, saveExamStudyResource, deleteExamStudyResource, uploadExamStudyResourcePdf,
   getExamMaterialRequests, saveExamMaterialRequest, uploadExamRequestRefPdf,
+  getExamPlanEntries, saveExamPlanEntry, getExamPlanCheckResults, saveExamPlanCheckResult,
   getAllUserIds, getPrivilegedUserIds, deleteExamStudyResourceFile, getUsers,
 } from '../../store';
 import { sendPush } from '../../notifications';
@@ -659,9 +660,269 @@ function ProblemBankTab() {
   );
 }
 
+/* ── 탭5: 플래너 ── */
+const PLAN_SUBJECTS: ExamPlanSubject[] = ['이교론', '중세국어', '의미론', '교직', '기타'];
+const PLAN_CATEGORIES: ExamPlanCategory[] = ['회독', '단권화', '문제풀이', '오답정리', '기타'];
+const MARKS: ExamPlanCheckMark[] = ['O', '△', 'X'];
+const MARK_STYLE: Record<ExamPlanCheckMark, string> = {
+  'O': 'bg-green-100 text-green-700 border-green-300',
+  '△': 'bg-amber-100 text-amber-700 border-amber-300',
+  'X': 'bg-red-100 text-red-600 border-red-300',
+};
+
+function PlannerTab({ currentUser }: { currentUser: User }) {
+  const today = getKSTToday();
+  const [date, setDate] = useState(today);
+
+  const entries = getExamPlanEntries();
+  const checkResults = getExamPlanCheckResults();
+  const assignments = getExamStudyCheckAssignments();
+
+  /* 내가 체크해야 할 사람 */
+  const myCheckAssignment = assignments.find(a => a.checkerId === currentUser.id);
+
+  /* 오늘 내 계획 */
+  const myEntryId = `${currentUser.id}_${date}`;
+  const myEntry = entries.find(e => e.id === myEntryId);
+
+  /* 항목 추가 폼 상태 */
+  const [subject, setSubject] = useState<ExamPlanSubject>('이교론');
+  const [category, setCategory] = useState<ExamPlanCategory>('회독');
+  const [detail, setDetail] = useState('');
+  const [draftItems, setDraftItems] = useState<ExamPlanItem[]>(() => myEntry?.items ?? []);
+  const [planSaved, setPlanSaved] = useState(false);
+
+  /* 날짜 바뀌면 항목 리셋 */
+  useEffect(() => {
+    const e = entries.find(en => en.id === `${currentUser.id}_${date}`);
+    setDraftItems(e?.items ?? []);
+    setPlanSaved(false);
+  }, [date, entries.length]);
+
+  function addItem() {
+    if (!detail.trim()) return;
+    const item: ExamPlanItem = { id: crypto.randomUUID(), subject, category, detail: detail.trim() };
+    setDraftItems(prev => [...prev, item]);
+    setDetail('');
+    setPlanSaved(false);
+  }
+  function removeItem(id: string) {
+    setDraftItems(prev => prev.filter(i => i.id !== id));
+    setPlanSaved(false);
+  }
+  function savePlan() {
+    saveExamPlanEntry({
+      id: myEntryId,
+      userId: currentUser.id,
+      username: currentUser.username,
+      date,
+      items: draftItems,
+      updatedAt: new Date().toISOString(),
+    });
+    setPlanSaved(true);
+  }
+
+  /* 담당 멤버 체크 */
+  const checkeeEntry = myCheckAssignment
+    ? entries.find(e => e.userId === myCheckAssignment.checkeeId && e.date === date)
+    : null;
+  const checkResultId = myCheckAssignment
+    ? `${currentUser.id}_${myCheckAssignment.checkeeId}_${date}`
+    : '';
+  const myCheckResult = checkResults.find(r => r.id === checkResultId);
+  const [marks, setMarks] = useState<Record<string, ExamPlanCheckMark>>(() => myCheckResult?.marks ?? {});
+
+  useEffect(() => {
+    const r = checkResults.find(r => r.id === checkResultId);
+    setMarks(r?.marks ?? {});
+  }, [checkResultId, checkResults.length]);
+
+  function toggleMark(itemId: string, mark: ExamPlanCheckMark) {
+    setMarks(prev => {
+      const next = { ...prev };
+      if (next[itemId] === mark) delete next[itemId];
+      else next[itemId] = mark;
+      return next;
+    });
+  }
+  function saveCheck() {
+    if (!myCheckAssignment) return;
+    saveExamPlanCheckResult({
+      id: checkResultId,
+      checkerId: currentUser.id,
+      checkeeId: myCheckAssignment.checkeeId,
+      date,
+      marks,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* 날짜 선택 */}
+      <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3">
+        <CalendarDays className="w-4 h-4 text-primary-400 shrink-0" />
+        <input
+          type="date" value={date} onChange={e => setDate(e.target.value)}
+          className="flex-1 text-sm font-semibold text-gray-700 focus:outline-none"
+        />
+      </div>
+
+      {/* ── 내 공부 계획 ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <p className="text-xs font-bold text-gray-600">내 공부 계획</p>
+
+        {/* 항목 추가 */}
+        <div className="space-y-2">
+          <div className="flex gap-1.5 flex-wrap">
+            {PLAN_SUBJECTS.map(s => (
+              <button key={s} onClick={() => setSubject(s)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${subject === s ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-500 border-gray-200'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {PLAN_CATEGORIES.map(c => (
+              <button key={c} onClick={() => setCategory(c)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${category === c ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-500 border-gray-200'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text" placeholder="내용 입력 (예: 4단원 1회독)" value={detail}
+              onChange={e => setDetail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addItem()}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+            />
+            <button
+              onClick={addItem} disabled={!detail.trim()}
+              className="px-3 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-40 shrink-0"
+              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+            >
+              추가
+            </button>
+          </div>
+        </div>
+
+        {/* 항목 목록 */}
+        {draftItems.length === 0 ? (
+          <p className="text-xs text-gray-300 text-center py-3">계획을 추가해 주세요</p>
+        ) : (
+          <div className="space-y-1.5">
+            {draftItems.map(item => (
+              <div key={item.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50">
+                <span className="text-[10px] font-bold text-primary-600 bg-primary-50 rounded-full px-2 py-0.5 shrink-0">{item.subject}</span>
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 shrink-0">{item.category}</span>
+                <span className="text-sm text-gray-700 flex-1 min-w-0 truncate">{item.detail}</span>
+                <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-400 shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={savePlan} disabled={draftItems.length === 0}
+          className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-1.5"
+          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        >
+          {planSaved ? <><Check className="w-4 h-4" /> 저장 완료</> : '계획 저장'}
+        </button>
+      </div>
+
+      {/* ── 담당 멤버 체크 ── */}
+      {myCheckAssignment && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-gray-600">
+              공부 체크 — <span className="text-primary-600">{myCheckAssignment.checkeeName}</span>
+            </p>
+            <span className="text-[11px] text-gray-400">O / △ / X</span>
+          </div>
+
+          {!checkeeEntry || checkeeEntry.items.length === 0 ? (
+            <p className="text-xs text-gray-300 text-center py-4">
+              {myCheckAssignment.checkeeName}님이 아직 계획을 작성하지 않았습니다
+            </p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {checkeeEntry.items.map(item => {
+                  const mark = marks[item.id];
+                  return (
+                    <div key={item.id} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-bold text-primary-600 bg-primary-50 rounded-full px-2 py-0.5 shrink-0">{item.subject}</span>
+                          <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5 shrink-0">{item.category}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 truncate">{item.detail}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        {MARKS.map(m => (
+                          <button
+                            key={m}
+                            onClick={() => toggleMark(item.id, m)}
+                            className={`w-8 h-8 rounded-lg text-sm font-bold border transition ${mark === m ? MARK_STYLE[m] : 'bg-white text-gray-300 border-gray-200'}`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={saveCheck}
+                className="w-full py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              >
+                체크 저장
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 내 체크 결과 (남이 나를 체크한 것) */}
+      {(() => {
+        const checkerAssignment = assignments.find(a => a.checkeeId === currentUser.id);
+        if (!checkerAssignment) return null;
+        const myResultId = `${checkerAssignment.checkerId}_${currentUser.id}_${date}`;
+        const result = checkResults.find(r => r.id === myResultId);
+        if (!result || Object.keys(result.marks).length === 0) return null;
+        const myPlanEntry = entries.find(e => e.id === myEntryId);
+        if (!myPlanEntry) return null;
+        return (
+          <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4 space-y-2">
+            <p className="text-xs font-bold text-gray-500">
+              {checkerAssignment.checkerName}님의 체크 결과
+            </p>
+            {myPlanEntry.items.map(item => {
+              const mark = result.marks[item.id];
+              if (!mark) return null;
+              return (
+                <div key={item.id} className="flex items-center gap-2">
+                  <span className={`w-7 h-7 rounded-lg text-sm font-bold border flex items-center justify-center shrink-0 ${MARK_STYLE[mark]}`}>{mark}</span>
+                  <span className="text-sm text-gray-600 truncate">{item.detail}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 /* ── 메인 ── */
-type TabKey = '계획표' | '자료 도서관' | '자료 요청' | '문제 은행';
-const TABS: TabKey[] = ['계획표', '자료 도서관', '자료 요청', '문제 은행'];
+type TabKey = '계획표' | '자료 도서관' | '자료 요청' | '문제 은행' | '플래너';
+const TABS: TabKey[] = ['계획표', '자료 도서관', '자료 요청' , '문제 은행', '플래너'];
 
 export default function ExamPeriodTab({ currentUser }: Props) {
   const [, setTick] = useState(0);
@@ -745,7 +1006,7 @@ export default function ExamPeriodTab({ currentUser }: Props) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}
+                className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}
               >
                 {tab}
               </button>
@@ -766,6 +1027,7 @@ export default function ExamPeriodTab({ currentUser }: Props) {
             <MaterialRequestTab currentUser={currentUser} isAdmin={isAdmin} />
           )}
           {activeTab === '문제 은행' && <ProblemBankTab />}
+          {activeTab === '플래너' && <PlannerTab currentUser={currentUser} />}
         </>
       )}
     </div>
