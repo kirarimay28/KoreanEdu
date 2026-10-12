@@ -35,6 +35,8 @@ import NameWithCrown from './components/common/NameWithCrown';
 import DailyVocab from './components/common/DailyVocab';
 import Avatar from './components/common/Avatar';
 import { initializeData, refreshData, getPendingRequestsForUser, getUserById, subscribeExamPeriodData, getExamPeriod } from './store';
+import { getTheme } from './theme';
+import type { ThemeId } from './theme';
 import { subscribeNotifications, markAllNotificationsRead, type AppNotification } from './notifications';
 import type { ExamPeriod } from './types';
 import AnnouncementBar from './components/Admin/AnnouncementBar';
@@ -42,6 +44,392 @@ import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
 import StudyRoomPanel from './components/StudyRoom/StudyRoomPanel';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
+
+// ── 테마별 배경 오버레이 ──────────────────────────────────
+const OVERLAY_STYLE: React.CSSProperties = {
+  position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+  zIndex: 0, pointerEvents: 'none',
+};
+
+function OverlayPink() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <path id="petal" d="M0 0 C-1.6 -0.8 -1.8 -3.8 0 -4.8 C1.8 -3.8 1.6 -0.8 0 0Z"/>
+        <path id="sparkle" d="M0 -3.4 L0.5 -0.5 L3.4 0 L0.5 0.5 L0 3.4 L-0.5 0.5 L-3.4 0 L-0.5 -0.5Z"/>
+        <path id="heart" d="M0 2.4 C-0.4 1.4 -3.4 -0.6 -3.4 -2.5 C-3.4 -4.2 -1.7 -4.8 0 -3.1 C1.7 -4.8 3.4 -4.2 3.4 -2.5 C3.4 -0.6 0.4 1.4 0 2.4Z"/>
+        <path id="star" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+      </defs>
+      <g transform="translate(8,13)" opacity="0.22" fill="var(--p-600)">
+        <use href="#petal" transform="rotate(0)"/><use href="#petal" transform="rotate(72)"/>
+        <use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(216)"/>
+        <use href="#petal" transform="rotate(288)"/><circle r="1.1" fill="var(--p-200)"/>
+      </g>
+      <g transform="translate(20,5) scale(0.7)" opacity="0.17" fill="var(--p-400)">
+        <use href="#petal" transform="rotate(36)"/><use href="#petal" transform="rotate(108)"/>
+        <use href="#petal" transform="rotate(180)"/><use href="#petal" transform="rotate(252)"/>
+        <use href="#petal" transform="rotate(324)"/><circle r="1" fill="var(--p-100)"/>
+      </g>
+      <g transform="translate(3,28) scale(0.7)" opacity="0.18" fill="var(--p-600)"><use href="#sparkle"/></g>
+      <g transform="translate(14,27) scale(0.45)" opacity="0.14" fill="var(--p-300)"><use href="#heart"/></g>
+      <g transform="translate(38,5) scale(0.55)" opacity="0.20" fill="var(--p-300)"><use href="#sparkle"/></g>
+      <g transform="translate(50,7) scale(0.38)" opacity="0.16" fill="var(--p-600)"><use href="#star"/></g>
+      <g transform="translate(62,4) scale(0.48)" opacity="0.19" fill="var(--p-400)"><use href="#sparkle"/></g>
+      <g transform="translate(91,11)" opacity="0.22" fill="var(--p-600)">
+        <use href="#petal" transform="rotate(18)"/><use href="#petal" transform="rotate(90)"/>
+        <use href="#petal" transform="rotate(162)"/><use href="#petal" transform="rotate(234)"/>
+        <use href="#petal" transform="rotate(306)"/><circle r="1.1" fill="var(--p-200)"/>
+      </g>
+      <g transform="translate(78,4) scale(0.65)" opacity="0.17" fill="var(--p-400)">
+        <use href="#petal" transform="rotate(0)"/><use href="#petal" transform="rotate(72)"/>
+        <use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(216)"/>
+        <use href="#petal" transform="rotate(288)"/><circle r="1" fill="var(--p-100)"/>
+      </g>
+      <g transform="translate(97,26) scale(0.65)" opacity="0.18" fill="var(--p-600)"><use href="#sparkle"/></g>
+      <g transform="translate(83,27) scale(0.5)" opacity="0.15" fill="var(--p-300)"><use href="#heart"/></g>
+      <g transform="translate(3,47) scale(0.6)" opacity="0.16" fill="var(--p-600)"><use href="#heart"/></g>
+      <g transform="translate(4,60) scale(0.5)" opacity="0.14" fill="var(--p-400)"><use href="#star"/></g>
+      <g transform="translate(2,72) scale(0.45)" opacity="0.13" fill="var(--p-300)"><use href="#sparkle"/></g>
+      <g transform="translate(97,44) scale(0.55)" opacity="0.16" fill="var(--p-600)"><use href="#heart"/></g>
+      <g transform="translate(96,58) scale(0.48)" opacity="0.14" fill="var(--p-400)"><use href="#sparkle"/></g>
+      <g transform="translate(95,70) scale(0.45)" opacity="0.13" fill="var(--p-300)"><use href="#star"/></g>
+      <g transform="translate(11,88) scale(0.7)" opacity="0.20" fill="var(--p-600)">
+        <use href="#petal" transform="rotate(18)"/><use href="#petal" transform="rotate(90)"/>
+        <use href="#petal" transform="rotate(162)"/><use href="#petal" transform="rotate(234)"/>
+        <use href="#petal" transform="rotate(306)"/><circle r="1.1" fill="var(--p-200)"/>
+      </g>
+      <g transform="translate(87,87) scale(0.75)" opacity="0.20" fill="var(--p-400)">
+        <use href="#petal" transform="rotate(0)"/><use href="#petal" transform="rotate(72)"/>
+        <use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(216)"/>
+        <use href="#petal" transform="rotate(288)"/><circle r="1" fill="var(--p-100)"/>
+      </g>
+      <g transform="translate(38,92) scale(0.5)" opacity="0.16" fill="var(--p-600)"><use href="#sparkle"/></g>
+      <g transform="translate(50,90) scale(0.55)" opacity="0.15" fill="var(--p-300)"><use href="#heart"/></g>
+      <g transform="translate(62,93) scale(0.42)" opacity="0.14" fill="var(--p-400)"><use href="#star"/></g>
+      <g opacity="0.13">
+        <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87 L100 93 Q93.75 97 87.5 93 Q81.25 89 75 93 Q68.75 97 62.5 93 Q56.25 89 50 93 Q43.75 97 37.5 93 Q31.25 89 25 93 Q18.75 97 12.5 93 Q6.25 89 0 93Z" fill="var(--p-600)" fillOpacity="0.22"/>
+        <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="var(--p-600)" fillOpacity="0.40"/>
+      </g>
+    </svg>
+  );
+}
+
+function OverlayNotebook() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      {/* 연필 아이콘들 — 모서리 */}
+      <g opacity="0.18" fill="var(--p-600)">
+        {/* 좌상단 연필 */}
+        <g transform="translate(4,4) rotate(-35)">
+          <rect x="-1.5" y="-9" width="3" height="14" rx="0.5"/>
+          <rect x="-1.5" y="-9" width="3" height="2.5" rx="0.5" fillOpacity="0.7"/>
+          <path d="M-1.5 5 L0 8.5 L1.5 5Z"/>
+        </g>
+        {/* 우상단 연필 */}
+        <g transform="translate(96,6) rotate(30)">
+          <rect x="-1.2" y="-8" width="2.4" height="12" rx="0.4" fillOpacity="0.8"/>
+          <path d="M-1.2 4 L0 7 L1.2 4Z" fillOpacity="0.9"/>
+        </g>
+      </g>
+      {/* 별 (★) */}
+      <g fill="var(--p-500)" opacity="0.20">
+        <path transform="translate(12,8) scale(0.55)" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+        <path transform="translate(88,9) scale(0.48)" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+        <path transform="translate(50,4) scale(0.38)" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+        <path transform="translate(3,50) scale(0.4)" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+        <path transform="translate(97,52) scale(0.4)" d="M0 -4 L0.9 -1.2 L3.8 -1.2 L1.5 0.5 L2.3 3.3 L0 1.6 L-2.3 3.3 L-1.5 0.5 L-3.8 -1.2 L-0.9 -1.2Z"/>
+      </g>
+      {/* 사이드 세로줄 (공책 마진선) */}
+      <line x1="6" y1="0" x2="6" y2="100" stroke="var(--p-400)" strokeOpacity="0.12" strokeWidth="0.4"/>
+      <line x1="94" y1="0" x2="94" y2="100" stroke="var(--p-400)" strokeOpacity="0.12" strokeWidth="0.4"/>
+      {/* 점 (스프링 구멍) */}
+      <g fill="none" stroke="var(--p-500)" strokeOpacity="0.15" strokeWidth="0.5">
+        <circle cx="3" cy="20" r="1.2"/><circle cx="3" cy="50" r="1.2"/><circle cx="3" cy="80" r="1.2"/>
+        <circle cx="97" cy="20" r="1.2"/><circle cx="97" cy="50" r="1.2"/><circle cx="97" cy="80" r="1.2"/>
+      </g>
+      {/* 하단 가로줄 */}
+      <g stroke="var(--p-400)" strokeOpacity="0.16" strokeWidth="0.4">
+        <line x1="0" y1="88" x2="100" y2="88"/>
+        <line x1="0" y1="92" x2="100" y2="92"/>
+        <line x1="0" y1="96" x2="100" y2="96"/>
+        <line x1="0" y1="100" x2="100" y2="100"/>
+      </g>
+      {/* 하단 장식 (책받침) */}
+      <path d="M0 96 L100 96 L100 100 L0 100Z" fill="var(--p-600)" fillOpacity="0.08"/>
+    </svg>
+  );
+}
+
+function OverlayChick() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        {/* 해바라기 꽃잎 */}
+        <path id="cpetal" d="M0 0 C-1.2 -0.6 -1.4 -3.2 0 -4.2 C1.4 -3.2 1.2 -0.6 0 0Z"/>
+        {/* 별 */}
+        <path id="cstar" d="M0 -3 L0.6 -0.9 L2.9 -0.9 L1.1 0.4 L1.8 2.6 L0 1.3 L-1.8 2.6 L-1.1 0.4 L-2.9 -0.9 L-0.6 -0.9Z"/>
+        {/* 병아리 발자국 */}
+        <g id="footprint">
+          <ellipse cx="0" cy="0" rx="0.5" ry="0.8" transform="rotate(-20)"/>
+          <ellipse cx="1" cy="-1" rx="0.4" ry="0.7" transform="translate(0.8,-0.5) rotate(30)"/>
+          <ellipse cx="-0.8" cy="-1" rx="0.4" ry="0.7" transform="translate(-0.6,-0.4) rotate(-30)"/>
+        </g>
+      </defs>
+      {/* 좌상단 해 */}
+      <g transform="translate(8,8)" opacity="0.20" fill="var(--p-500)">
+        {[0,45,90,135,180,225,270,315].map(r => (
+          <use key={r} href="#cpetal" transform={`rotate(${r}) scale(1.1)`}/>
+        ))}
+        <circle r="2.8" fillOpacity="0.8"/>
+      </g>
+      {/* 우상단 해 */}
+      <g transform="translate(92,7)" opacity="0.18" fill="var(--p-400)">
+        {[0,45,90,135,180,225,270,315].map(r => (
+          <use key={r} href="#cpetal" transform={`rotate(${r})`}/>
+        ))}
+        <circle r="2.2" fillOpacity="0.7"/>
+      </g>
+      {/* 상단 중앙 별들 */}
+      <g fill="var(--p-500)" opacity="0.22">
+        <use href="#cstar" transform="translate(35,5) scale(0.55)"/>
+        <use href="#cstar" transform="translate(50,6) scale(0.42)"/>
+        <use href="#cstar" transform="translate(65,5) scale(0.48)"/>
+      </g>
+      {/* 좌측 꽃 */}
+      <g transform="translate(3,45)" opacity="0.17" fill="var(--p-600)">
+        {[0,60,120,180,240,300].map(r => (
+          <use key={r} href="#cpetal" transform={`rotate(${r}) scale(0.9)`}/>
+        ))}
+        <circle r="1.5" fill="var(--p-300)"/>
+      </g>
+      <g transform="translate(4,65)" opacity="0.14" fill="var(--p-400)">
+        <use href="#cstar" transform="scale(0.55)"/>
+      </g>
+      {/* 우측 꽃 */}
+      <g transform="translate(97,43)" opacity="0.17" fill="var(--p-600)">
+        {[0,60,120,180,240,300].map(r => (
+          <use key={r} href="#cpetal" transform={`rotate(${r}) scale(0.9)`}/>
+        ))}
+        <circle r="1.5" fill="var(--p-300)"/>
+      </g>
+      <g transform="translate(96,63)" opacity="0.14" fill="var(--p-400)">
+        <use href="#cstar" transform="scale(0.5)"/>
+      </g>
+      {/* 병아리 발자국 - 하단 */}
+      <g fill="var(--p-600)" opacity="0.16">
+        <use href="#footprint" transform="translate(20,88) scale(1.4)"/>
+        <use href="#footprint" transform="translate(28,93) scale(1.2) rotate(15)"/>
+        <use href="#footprint" transform="translate(38,89) scale(1.3) rotate(-10)"/>
+        <use href="#footprint" transform="translate(48,92) scale(1.2) rotate(8)"/>
+        <use href="#footprint" transform="translate(58,88) scale(1.3) rotate(-5)"/>
+        <use href="#footprint" transform="translate(68,93) scale(1.2) rotate(12)"/>
+        <use href="#footprint" transform="translate(78,89) scale(1.3) rotate(-8)"/>
+      </g>
+      {/* 하단 물결 (귀여운 풀밭) */}
+      <path d="M0 95 Q5 91 10 95 Q15 91 20 95 Q25 91 30 95 Q35 91 40 95 Q45 91 50 95 Q55 91 60 95 Q65 91 70 95 Q75 91 80 95 Q85 91 90 95 Q95 91 100 95 L100 100 L0 100Z"
+        fill="var(--p-600)" fillOpacity="0.20"/>
+    </svg>
+  );
+}
+
+function OverlayLofi() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <path id="note1" d="M0 0 L0 -6 L3 -7 L3 -1Z M0 0 C0 0 -2 0.5 -2 2 C-2 3.2 -0.8 3.8 0 3.5 C0.8 3.2 1.2 2.2 0.5 1.5Z"/>
+        <path id="star2" d="M0 -3 L0.6 -0.9 L2.9 -0.9 L1.1 0.4 L1.8 2.6 L0 1.3 L-1.8 2.6 L-1.1 0.4 L-2.9 -0.9 L-0.6 -0.9Z"/>
+      </defs>
+      {/* 상단 음표 */}
+      <g fill="var(--p-600)" opacity="0.22">
+        <use href="#note1" transform="translate(8,10) scale(0.9)"/>
+        <use href="#note1" transform="translate(18,7) scale(0.7)"/>
+        <use href="#note1" transform="translate(82,9) scale(0.8)"/>
+        <use href="#note1" transform="translate(92,12) scale(0.65)"/>
+        {/* 이중 음표 */}
+        <g transform="translate(45,6)">
+          <line x1="0" y1="0" x2="0" y2="-6" stroke="var(--p-600)" strokeOpacity="0.8" strokeWidth="0.6"/>
+          <line x1="3.5" y1="-1" x2="3.5" y2="-7" stroke="var(--p-600)" strokeOpacity="0.8" strokeWidth="0.6"/>
+          <line x1="0" y1="-6" x2="3.5" y2="-7" stroke="var(--p-600)" strokeOpacity="0.8" strokeWidth="0.6"/>
+          <ellipse cx="0" cy="0" rx="1.8" ry="1.2" transform="rotate(-20)" fillOpacity="0.8"/>
+          <ellipse cx="3.5" cy="-1" rx="1.8" ry="1.2" transform="translate(3.5,-1) rotate(-20) translate(-3.5,1)" fillOpacity="0.8"/>
+        </g>
+      </g>
+      {/* 별 산개 */}
+      <g fill="var(--p-400)" opacity="0.20">
+        <use href="#star2" transform="translate(28,5) scale(0.5)"/>
+        <use href="#star2" transform="translate(62,4) scale(0.45)"/>
+        <use href="#star2" transform="translate(75,8) scale(0.38)"/>
+        <use href="#star2" transform="translate(3,30) scale(0.42)"/>
+        <use href="#star2" transform="translate(97,28) scale(0.4)"/>
+        <use href="#star2" transform="translate(2,55) scale(0.35)"/>
+        <use href="#star2" transform="translate(98,57) scale(0.38)"/>
+      </g>
+      {/* 좌측 오디오 웨이브 */}
+      <g stroke="var(--p-500)" strokeOpacity="0.16" strokeWidth="0.5" fill="none">
+        <path d="M0 40 Q2 36 0 32 Q-2 28 0 24"/>
+        <path d="M3 42 Q5 36 3 30 Q1 24 3 18"/>
+        <path d="M6 45 Q8 36 6 27 Q4 18 6 9"/>
+      </g>
+      {/* 우측 오디오 웨이브 */}
+      <g stroke="var(--p-500)" strokeOpacity="0.16" strokeWidth="0.5" fill="none">
+        <path d="M100 40 Q98 36 100 32 Q102 28 100 24"/>
+        <path d="M97 42 Q95 36 97 30 Q99 24 97 18"/>
+        <path d="M94 45 Q92 36 94 27 Q96 18 94 9"/>
+      </g>
+      {/* 하단 카세트 테이프 실루엣 */}
+      <g opacity="0.17" fill="var(--p-600)">
+        <rect x="30" y="90" width="40" height="10" rx="2" fillOpacity="0.4"/>
+        <circle cx="40" cy="95" r="3.5" fillOpacity="0.5"/>
+        <circle cx="60" cy="95" r="3.5" fillOpacity="0.5"/>
+        <rect x="43" y="92" width="14" height="6" rx="1" fillOpacity="0.2"/>
+        <circle cx="40" cy="95" r="1.5" fillOpacity="0.7"/>
+        <circle cx="60" cy="95" r="1.5" fillOpacity="0.7"/>
+        {/* 좌 카세트 */}
+        <rect x="2" y="88" width="22" height="12" rx="2" fillOpacity="0.3"/>
+        <circle cx="9" cy="94" r="3" fillOpacity="0.4"/>
+        <circle cx="17" cy="94" r="3" fillOpacity="0.4"/>
+        <circle cx="9" cy="94" r="1.2" fillOpacity="0.6"/>
+        <circle cx="17" cy="94" r="1.2" fillOpacity="0.6"/>
+        {/* 우 카세트 */}
+        <rect x="76" y="88" width="22" height="12" rx="2" fillOpacity="0.3"/>
+        <circle cx="83" cy="94" r="3" fillOpacity="0.4"/>
+        <circle cx="91" cy="94" r="3" fillOpacity="0.4"/>
+        <circle cx="83" cy="94" r="1.2" fillOpacity="0.6"/>
+        <circle cx="91" cy="94" r="1.2" fillOpacity="0.6"/>
+      </g>
+      {/* 달 */}
+      <path d="M4 72 C0 67 0 58 4 53 C2 56 1.5 62 4 72Z" fill="var(--p-400)" fillOpacity="0.22"/>
+      <path d="M96 72 C100 67 100 58 96 53 C98 56 98.5 62 96 72Z" fill="var(--p-400)" fillOpacity="0.22"/>
+    </svg>
+  );
+}
+
+function OverlayMono() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      {/* 동심원 — 좌상 */}
+      <g fill="none" stroke="var(--p-600)" strokeOpacity="0.10">
+        <circle cx="0" cy="0" r="12" strokeWidth="0.6"/>
+        <circle cx="0" cy="0" r="20" strokeWidth="0.5"/>
+        <circle cx="0" cy="0" r="28" strokeWidth="0.4"/>
+      </g>
+      {/* 동심원 — 우상 */}
+      <g fill="none" stroke="var(--p-600)" strokeOpacity="0.10">
+        <circle cx="100" cy="0" r="12" strokeWidth="0.6"/>
+        <circle cx="100" cy="0" r="20" strokeWidth="0.5"/>
+        <circle cx="100" cy="0" r="28" strokeWidth="0.4"/>
+      </g>
+      {/* 필름 스트립 — 좌측 */}
+      <g opacity="0.09" fill="var(--p-700)">
+        <rect x="0" y="18" width="5" height="64" fillOpacity="0.5"/>
+        {[22,30,38,46,54,62,70,78].map(y => (
+          <rect key={y} x="0.5" y={y} width="4" height="5" rx="0.5" fillOpacity="0.0" stroke="white" strokeWidth="0.4"/>
+        ))}
+        <rect x="0.5" y="22" width="4" height="5" rx="0.5"/><rect x="0.5" y="32" width="4" height="5" rx="0.5"/>
+        <rect x="0.5" y="42" width="4" height="5" rx="0.5"/><rect x="0.5" y="52" width="4" height="5" rx="0.5"/>
+        <rect x="0.5" y="62" width="4" height="5" rx="0.5"/><rect x="0.5" y="72" width="4" height="5" rx="0.5"/>
+      </g>
+      {/* 필름 스트립 — 우측 */}
+      <g opacity="0.09" fill="var(--p-700)">
+        <rect x="95" y="18" width="5" height="64" fillOpacity="0.5"/>
+        <rect x="95.5" y="22" width="4" height="5" rx="0.5"/><rect x="95.5" y="32" width="4" height="5" rx="0.5"/>
+        <rect x="95.5" y="42" width="4" height="5" rx="0.5"/><rect x="95.5" y="52" width="4" height="5" rx="0.5"/>
+        <rect x="95.5" y="62" width="4" height="5" rx="0.5"/><rect x="95.5" y="72" width="4" height="5" rx="0.5"/>
+      </g>
+      {/* 상단 점선 */}
+      <line x1="0" y1="8" x2="100" y2="8" stroke="var(--p-600)" strokeOpacity="0.10" strokeWidth="0.5" strokeDasharray="3 3"/>
+      <line x1="0" y1="4" x2="100" y2="4" stroke="var(--p-600)" strokeOpacity="0.07" strokeWidth="0.4"/>
+      {/* 하단 굵은 선 */}
+      <rect x="0" y="94" width="100" height="6" fill="var(--p-700)" fillOpacity="0.08"/>
+      <line x1="0" y1="94" x2="100" y2="94" stroke="var(--p-700)" strokeOpacity="0.15" strokeWidth="0.6"/>
+      {/* 중앙 격자점 */}
+      <g fill="var(--p-600)" fillOpacity="0.07">
+        {[20,35,50,65,80].map(x =>
+          [15,30,50,70,85].map(y => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="0.6"/>
+          ))
+        )}
+      </g>
+    </svg>
+  );
+}
+
+function OverlayCeladon() {
+  return (
+    <svg aria-hidden="true" style={OVERLAY_STYLE} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        {/* 연꽃 꽃잎 */}
+        <path id="lotus" d="M0 0 C-1.2 -0.5 -1.5 -3.5 0 -4.5 C1.5 -3.5 1.2 -0.5 0 0Z"/>
+        {/* 구름 (전통 운문) */}
+        <path id="cloud" d="M0 0 Q2 -3 4 -2 Q5 -4 7 -3 Q9 -4 10 -2 Q12 -3 13 0Z"/>
+      </defs>
+      {/* 연꽃 — 좌상 */}
+      <g transform="translate(8,8)" opacity="0.20" fill="var(--p-500)">
+        {[0,60,120,180,240,300].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r})`}/>
+        ))}
+        <circle r="1.8" fillOpacity="0.7"/>
+      </g>
+      {/* 연꽃 — 우상 */}
+      <g transform="translate(92,8)" opacity="0.18" fill="var(--p-500)">
+        {[0,60,120,180,240,300].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r})`}/>
+        ))}
+        <circle r="1.5" fillOpacity="0.65"/>
+      </g>
+      {/* 상단 구름 */}
+      <g fill="var(--p-400)" fillOpacity="0.18">
+        <use href="#cloud" transform="translate(20,5) scale(0.9)"/>
+        <use href="#cloud" transform="translate(55,4) scale(0.75)"/>
+        <use href="#cloud" transform="translate(72,6) scale(0.8)"/>
+      </g>
+      {/* 좌측 작은 연꽃 */}
+      <g transform="translate(3,45)" opacity="0.16" fill="var(--p-600)">
+        {[0,72,144,216,288].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r}) scale(0.9)`}/>
+        ))}
+        <circle r="1.2"/>
+      </g>
+      <g transform="translate(4,65)" opacity="0.14" fill="var(--p-400)">
+        {[0,72,144,216,288].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r}) scale(0.7)`}/>
+        ))}
+        <circle r="0.9"/>
+      </g>
+      {/* 우측 작은 연꽃 */}
+      <g transform="translate(97,44)" opacity="0.16" fill="var(--p-600)">
+        {[0,72,144,216,288].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r}) scale(0.9)`}/>
+        ))}
+        <circle r="1.2"/>
+      </g>
+      <g transform="translate(96,65)" opacity="0.14" fill="var(--p-400)">
+        {[0,72,144,216,288].map(r => (
+          <use key={r} href="#lotus" transform={`rotate(${r}) scale(0.7)`}/>
+        ))}
+        <circle r="0.9"/>
+      </g>
+      {/* 하단 물결 */}
+      <g opacity="0.16">
+        <path d="M0 88 Q5 84 10 88 Q15 84 20 88 Q25 84 30 88 Q35 84 40 88 Q45 84 50 88 Q55 84 60 88 Q65 84 70 88 Q75 84 80 88 Q85 84 90 88 Q95 84 100 88 L100 92 Q95 96 90 92 Q85 88 80 92 Q75 96 70 92 Q65 88 60 92 Q55 96 50 92 Q45 88 40 92 Q35 96 30 92 Q25 88 20 92 Q15 96 10 92 Q5 88 0 92Z"
+          fill="var(--p-500)" fillOpacity="0.25"/>
+        <path d="M0 93 Q5 89 10 93 Q15 89 20 93 Q25 89 30 93 Q35 89 40 93 Q45 89 50 93 Q55 89 60 93 Q65 89 70 93 Q75 89 80 93 Q85 89 90 93 Q95 89 100 93 L100 100 L0 100Z"
+          fill="var(--p-600)" fillOpacity="0.35"/>
+      </g>
+    </svg>
+  );
+}
+
+function ThemeOverlay({ theme }: { theme: ThemeId }) {
+  switch (theme) {
+    case 'notebook': return <OverlayNotebook />;
+    case 'chick':    return <OverlayChick />;
+    case 'lofi':     return <OverlayLofi />;
+    case 'mono':     return <OverlayMono />;
+    case 'celadon':  return <OverlayCeladon />;
+    default:         return <OverlayPink />;
+  }
+}
 
 function getDailyQuote(): string {
   const today = getKSTToday();
@@ -92,9 +480,9 @@ const MENU_TABS: MenuTabDef[] = [
 const isMenuTab = (tab: MainTab) => MENU_TABS.some(t => t.id === tab);
 
 export default function App() {
-  const [, setThemeVersion] = useState(0);
+  const [currentTheme, setCurrentTheme] = useState<ThemeId>(getTheme);
   useEffect(() => {
-    const handler = () => setThemeVersion(v => v + 1);
+    const handler = () => setCurrentTheme(getTheme());
     window.addEventListener('themechange', handler);
     return () => window.removeEventListener('themechange', handler);
   }, []);
@@ -216,8 +604,11 @@ export default function App() {
   return (
     <div className="min-h-screen theme-bg-wrap">
 
-      {/* ─── Pink icon decorative overlay ─── */}
-      <svg
+      {/* ─── Theme overlay ─── */}
+      <ThemeOverlay theme={currentTheme} />
+
+      {/* ─── (legacy kept for reference, unreachable) ─── */}
+      {false && <svg
         aria-hidden="true"
         style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
         viewBox="0 0 100 100"
@@ -352,7 +743,7 @@ export default function App() {
           <path d="M0 92 Q6.25 88 12.5 92 Q18.75 96 25 92 Q31.25 88 37.5 92 Q43.75 96 50 92 Q56.25 88 62.5 92 Q68.75 96 75 92 Q81.25 88 87.5 92 Q93.75 96 100 92 L100 100 L0 100Z" fill="var(--p-600)" fillOpacity="0.40"/>
           <path d="M0 87 Q6.25 83 12.5 87 Q18.75 91 25 87 Q31.25 83 37.5 87 Q43.75 91 50 87 Q56.25 83 62.5 87 Q68.75 91 75 87 Q81.25 83 87.5 87 Q93.75 91 100 87" stroke="white" strokeOpacity="0.25" strokeWidth="0.4" fill="none"/>
         </g>
-      </svg>
+      </svg>}
 
       {/* ── Side Panel Overlay ── */}
       {sideOpen && (

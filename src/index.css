@@ -140,13 +140,30 @@
   --theme-shimmer-hi: #d6f0e6;
 }
 
-/* 고려청자: 은은한 비색 배경 */
+/* 고려청자: 비색 그라데이션 배경 */
 [data-theme="celadon"] body,
 [data-theme="celadon"] .theme-bg-wrap {
   background-color: #eef8f3;
   background-image:
-    radial-gradient(ellipse at 20% 10%, rgba(114,184,160,0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 90%, rgba(74,158,134,0.14) 0%, transparent 45%);
+    radial-gradient(ellipse at 15% 8%, rgba(114,184,160,0.32) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 92%, rgba(74,158,134,0.26) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 50%, rgba(160,216,196,0.12) 0%, transparent 60%);
+}
+
+/* 병아리: 햇살 그라데이션 배경 */
+[data-theme="chick"] body,
+[data-theme="chick"] .theme-bg-wrap {
+  background-color: #fffde8;
+  background-image:
+    radial-gradient(ellipse at 90% 5%, rgba(255,220,30,0.40) 0%, rgba(255,220,30,0.12) 28%, transparent 55%),
+    radial-gradient(ellipse at 10% 95%, rgba(255,200,50,0.22) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,240,100,0.08) 0%, transparent 70%);
+}
+
+/* 모노: 깔끔한 선형 그라데이션 */
+[data-theme="mono"] body,
+[data-theme="mono"] .theme-bg-wrap {
+  background: linear-gradient(160deg, #ffffff 0%, #f2f2f2 45%, #e6e6e6 100%);
 }
 
 /* ── 전역 ──────────────────────────────────────────── */
