@@ -534,7 +534,7 @@ export default function App() {
               </button>
 
               {showNotifPanel && (
-                <div className="absolute right-0 top-full mt-1 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                <div className="fixed right-2 top-14 w-[min(288px,calc(100vw-16px))] bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-gray-50 flex items-center justify-between">
                     <p className="text-xs font-bold text-gray-700">알림</p>
                     {notifications.length > 0 && (
