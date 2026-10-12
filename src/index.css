@@ -32,24 +32,24 @@
 
 /* 공책&연필 */
 [data-theme="notebook"] {
-  --p-50:  #f4f6fb;
-  --p-100: #e8edf7;
-  --p-200: #c8d4ed;
-  --p-300: #a0b4e0;
-  --p-400: #7090d0;
-  --p-500: #4a6ec0;
-  --p-600: #3355a8;
-  --p-700: #254090;
-  --p-800: #1a2f78;
-  --p-900: #111f5c;
-  --theme-bg: #f5f3ee;
-  --theme-text: #2c2c3e;
-  --theme-grad-from: #a0b4e0;
-  --theme-grad-to: #3355a8;
-  --theme-border-tint: rgba(100,140,220,0.25);
-  --theme-shimmer-start: #1a2f78;
-  --theme-shimmer-mid: #3355a8;
-  --theme-shimmer-hi: #e8edf7;
+  --p-50:  #f0f6ff;
+  --p-100: #daeaff;
+  --p-200: #b5d3ff;
+  --p-300: #80b4f5;
+  --p-400: #4d90e8;
+  --p-500: #2a6ccc;
+  --p-600: #1a50a8;
+  --p-700: #103a85;
+  --p-800: #082860;
+  --p-900: #041840;
+  --theme-bg: #f8fbff;
+  --theme-text: #0a1e40;
+  --theme-grad-from: #80b4f5;
+  --theme-grad-to: #082860;
+  --theme-border-tint: rgba(80,140,220,0.22);
+  --theme-shimmer-start: #082860;
+  --theme-shimmer-mid: #1a50a8;
+  --theme-shimmer-hi: #daeaff;
 }
 
 /* 병아리 */
@@ -76,46 +76,46 @@
 
 /* 로우파이 */
 [data-theme="lofi"] {
-  --p-50:  #f5f2f8;
-  --p-100: #ebe5f2;
-  --p-200: #d6c8e8;
-  --p-300: #bba5d8;
-  --p-400: #9d82c8;
-  --p-500: #8060b5;
-  --p-600: #6b4d9e;
-  --p-700: #583c88;
-  --p-800: #422d6e;
-  --p-900: #2e1d52;
-  --theme-bg: #f2ede8;
-  --theme-text: #2a1d3a;
-  --theme-grad-from: #bba5d8;
-  --theme-grad-to: #6b4d9e;
-  --theme-border-tint: rgba(150,120,200,0.25);
-  --theme-shimmer-start: #2e1d52;
-  --theme-shimmer-mid: #6b4d9e;
-  --theme-shimmer-hi: #ebe5f2;
+  --p-50:  #faf7ff;
+  --p-100: #f0eaff;
+  --p-200: #ddd0f8;
+  --p-300: #c4aaf2;
+  --p-400: #a882e8;
+  --p-500: #8a60d8;
+  --p-600: #7040c8;
+  --p-700: #5828a8;
+  --p-800: #401890;
+  --p-900: #2c0c70;
+  --theme-bg: #d4c4f0;
+  --theme-text: #1e1040;
+  --theme-grad-from: #c4aaf2;
+  --theme-grad-to: #7040c8;
+  --theme-border-tint: rgba(140,100,220,0.22);
+  --theme-shimmer-start: #401890;
+  --theme-shimmer-mid: #7040c8;
+  --theme-shimmer-hi: #f0eaff;
 }
 
 /* 모노 */
 [data-theme="mono"] {
-  --p-50:  #f7f7f7;
-  --p-100: #efefef;
-  --p-200: #d8d8d8;
-  --p-300: #bababa;
-  --p-400: #989898;
-  --p-500: #757575;
-  --p-600: #555555;
-  --p-700: #3a3a3a;
-  --p-800: #242424;
-  --p-900: #111111;
-  --theme-bg: #f4f4f4;
-  --theme-text: #1a1a1a;
-  --theme-grad-from: #bababa;
-  --theme-grad-to: #555555;
-  --theme-border-tint: rgba(80,80,80,0.18);
-  --theme-shimmer-start: #242424;
-  --theme-shimmer-mid: #555555;
-  --theme-shimmer-hi: #efefef;
+  --p-50:  #f9f9f9;
+  --p-100: #f0f0f0;
+  --p-200: #e0e0e0;
+  --p-300: #c8c8c8;
+  --p-400: #aaaaaa;
+  --p-500: #888888;
+  --p-600: #444444;
+  --p-700: #2e2e2e;
+  --p-800: #1a1a1a;
+  --p-900: #080808;
+  --theme-bg: #f5f5f5;
+  --theme-text: #111111;
+  --theme-grad-from: #c8c8c8;
+  --theme-grad-to: #1a1a1a;
+  --theme-border-tint: rgba(60,60,60,0.14);
+  --theme-shimmer-start: #111111;
+  --theme-shimmer-mid: #444444;
+  --theme-shimmer-hi: #f0f0f0;
 }
 
 /* ── 전역 ──────────────────────────────────────────── */
@@ -133,11 +133,39 @@ body {
   transition: background-color 0.3s ease, color 0.2s ease;
 }
 
+/* 로우파이: 드리밍 그라디언트 배경 */
+[data-theme="lofi"] body,
+[data-theme="lofi"] .theme-bg-wrap {
+  background: linear-gradient(
+    170deg,
+    #b8eafc 0%,
+    #b8c4f8 22%,
+    #c8a0f0 45%,
+    #e4b0dc 68%,
+    #f8cae8 100%
+  );
+}
+
+/* 공책&연필: 모눈종이 패턴 배경 */
+[data-theme="notebook"] body,
+[data-theme="notebook"] .theme-bg-wrap {
+  background-color: #f8fbff;
+  background-image:
+    linear-gradient(rgba(120, 170, 220, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 170, 220, 0.22) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 #root {
   min-height: 100vh;
 }
 
 @layer components {
+  /* 배경 래퍼 — 테마별 배경 적용 (특정 테마에서 오버라이드됨) */
+  .theme-bg-wrap {
+    background: var(--theme-bg);
+  }
+
   /* 테마 gradient 유틸 — inline style 대신 이 클래스 사용 */
   .theme-gradient {
     background: linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%);

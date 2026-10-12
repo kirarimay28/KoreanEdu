@@ -174,11 +174,9 @@ export default function App() {
   const today = getKSTToday();
   const isExamPeriodActive = examPeriod !== null && today >= examPeriod.startDate && today <= examPeriod.endDate;
 
-  const jadeBg = { background: 'var(--theme-bg)' } as React.CSSProperties;
-
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={jadeBg}>
+      <div className="min-h-screen theme-bg-wrap flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 border-4 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
         <p className="text-gray-500 text-sm">데이터를 불러오는 중...</p>
       </div>
@@ -187,7 +185,7 @@ export default function App() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-8 text-center" style={jadeBg}>
+      <div className="min-h-screen theme-bg-wrap flex flex-col items-center justify-center gap-4 p-8 text-center">
         <p className="text-red-500 font-semibold">서버 연결에 실패했습니다.</p>
         <p className="text-gray-500 text-sm">네트워크를 확인하고 다시 시도해 주세요.</p>
         <button
@@ -209,7 +207,7 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--theme-bg)' }}>
+    <div className="min-h-screen theme-bg-wrap">
 
       {/* ─── Pink icon decorative overlay ─── */}
       <svg
