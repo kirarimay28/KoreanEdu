@@ -174,7 +174,7 @@ export default function App() {
   const today = getKSTToday();
   const isExamPeriodActive = examPeriod !== null && today >= examPeriod.startDate && today <= examPeriod.endDate;
 
-  const jadeBg = { background: '#fff0f5' } as React.CSSProperties;
+  const jadeBg = { background: 'var(--theme-bg)' } as React.CSSProperties;
 
   if (loading) {
     return (
@@ -209,7 +209,7 @@ export default function App() {
   const roleLabel = currentUser.role === 'admin' ? '방장' : currentUser.role === 'subadmin' ? '부방장' : '멤버';
 
   return (
-    <div className="min-h-screen" style={{ background: '#fff0f5' }}>
+    <div className="min-h-screen" style={{ background: 'var(--theme-bg)' }}>
 
       {/* ─── Pink icon decorative overlay ─── */}
       <svg
@@ -375,8 +375,8 @@ export default function App() {
               style={{
                 background: `
                   radial-gradient(ellipse at 22% 20%, rgba(255,255,255,0.82) 0%, rgba(224,242,238,0.4) 30%, transparent 54%),
-                  radial-gradient(ellipse at 76% 82%, rgba(255,163,199,0.28) 0%, transparent 50%),
-                  linear-gradient(148deg, #fdd5e8 0%, #f9bcd4 30%, #ffa3c7 62%, #f8bed6 100%)
+                  radial-gradient(ellipse at 76% 82%, var(--theme-sidebar-radial, rgba(255,163,199,0.28)) 0%, transparent 50%),
+                  linear-gradient(148deg, var(--p-100) 0%, var(--p-200) 30%, var(--p-300) 62%, var(--p-100) 100%)
                 `,
               }}
             >
@@ -445,14 +445,14 @@ export default function App() {
                     }`}
                     style={isActive ? {
                       background: 'rgba(255,255,255,0.72)',
-                      border: '1px solid rgba(255,163,199,0.22)',
-                      boxShadow: '0 1px 6px rgba(222,78,128,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
+                      border: '1px solid var(--theme-border-tint)',
+                      boxShadow: '0 1px 6px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.5) inset',
                     } : {}}
                   >
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all`}
                       style={isActive ? {
-                        background: 'linear-gradient(135deg, #ffc9e0 0%, #ffa3c7 100%)',
-                        boxShadow: '0 2px 6px rgba(222,78,128,0.2)',
+                        background: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                       } : { background: 'rgba(255,255,255,0.55)' }}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.iconColor}`} />
@@ -492,7 +492,7 @@ export default function App() {
       )}
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-10" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(248,144,188,0.18)', boxShadow: '0 1px 16px rgba(222,78,128,0.08)' }}>
+      <header className="sticky top-0 z-10" style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--theme-border-tint)', boxShadow: '0 1px 16px rgba(0,0,0,0.04)' }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger */}
