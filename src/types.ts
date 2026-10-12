@@ -440,6 +440,8 @@ export interface AppData {
   medievalBlankExams: MedievalBlankExam[];
   examPeriod: ExamPeriod | null;
   examStudySchedules: ExamStudySchedule[];
+  examStudyResources: ExamStudyResource[];
+  examMaterialRequests: ExamMaterialRequest[];
   attendanceCheckIns: AttendanceCheckIn[];
   meetingRecords: MeetingRecord[];
 }
@@ -644,4 +646,31 @@ export interface ExamStudySchedule {
   username: string;
   days: ExamDayPlan[];
   updatedAt: string;
+}
+
+export type ExamResourceCategory = '자습서' | '평가문제지' | '단권화' | '기타';
+
+export interface ExamStudyResource {
+  id: string;
+  title: string;
+  category: ExamResourceCategory;
+  fileUrl: string;
+  storagePath: string;
+  uploadedById: string;
+  uploadedByName: string;
+  createdAt: string;
+}
+
+export interface ExamMaterialRequest {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  category: ExamResourceCategory;
+  description: string;
+  refPdfUrl?: string;
+  refPdfPath?: string;
+  createdAt: string;
+  completed: boolean;
+  completedAt?: string;
+  completedById?: string;
 }

@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
-import type { User, ExamPeriod, ExamStudySchedule, ExamDayPlan, Weekday } from '../../types';
+import { useState, useEffect, useRef } from 'react';
+import type { User, ExamPeriod, ExamStudySchedule, ExamDayPlan, Weekday, ExamStudyResource, ExamMaterialRequest, ExamResourceCategory } from '../../types';
 import { isPrivileged } from '../../types';
 import {
   subscribeExamPeriodData, getExamPeriod, setExamPeriod, clearExamPeriod,
-  getExamStudySchedules, saveExamStudySchedule, getAllUserIds,
+  getExamStudySchedules, saveExamStudySchedule,
+  getExamStudyResources, saveExamStudyResource, deleteExamStudyResource, uploadExamStudyResourcePdf,
+  getExamMaterialRequests, saveExamMaterialRequest, uploadExamRequestRefPdf,
+  getAllUserIds, getPrivilegedUserIds, deleteExamStudyResourceFile,
 } from '../../store';
 import { sendPush } from '../../notifications';
-import { CalendarDays, Trash2, Check, Users, Clock } from 'lucide-react';
+import {
+  CalendarDays, Trash2, Check, Users, Clock, BookOpen, Upload, FileText,
+  MessageSquarePlus, ExternalLink, CheckCircle2, ChevronDown, ChevronUp,
+} from 'lucide-react';
 import { getKSTToday } from '../common/DateNavigator';
 
 interface Props { currentUser: User; }
 
 const DAYS: Weekday[] = ['월', '화', '수', '목', '금', '토', '일'];
+const CATEGORIES: ExamResourceCategory[] = ['자습서', '평가문제지', '단권화', '기타'];
+const PROBLEM_BANK_URL = 'https://claude.ai/artifact/D4Szqu6j3srT7EumUPrtPS';
 
 function calcHours(start: string, end: string): number {
   if (!start || !end) return 0;
@@ -25,6 +33,18 @@ function isActive(period: ExamPeriod | null): boolean {
   if (!period) return false;
   const today = getKSTToday();
   return today >= period.startDate && today <= period.endDate;
+}
+
+function ProgressBar({ progress }: { progress: number }) {
+  if (progress <= 0 || progress >= 100) return null;
+  return (
+    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mt-2">
+      <div
+        className="h-2 rounded-full transition-all duration-200"
+        style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#f9a8c9,#de4e80)' }}
+      />
+    </div>
+  );
 }
 
 /* ── 방장: 기간 설정 ── */
@@ -70,73 +90,22 @@ function AdminPeriodForm({ onSave }: { onSave: (start: string, end: string) => v
   );
 }
 
-/* ── 방장: 멤버 일정 표 ── */
-function AdminScheduleView({ schedules }: { schedules: ExamStudySchedule[] }) {
-  if (schedules.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-sm text-gray-300 font-semibold">아직 제출된 계획이 없습니다</p>
-      </div>
-    );
-  }
-
-  const totalByMember = (days: ExamDayPlan[]) =>
-    days.filter(d => d.willCome).reduce((sum, d) => sum + calcHours(d.startTime, d.endTime), 0);
-
-  return (
-    <div className="space-y-3">
-      <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5">
-        <Users className="w-3.5 h-3.5" /> 제출된 계획 ({schedules.length}명)
-      </p>
-      {schedules.map(s => (
-        <div key={s.userId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-bold text-gray-800">{s.username}</p>
-            <span className="text-xs text-primary-600 font-bold">
-              총 {totalByMember(s.days)}h
-            </span>
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {DAYS.map(day => {
-              const plan = s.days.find(d => d.day === day);
-              const come = plan?.willCome;
-              return (
-                <div key={day} className={`rounded-lg p-1.5 text-center ${come ? 'bg-primary-50' : 'bg-gray-50'}`}>
-                  <p className={`text-[10px] font-bold ${come ? 'text-primary-600' : 'text-gray-300'}`}>{day}</p>
-                  {come && plan ? (
-                    <p className="text-[8px] text-primary-500 mt-0.5 leading-tight">
-                      {plan.startTime}<br />~{plan.endTime}
-                    </p>
-                  ) : (
-                    <p className="text-[8px] text-gray-200 mt-0.5">—</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── 멤버: 일정 입력 ── */
-function MemberScheduleForm({
+/* ── 탭1: 계획표 ── */
+function ScheduleTab({
   currentUser,
-  existing,
-  onSave,
-}: {
-  currentUser: User;
-  existing: ExamStudySchedule | null;
-  onSave: () => void;
-}) {
+  onSaved,
+}: { currentUser: User; isAdmin: boolean; onSaved: () => void }) {
+  const schedules = getExamStudySchedules();
+  const mySchedule = schedules.find(s => s.userId === currentUser.id) ?? null;
+
   const [days, setDays] = useState<ExamDayPlan[]>(() =>
     DAYS.map(day => {
-      const found = existing?.days.find(d => d.day === day);
+      const found = mySchedule?.days.find(d => d.day === day);
       return found ?? { day, willCome: false, startTime: '09:00', endTime: '18:00' };
     })
   );
   const [saved, setSaved] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   function toggleCome(i: number) {
     setDays(prev => prev.map((d, idx) => idx === i ? { ...d, willCome: !d.willCome } : d));
@@ -146,7 +115,6 @@ function MemberScheduleForm({
     setDays(prev => prev.map((d, idx) => idx === i ? { ...d, [field]: val } : d));
     setSaved(false);
   }
-
   function handleSave() {
     saveExamStudySchedule({
       userId: currentUser.id,
@@ -155,16 +123,19 @@ function MemberScheduleForm({
       updatedAt: new Date().toISOString(),
     });
     setSaved(true);
-    onSave();
+    onSaved();
   }
 
   const totalHours = days.filter(d => d.willCome).reduce((sum, d) => sum + calcHours(d.startTime, d.endTime), 0);
+  const totalByMember = (s: ExamStudySchedule) =>
+    s.days.filter(d => d.willCome).reduce((sum, d) => sum + calcHours(d.startTime, d.endTime), 0);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* 내 계획 입력 */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold text-gray-600">요일별 공부 계획</p>
+          <p className="text-xs font-bold text-gray-600">내 공부 계획</p>
           <span className="text-xs text-primary-600 font-bold">총 {totalHours}시간</span>
         </div>
         {days.map((d, i) => (
@@ -201,22 +172,385 @@ function MemberScheduleForm({
             </div>
           </div>
         ))}
+        <button
+          onClick={handleSave}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        >
+          {saved ? <><Check className="w-4 h-4" /> 저장 완료</> : '계획 저장'}
+        </button>
       </div>
 
-      <button
-        onClick={handleSave}
-        className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2"
-        style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-      >
-        {saved ? <><Check className="w-4 h-4" /> 저장 완료</> : '계획 저장'}
-      </button>
+      {/* 전체 멤버 일정 */}
+      {schedules.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <button
+            className="w-full flex items-center justify-between"
+            onClick={() => setShowAll(v => !v)}
+          >
+            <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> 멤버 일정 ({schedules.length}명)
+            </p>
+            {showAll ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          </button>
+          {showAll && (
+            <div className="mt-3 space-y-3">
+              {schedules.map(s => (
+                <div key={s.userId}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-bold text-gray-700">{s.username}</p>
+                    <span className="text-[11px] text-primary-600 font-bold">총 {totalByMember(s)}h</span>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {DAYS.map(day => {
+                      const plan = s.days.find(d => d.day === day);
+                      const come = plan?.willCome;
+                      return (
+                        <div key={day} className={`rounded-lg p-1.5 text-center ${come ? 'bg-primary-50' : 'bg-gray-50'}`}>
+                          <p className={`text-[10px] font-bold ${come ? 'text-primary-600' : 'text-gray-300'}`}>{day}</p>
+                          {come && plan ? (
+                            <p className="text-[8px] text-primary-500 mt-0.5 leading-tight">
+                              {plan.startTime}<br />~{plan.endTime}
+                            </p>
+                          ) : (
+                            <p className="text-[8px] text-gray-200 mt-0.5">—</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 탭2: 자료 도서관 ── */
+function ResourceLibraryTab({ currentUser, isAdmin }: { currentUser: User; isAdmin: boolean }) {
+  const resources = getExamStudyResources();
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<ExamResourceCategory>('자습서');
+  const [file, setFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleUpload() {
+    if (!title.trim() || !file) return;
+    setUploading(true);
+    setProgress(0);
+    try {
+      const id = crypto.randomUUID();
+      const { url, storagePath } = await uploadExamStudyResourcePdf(id, file, pct => setProgress(pct));
+      saveExamStudyResource({
+        id, title: title.trim(), category, fileUrl: url, storagePath,
+        uploadedById: currentUser.id,
+        uploadedByName: currentUser.username,
+        createdAt: new Date().toISOString(),
+      });
+      setTitle(''); setCategory('자습서'); setFile(null);
+      if (fileRef.current) fileRef.current.value = '';
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  }
+
+  async function handleDelete(r: ExamStudyResource) {
+    if (!confirm(`"${r.title}" 자료를 삭제하시겠습니까?`)) return;
+    await deleteExamStudyResourceFile(r.storagePath);
+    deleteExamStudyResource(r.id);
+  }
+
+  const byCategory = CATEGORIES.map(cat => ({
+    cat,
+    items: resources.filter(r => r.category === cat),
+  })).filter(g => g.items.length > 0);
+
+  return (
+    <div className="space-y-4">
+      {/* 업로드 폼 */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <p className="text-xs font-bold text-gray-600">자료 업로드</p>
+        <input
+          type="text" placeholder="자료 제목" value={title}
+          onChange={e => setTitle(e.target.value)}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400"
+        />
+        <div className="flex gap-2 flex-wrap">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${category === cat ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-500 border-gray-200'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 border border-dashed border-gray-200 rounded-xl px-3 py-2.5 cursor-pointer hover:border-primary-300 transition">
+          <Upload className="w-4 h-4 text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-500 truncate">{file ? file.name : 'PDF 선택'}</span>
+          <input ref={fileRef} type="file" accept=".pdf" className="hidden"
+            onChange={e => setFile(e.target.files?.[0] ?? null)} />
+        </label>
+        {uploading && <ProgressBar progress={progress} />}
+        <button
+          onClick={handleUpload}
+          disabled={uploading || !title.trim() || !file}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        >
+          {uploading ? `업로드 중… ${progress}%` : '업로드'}
+        </button>
+      </div>
+
+      {/* 자료 목록 */}
+      {resources.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-sm text-gray-300 font-semibold">업로드된 자료가 없습니다</p>
+        </div>
+      ) : (
+        byCategory.map(({ cat, items }) => (
+          <div key={cat} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-2">
+            <p className="text-xs font-bold text-gray-500 mb-2">{cat}</p>
+            {items.map(r => (
+              <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50">
+                <FileText className="w-4 h-4 text-primary-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{r.title}</p>
+                  <p className="text-[11px] text-gray-400">{r.uploadedByName}</p>
+                </div>
+                <a
+                  href={r.fileUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-primary-600 font-bold px-2.5 py-1 rounded-lg border border-primary-200 shrink-0"
+                >
+                  열기
+                </a>
+                {isAdmin && (
+                  <button onClick={() => handleDelete(r)} className="text-red-400 hover:text-red-600">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+/* ── 탭3: 자료 요청 ── */
+function MaterialRequestTab({ currentUser, isAdmin }: { currentUser: User; isAdmin: boolean }) {
+  const requests = getExamMaterialRequests();
+  const [category, setCategory] = useState<ExamResourceCategory>('자습서');
+  const [description, setDescription] = useState('');
+  const [refFile, setRefFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const refFileRef = useRef<HTMLInputElement>(null);
+
+  async function handleSubmit() {
+    if (!description.trim()) return;
+    setSubmitting(true);
+    setUploading(false);
+    try {
+      const id = crypto.randomUUID();
+      let refPdfUrl: string | undefined;
+      let refPdfPath: string | undefined;
+      if (refFile) {
+        setUploading(true);
+        setProgress(0);
+        const result = await uploadExamRequestRefPdf(id, refFile, pct => setProgress(pct));
+        refPdfUrl = result.url;
+        refPdfPath = result.storagePath;
+        setUploading(false);
+      }
+      const req: ExamMaterialRequest = {
+        id,
+        requesterId: currentUser.id,
+        requesterName: currentUser.username,
+        category,
+        description: description.trim(),
+        refPdfUrl,
+        refPdfPath,
+        createdAt: new Date().toISOString(),
+        completed: false,
+      };
+      saveExamMaterialRequest(req);
+      sendPush({
+        userIds: getPrivilegedUserIds().filter(id => id !== currentUser.id),
+        title: '📥 자료 요청',
+        body: `${currentUser.username}님이 [${category}] 자료를 요청했습니다.`,
+      });
+      setDescription(''); setCategory('자습서'); setRefFile(null);
+      if (refFileRef.current) refFileRef.current.value = '';
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSubmitting(false);
+      setProgress(0);
+    }
+  }
+
+  async function handleComplete(req: ExamMaterialRequest) {
+    const updated: ExamMaterialRequest = {
+      ...req,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      completedById: currentUser.id,
+    };
+    saveExamMaterialRequest(updated);
+    sendPush({
+      userIds: [req.requesterId],
+      title: '✅ 자료 제공 완료',
+      body: `요청하신 [${req.category}] 자료가 준비되었습니다.`,
+    });
+  }
+
+  const pending = requests.filter(r => !r.completed);
+  const done = requests.filter(r => r.completed);
+
+  return (
+    <div className="space-y-4">
+      {/* 요청 폼 */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <p className="text-xs font-bold text-gray-600">자료 요청</p>
+        <div className="flex gap-2 flex-wrap">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition ${category === cat ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-500 border-gray-200'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <textarea
+          placeholder="어떤 자료가 필요한지 설명해 주세요"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          rows={3}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-400 resize-none"
+        />
+        <label className="flex items-center gap-2 border border-dashed border-gray-200 rounded-xl px-3 py-2 cursor-pointer hover:border-primary-300 transition">
+          <Upload className="w-4 h-4 text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-500 truncate">{refFile ? refFile.name : '참고용 PDF (선택)'}</span>
+          <input ref={refFileRef} type="file" accept=".pdf" className="hidden"
+            onChange={e => setRefFile(e.target.files?.[0] ?? null)} />
+        </label>
+        {uploading && <ProgressBar progress={progress} />}
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !description.trim()}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        >
+          <MessageSquarePlus className="w-4 h-4" />
+          {submitting ? '요청 중…' : '요청 올리기'}
+        </button>
+      </div>
+
+      {/* 대기 중 요청 */}
+      {pending.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-500">대기 중 ({pending.length})</p>
+          {pending.map(r => (
+            <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-bold text-primary-600 bg-primary-50 rounded-full px-2 py-0.5">{r.category}</span>
+                    <span className="text-[11px] text-gray-400">{r.requesterName}</span>
+                  </div>
+                  <p className="text-sm text-gray-700">{r.description}</p>
+                  {r.refPdfUrl && (
+                    <a href={r.refPdfUrl} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-primary-600 mt-1">
+                      <FileText className="w-3 h-3" /> 참고 PDF
+                    </a>
+                  )}
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleComplete(r)}
+                    className="shrink-0 flex items-center gap-1 text-xs font-bold text-green-600 border border-green-200 rounded-lg px-2.5 py-1 hover:bg-green-50 transition"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 완료
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 완료된 요청 */}
+      {done.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-400">완료된 요청 ({done.length})</p>
+          {done.map(r => (
+            <div key={r.id} className="bg-gray-50 rounded-2xl border border-gray-100 p-4 opacity-60">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">{r.category}</span>
+                <span className="text-[11px] text-gray-400">{r.requesterName}</span>
+                <span className="ml-auto text-[11px] text-green-600 font-bold flex items-center gap-0.5">
+                  <CheckCircle2 className="w-3 h-3" /> 완료
+                </span>
+              </div>
+              <p className="text-sm text-gray-500">{r.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {requests.length === 0 && (
+        <div className="text-center py-10">
+          <p className="text-sm text-gray-300 font-semibold">등록된 요청이 없습니다</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 탭4: 문제 은행 ── */
+function ProblemBankTab() {
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center space-y-3">
+        <BookOpen className="w-8 h-8 text-primary-400 mx-auto" />
+        <p className="text-sm font-bold text-gray-700">중세국어 · 교육과정 문제 은행</p>
+        <p className="text-xs text-gray-400">외부 문제 풀이 페이지로 이동합니다</p>
+        <a
+          href={PROBLEM_BANK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        >
+          <ExternalLink className="w-4 h-4" /> 문제 은행 열기
+        </a>
+      </div>
     </div>
   );
 }
 
 /* ── 메인 ── */
+type TabKey = '계획표' | '자료 도서관' | '자료 요청' | '문제 은행';
+const TABS: TabKey[] = ['계획표', '자료 도서관', '자료 요청', '문제 은행'];
+
 export default function ExamPeriodTab({ currentUser }: Props) {
   const [, setTick] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabKey>('계획표');
 
   useEffect(() => {
     const unsub = subscribeExamPeriodData(() => setTick(t => t + 1));
@@ -225,8 +559,6 @@ export default function ExamPeriodTab({ currentUser }: Props) {
 
   const isAdmin = isPrivileged(currentUser);
   const period = getExamPeriod();
-  const schedules = getExamStudySchedules();
-  const mySchedule = schedules.find(s => s.userId === currentUser.id) ?? null;
   const active = isActive(period);
 
   function handleSetPeriod(start: string, end: string) {
@@ -242,7 +574,7 @@ export default function ExamPeriodTab({ currentUser }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 현재 시험기간 상태 */}
+      {/* 시험기간 배너 */}
       {period ? (
         <div className={`rounded-2xl p-4 ${active ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100'}`}>
           <div className="flex items-center justify-between">
@@ -259,7 +591,12 @@ export default function ExamPeriodTab({ currentUser }: Props) {
             </div>
             {isAdmin && (
               <button
-                onClick={() => { if (confirm('시험기간을 삭제하시겠습니까?')) { clearExamPeriod(); sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간 종료', body: '시험기간이 종료되었습니다.' }); } }}
+                onClick={() => {
+                  if (confirm('시험기간을 삭제하시겠습니까?')) {
+                    clearExamPeriod();
+                    sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간 종료', body: '시험기간이 종료되었습니다.' });
+                  }
+                }}
                 className="text-xs text-red-400 border border-red-100 rounded-lg px-2.5 py-1 hover:bg-red-50 transition flex items-center gap-1"
               >
                 <Trash2 className="w-3 h-3" /> 삭제
@@ -276,24 +613,44 @@ export default function ExamPeriodTab({ currentUser }: Props) {
         </div>
       ) : (
         isAdmin ? null : (
-          <div className="text-center py-10">
+          <div className="text-center py-6">
             <p className="text-sm text-gray-300 font-semibold">설정된 시험기간이 없습니다</p>
           </div>
         )
       )}
 
-      {/* 방장: 기간 설정 폼 (시험기간 없을 때) */}
+      {/* 방장: 기간 설정 폼 */}
       {isAdmin && !period && <AdminPeriodForm onSave={handleSetPeriod} />}
 
-      {/* 공부 계획 섹션 (시험기간 있을 때) */}
+      {/* 탭 네비게이션 */}
       {period && (
         <>
-          <MemberScheduleForm
-            currentUser={currentUser}
-            existing={mySchedule}
-            onSave={() => setTick(t => t + 1)}
-          />
-          {isAdmin && <AdminScheduleView schedules={schedules} />}
+          <div className="flex gap-1 bg-gray-100 rounded-2xl p-1">
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === '계획표' && (
+            <ScheduleTab
+              currentUser={currentUser}
+              isAdmin={isAdmin}
+              onSaved={() => setTick(t => t + 1)}
+            />
+          )}
+          {activeTab === '자료 도서관' && (
+            <ResourceLibraryTab currentUser={currentUser} isAdmin={isAdmin} />
+          )}
+          {activeTab === '자료 요청' && (
+            <MaterialRequestTab currentUser={currentUser} isAdmin={isAdmin} />
+          )}
+          {activeTab === '문제 은행' && <ProblemBankTab />}
         </>
       )}
     </div>
