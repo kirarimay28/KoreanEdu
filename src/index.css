@@ -5,6 +5,121 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── 테마 변수 ──────────────────────────────────────────── */
+
+/* 기본 (핑크) */
+:root,
+[data-theme="pink"] {
+  --p-50:  #fff5f9;
+  --p-100: #feeaf3;
+  --p-200: #fdd3e8;
+  --p-300: #ffb3d0;
+  --p-400: #f890bc;
+  --p-500: #f068a0;
+  --p-600: #de4e80;
+  --p-700: #be3065;
+  --p-800: #9e1e4c;
+  --p-900: #7e0e36;
+  --theme-bg: #fff0f5;
+  --theme-text: #3d1a2a;
+  --theme-grad-from: #f9a8c9;
+  --theme-grad-to: #de4e80;
+  --theme-border-tint: rgba(255,163,199,0.30);
+  --theme-shimmer-start: #9e1e4c;
+  --theme-shimmer-mid: #de4e80;
+  --theme-shimmer-hi: #ffeaf3;
+}
+
+/* 공책&연필 */
+[data-theme="notebook"] {
+  --p-50:  #f4f6fb;
+  --p-100: #e8edf7;
+  --p-200: #c8d4ed;
+  --p-300: #a0b4e0;
+  --p-400: #7090d0;
+  --p-500: #4a6ec0;
+  --p-600: #3355a8;
+  --p-700: #254090;
+  --p-800: #1a2f78;
+  --p-900: #111f5c;
+  --theme-bg: #f5f3ee;
+  --theme-text: #2c2c3e;
+  --theme-grad-from: #a0b4e0;
+  --theme-grad-to: #3355a8;
+  --theme-border-tint: rgba(100,140,220,0.25);
+  --theme-shimmer-start: #1a2f78;
+  --theme-shimmer-mid: #3355a8;
+  --theme-shimmer-hi: #e8edf7;
+}
+
+/* 병아리 */
+[data-theme="chick"] {
+  --p-50:  #fffde8;
+  --p-100: #fff8c8;
+  --p-200: #ffee90;
+  --p-300: #ffe050;
+  --p-400: #ffcf18;
+  --p-500: #f5b800;
+  --p-600: #d49600;
+  --p-700: #b07800;
+  --p-800: #8c5c00;
+  --p-900: #6a4200;
+  --theme-bg: #fffde8;
+  --theme-text: #3a2e00;
+  --theme-grad-from: #ffe050;
+  --theme-grad-to: #d49600;
+  --theme-border-tint: rgba(240,180,0,0.25);
+  --theme-shimmer-start: #8c5c00;
+  --theme-shimmer-mid: #d49600;
+  --theme-shimmer-hi: #fff8c8;
+}
+
+/* 로우파이 */
+[data-theme="lofi"] {
+  --p-50:  #f5f2f8;
+  --p-100: #ebe5f2;
+  --p-200: #d6c8e8;
+  --p-300: #bba5d8;
+  --p-400: #9d82c8;
+  --p-500: #8060b5;
+  --p-600: #6b4d9e;
+  --p-700: #583c88;
+  --p-800: #422d6e;
+  --p-900: #2e1d52;
+  --theme-bg: #f2ede8;
+  --theme-text: #2a1d3a;
+  --theme-grad-from: #bba5d8;
+  --theme-grad-to: #6b4d9e;
+  --theme-border-tint: rgba(150,120,200,0.25);
+  --theme-shimmer-start: #2e1d52;
+  --theme-shimmer-mid: #6b4d9e;
+  --theme-shimmer-hi: #ebe5f2;
+}
+
+/* 모노 */
+[data-theme="mono"] {
+  --p-50:  #f7f7f7;
+  --p-100: #efefef;
+  --p-200: #d8d8d8;
+  --p-300: #bababa;
+  --p-400: #989898;
+  --p-500: #757575;
+  --p-600: #555555;
+  --p-700: #3a3a3a;
+  --p-800: #242424;
+  --p-900: #111111;
+  --theme-bg: #f4f4f4;
+  --theme-text: #1a1a1a;
+  --theme-grad-from: #bababa;
+  --theme-grad-to: #555555;
+  --theme-border-tint: rgba(80,80,80,0.18);
+  --theme-shimmer-start: #242424;
+  --theme-shimmer-mid: #555555;
+  --theme-shimmer-hi: #efefef;
+}
+
+/* ── 전역 ──────────────────────────────────────────── */
+
 * {
   box-sizing: border-box;
 }
@@ -12,9 +127,10 @@
 body {
   margin: 0;
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background-color: #fff0f5;
-  color: #3d1a2a;
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.2s ease;
 }
 
 #root {
@@ -22,10 +138,21 @@ body {
 }
 
 @layer components {
+  /* 테마 gradient 유틸 — inline style 대신 이 클래스 사용 */
+  .theme-gradient {
+    background: linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%);
+  }
+  .theme-gradient-text {
+    background: linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   .tab-active {
     @apply text-white font-semibold;
-    background: linear-gradient(135deg, #de4e80 0%, #f890bc 100%);
-    box-shadow: 0 2px 8px rgba(222,78,128,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
+    background: linear-gradient(135deg, var(--theme-grad-to) 0%, var(--theme-grad-from) 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.16), 0 0 0 1px rgba(255,255,255,0.18) inset;
   }
   .tab-inactive {
     @apply text-gray-400 font-medium;
@@ -34,21 +161,21 @@ body {
   }
   .tab-inactive:hover {
     background: rgba(255, 255, 255, 0.80);
-    color: #de4e80;
+    color: var(--p-600);
   }
   .input-field {
     @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm;
     background: rgba(255, 255, 255, 0.60);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 163, 199, 0.30);
+    border: 1px solid var(--theme-border-tint);
   }
   .textarea-field {
     @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent transition text-gray-800 placeholder-gray-400 text-sm resize-none;
     background: rgba(255, 255, 255, 0.60);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 163, 199, 0.30);
+    border: 1px solid var(--theme-border-tint);
   }
   .card {
     @apply rounded-2xl p-5;
@@ -57,7 +184,7 @@ body {
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid rgba(255, 255, 255, 0.55);
     box-shadow:
-      0 2px 20px rgba(222, 78, 128, 0.06),
+      0 2px 20px rgba(0,0,0,0.04),
       0 0 0 1px rgba(255, 255, 255, 0.45) inset;
   }
   .btn-primary {
@@ -66,7 +193,7 @@ body {
   .btn-secondary {
     @apply text-primary-700 font-medium px-6 py-3 rounded-xl transition-all duration-200;
     background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(255, 163, 199, 0.25);
+    border: 1px solid var(--theme-border-tint);
   }
   .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.88);
@@ -88,19 +215,19 @@ body {
 .auth-logo-shimmer {
   background: linear-gradient(
     120deg,
-    #9e1e4c 0%,
-    #de4e80 18%,
-    #ffb3d0 40%,
-    #ffeaf3 52%,
-    #ffb3d0 64%,
-    #de4e80 82%,
-    #9e1e4c 100%
+    var(--theme-shimmer-start) 0%,
+    var(--theme-shimmer-mid)   18%,
+    var(--theme-grad-from)     40%,
+    var(--theme-shimmer-hi)    52%,
+    var(--theme-grad-from)     64%,
+    var(--theme-shimmer-mid)   82%,
+    var(--theme-shimmer-start) 100%
   );
   background-size: 260% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 3px 16px rgba(222, 78, 128, 0.28));
+  filter: drop-shadow(0 3px 16px color-mix(in srgb, var(--p-600) 30%, transparent));
   animation: auth-shimmer 4s ease-in-out infinite alternate;
 }
 

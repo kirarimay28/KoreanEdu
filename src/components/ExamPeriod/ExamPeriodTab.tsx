@@ -42,8 +42,8 @@ function ProgressBar({ progress }: { progress: number }) {
   return (
     <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden mt-2">
       <div
-        className="h-2 rounded-full transition-all duration-200"
-        style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#f9a8c9,#de4e80)' }}
+        className="h-2 rounded-full transition-all duration-200 theme-gradient"
+        style={{ width: `${progress}%` }}
       />
     </div>
   );
@@ -83,8 +83,7 @@ function AdminPeriodForm({ onSave }: { onSave: (start: string, end: string) => v
       {error && <p className="text-xs text-red-500">{error}</p>}
       <button
         onClick={handleSave}
-        className="w-full py-3 rounded-xl text-sm font-bold text-white transition"
-        style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+        className="w-full py-3 rounded-xl text-sm font-bold text-white transition theme-gradient"
       >
         시험기간 설정
       </button>
@@ -192,8 +191,7 @@ function ScheduleTab({
                 <div className="flex items-center gap-3 px-3 py-2.5">
                   <button
                     onClick={() => toggleCome(i)}
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm transition shrink-0 ${d.willCome ? 'text-white' : 'text-gray-400 bg-white border border-gray-200'}`}
-                    style={d.willCome ? { background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' } : {}}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm transition shrink-0 ${d.willCome ? 'text-white theme-gradient' : 'text-gray-400 bg-white border border-gray-200'}`}
                   >
                     {d.day}
                   </button>
@@ -222,8 +220,7 @@ function ScheduleTab({
               <button onClick={() => setEditingSchedule(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 border border-gray-200">취소</button>
               <button
                 onClick={handleSaveSchedule}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white theme-gradient"
               >
                 {scheduleSaved ? <span className="flex items-center justify-center gap-1"><Check className="w-4 h-4" /> 저장됨</span> : '저장'}
               </button>
@@ -294,8 +291,7 @@ function ScheduleTab({
               <button onClick={() => setEditingAssign(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 border border-gray-200">취소</button>
               <button
                 onClick={handleSaveAssignments}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white theme-gradient"
               >
                 저장
               </button>
@@ -420,8 +416,7 @@ function ResourceLibraryTab({ currentUser, isAdmin }: { currentUser: User; isAdm
         <button
           onClick={handleUpload}
           disabled={uploading || !title.trim() || !file}
-          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50 theme-gradient"
         >
           {uploading ? `업로드 중… ${progress}%` : '업로드'}
         </button>
@@ -568,8 +563,7 @@ function MaterialRequestTab({ currentUser, isAdmin }: { currentUser: User; isAdm
         <button
           onClick={handleSubmit}
           disabled={submitting || !description.trim()}
-          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-50 flex items-center justify-center gap-2 theme-gradient"
         >
           <MessageSquarePlus className="w-4 h-4" />
           {submitting ? '요청 중…' : '요청 올리기'}
@@ -650,8 +644,7 @@ function ProblemBankTab() {
           href={PROBLEM_BANK_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2 theme-gradient"
         >
           <ExternalLink className="w-4 h-4" /> 문제 은행 열기
         </a>
@@ -799,8 +792,7 @@ function PlannerTab({ currentUser }: { currentUser: User }) {
             />
             <button
               onClick={addItem} disabled={!detail.trim()}
-              className="px-3 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-40 shrink-0"
-              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              className="px-3 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-40 shrink-0 theme-gradient"
             >
               추가
             </button>
@@ -827,8 +819,7 @@ function PlannerTab({ currentUser }: { currentUser: User }) {
 
         <button
           onClick={savePlan} disabled={draftItems.length === 0}
-          className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-1.5"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+          className="w-full py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-1.5 theme-gradient"
         >
           {planSaved ? <><Check className="w-4 h-4" /> 저장 완료</> : '계획 저장'}
         </button>
@@ -879,8 +870,7 @@ function PlannerTab({ currentUser }: { currentUser: User }) {
               </div>
               <button
                 onClick={saveCheck}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                className="w-full py-2.5 rounded-xl text-sm font-bold text-white theme-gradient"
               >
                 체크 저장
               </button>

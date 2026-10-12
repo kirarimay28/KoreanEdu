@@ -391,8 +391,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
           <button
             onClick={handleSubmitQs}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 theme-gradient"
           >
             {saving ? '저장 중...' : '제출하기'}
           </button>
@@ -443,8 +442,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
           <button
             onClick={handleSaveAnswer}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white disabled:opacity-60 theme-gradient"
           >
             {saving ? '저장 중...' : '저장하기'}
           </button>
@@ -590,8 +588,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={handleAddRound}
-                  className="flex-1 py-2 rounded-xl text-sm font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                  className="flex-1 py-2 rounded-xl text-sm font-bold text-white theme-gradient"
                 >
                   추가
                 </button>
@@ -665,8 +662,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
                 />
                 <button
                   onClick={handleCreateRound}
-                  className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-white theme-gradient"
                 >
                   개설
                 </button>
@@ -727,8 +723,7 @@ export default function EduTab({ currentUser }: { currentUser: User }) {
             <div className="flex gap-2">
               <button
                 onClick={() => setView('create')}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white flex items-center justify-center gap-2 theme-gradient"
               >
                 {hasMyQs ? '내 문제 수정하기' : '문제 제작하기'}
               </button>

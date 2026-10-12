@@ -266,8 +266,8 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
-                  className="h-2 rounded-full transition-all duration-200"
-                  style={{ width: `${uploadProgress}%`, background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                  className="h-2 rounded-full transition-all duration-200 theme-gradient"
+                  style={{ width: `${uploadProgress}%` }}
                 />
               </div>
             </div>
@@ -276,8 +276,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
             <button
               onClick={handleUploadChapter}
               disabled={uploading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60"
-              style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-60 theme-gradient"
             >
               {uploading ? (formPdfFile ? `업로드 중 ${uploadProgress}%` : '저장 중...') : editingChapter ? '수정 완료' : '업로드'}
             </button>
@@ -389,8 +388,7 @@ export default function EduReaderView({ currentUser, onBack, tick: parentTick }:
                 {isAdmin && (
                   <button
                     onClick={() => handleEditChapter(selectedChapter)}
-                    className="text-sm font-bold text-white px-5 py-2 rounded-xl"
-                    style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+                    className="text-sm font-bold text-white px-5 py-2 rounded-xl theme-gradient"
                   >
                     수정에서 다시 업로드
                   </button>

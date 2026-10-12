@@ -56,7 +56,7 @@ const SECTIONS: Section[] = [
   {
     id: 'edu',
     icon: BookOpen,
-    gradient: 'linear-gradient(135deg, #de4e80, #f890bc)',
+    gradient: 'linear-gradient(135deg, var(--theme-grad-from) 0%, var(--theme-grad-to) 100%)',
     badge: '01',
     title: '국어교과교육론',
     textbook: { title: '국어교육의 이해' },

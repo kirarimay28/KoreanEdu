@@ -132,8 +132,7 @@ export default function AdminManualTab() {
       {/* 헤더 */}
       <div className="rounded-2xl p-4 flex items-center gap-3"
         style={{ background: 'linear-gradient(135deg,#fce7ef 0%,#fdf0f5 100%)', border: '1px solid #fce7ef' }}>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9,#de4e80)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 theme-gradient">
           <Crown className="w-5 h-5 text-white" />
         </div>
         <div>

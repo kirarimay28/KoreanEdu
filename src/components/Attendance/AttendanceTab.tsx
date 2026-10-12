@@ -131,8 +131,7 @@ export default function AttendanceTab({ currentUser }: Props) {
         ) : (
           <button
             onClick={() => submitAttendanceCheckIn(currentUser.id, currentUser.username, today)}
-            className="w-full py-3 rounded-xl text-sm font-bold text-white transition"
-            style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+            className="w-full py-3 rounded-xl text-sm font-bold text-white transition theme-gradient"
           >
             출석 체크하기
           </button>
