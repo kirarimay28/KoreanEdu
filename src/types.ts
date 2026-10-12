@@ -444,6 +444,8 @@ export interface AppData {
   examStudyCheckAssignments: ExamStudyCheckAssignment[];
   examStudyResources: ExamStudyResource[];
   examMaterialRequests: ExamMaterialRequest[];
+  examPlanEntries: ExamPlanEntry[];
+  examPlanCheckResults: ExamPlanCheckResult[];
   attendanceCheckIns: AttendanceCheckIn[];
   meetingRecords: MeetingRecord[];
 }
@@ -675,6 +677,35 @@ export interface ExamStudyResource {
   uploadedById: string;
   uploadedByName: string;
   createdAt: string;
+}
+
+export type ExamPlanSubject = '이교론' | '중세국어' | '의미론' | '교직' | '기타';
+export type ExamPlanCategory = '회독' | '단권화' | '문제풀이' | '오답정리' | '기타';
+export type ExamPlanCheckMark = 'O' | '△' | 'X';
+
+export interface ExamPlanItem {
+  id: string;
+  subject: ExamPlanSubject;
+  category: ExamPlanCategory;
+  detail: string;
+}
+
+export interface ExamPlanEntry {
+  id: string; // userId_date
+  userId: string;
+  username: string;
+  date: string; // YYYY-MM-DD
+  items: ExamPlanItem[];
+  updatedAt: string;
+}
+
+export interface ExamPlanCheckResult {
+  id: string; // checkerId_checkeeId_date
+  checkerId: string;
+  checkeeId: string;
+  date: string;
+  marks: Record<string, ExamPlanCheckMark>;
+  updatedAt: string;
 }
 
 export interface ExamMaterialRequest {

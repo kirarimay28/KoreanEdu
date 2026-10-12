@@ -14,6 +14,7 @@ import type {
   EduChapter, EduReaderBookmark, EduExamDraft,
   MedievalLesson, MedievalBlankExam,
   ExamPeriod, ExamStudySchedule, ExamSharedSchedule, ExamStudyCheckAssignment, ExamStudyResource, ExamMaterialRequest,
+  ExamPlanEntry, ExamPlanCheckResult,
   AttendanceCheckIn,
   MeetingRecord,
 } from './types';
@@ -65,6 +66,8 @@ const defaultData: AppData = {
   examStudyCheckAssignments: [],
   examStudyResources: [],
   examMaterialRequests: [],
+  examPlanEntries: [],
+  examPlanCheckResults: [],
   attendanceCheckIns: [],
   meetingRecords: [],
 };
@@ -225,6 +228,8 @@ async function fetchFromFirestore(): Promise<void> {
     examStudyCheckAssignments: mem.examStudyCheckAssignments,
     examStudyResources:       esr.docs.map(d => d.data() as ExamStudyResource),
     examMaterialRequests:     emr.docs.map(d => d.data() as ExamMaterialRequest),
+    examPlanEntries:          mem.examPlanEntries,
+    examPlanCheckResults:     mem.examPlanCheckResults,
     attendanceCheckIns:       mem.attendanceCheckIns,
     meetingRecords:           mr.docs.map(d => d.data() as MeetingRecord),
   };
@@ -1527,6 +1532,16 @@ export function subscribeExamPeriodData(callback: () => void): () => void {
       snap => { mem.examMaterialRequests = snap.docs.map(d => d.data() as ExamMaterialRequest); saveCache(); callback(); },
       err => console.warn('examMaterialRequests listener error:', err)
     ),
+    onSnapshot(
+      collection(db, 'examPlanEntries'),
+      snap => { mem.examPlanEntries = snap.docs.map(d => d.data() as ExamPlanEntry); saveCache(); callback(); },
+      err => console.warn('examPlanEntries listener error:', err)
+    ),
+    onSnapshot(
+      collection(db, 'examPlanCheckResults'),
+      snap => { mem.examPlanCheckResults = snap.docs.map(d => d.data() as ExamPlanCheckResult); saveCache(); callback(); },
+      err => console.warn('examPlanCheckResults listener error:', err)
+    ),
   ];
   return () => unsubs.forEach(u => u());
 }
@@ -1568,6 +1583,27 @@ export function getExamStudyCheckAssignments(): ExamStudyCheckAssignment[] { ret
 export function setExamStudyCheckAssignments(assignments: ExamStudyCheckAssignment[]): void {
   mem.examStudyCheckAssignments = assignments;
   persist('appSettings', 'examStudyCheckAssignments', { assignments });
+  saveCache();
+}
+
+// ── 시험 플래너 ─────────────────────────────────────────────
+export function getExamPlanEntries(): ExamPlanEntry[] { return [...mem.examPlanEntries]; }
+
+export function saveExamPlanEntry(entry: ExamPlanEntry): void {
+  const idx = mem.examPlanEntries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) mem.examPlanEntries[idx] = entry;
+  else mem.examPlanEntries.push(entry);
+  persist('examPlanEntries', entry.id, entry);
+  saveCache();
+}
+
+export function getExamPlanCheckResults(): ExamPlanCheckResult[] { return [...mem.examPlanCheckResults]; }
+
+export function saveExamPlanCheckResult(result: ExamPlanCheckResult): void {
+  const idx = mem.examPlanCheckResults.findIndex(r => r.id === result.id);
+  if (idx >= 0) mem.examPlanCheckResults[idx] = result;
+  else mem.examPlanCheckResults.push(result);
+  persist('examPlanCheckResults', result.id, result);
   saveCache();
 }
 
