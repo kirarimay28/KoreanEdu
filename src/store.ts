@@ -13,7 +13,7 @@ import type {
   FineType, FineExemptionRequest, FineExemptionStatus,
   EduChapter, EduReaderBookmark, EduExamDraft,
   MedievalLesson, MedievalBlankExam,
-  ExamPeriod, ExamStudySchedule, ExamStudyResource, ExamMaterialRequest,
+  ExamPeriod, ExamStudySchedule, ExamSharedSchedule, ExamStudyCheckAssignment, ExamStudyResource, ExamMaterialRequest,
   AttendanceCheckIn,
   MeetingRecord,
 } from './types';
@@ -61,6 +61,8 @@ const defaultData: AppData = {
   medievalBlankExams: [],
   examPeriod: null,
   examStudySchedules: [],
+  examSharedSchedule: null,
+  examStudyCheckAssignments: [],
   examStudyResources: [],
   examMaterialRequests: [],
   attendanceCheckIns: [],
@@ -219,6 +221,8 @@ async function fetchFromFirestore(): Promise<void> {
     medievalBlankExams:       mem.medievalBlankExams,
     examPeriod:               mem.examPeriod,
     examStudySchedules:       mem.examStudySchedules,
+    examSharedSchedule:       mem.examSharedSchedule,
+    examStudyCheckAssignments: mem.examStudyCheckAssignments,
     examStudyResources:       esr.docs.map(d => d.data() as ExamStudyResource),
     examMaterialRequests:     emr.docs.map(d => d.data() as ExamMaterialRequest),
     attendanceCheckIns:       mem.attendanceCheckIns,
@@ -1504,6 +1508,16 @@ export function subscribeExamPeriodData(callback: () => void): () => void {
       err => console.warn('examStudySchedules listener error:', err)
     ),
     onSnapshot(
+      doc(db, 'appSettings', 'examSharedSchedule'),
+      snap => { mem.examSharedSchedule = snap.exists() ? (snap.data() as ExamSharedSchedule) : null; saveCache(); callback(); },
+      err => console.warn('examSharedSchedule listener error:', err)
+    ),
+    onSnapshot(
+      doc(db, 'appSettings', 'examStudyCheckAssignments'),
+      snap => { mem.examStudyCheckAssignments = snap.exists() ? ((snap.data() as { assignments: ExamStudyCheckAssignment[] }).assignments ?? []) : []; saveCache(); callback(); },
+      err => console.warn('examStudyCheckAssignments listener error:', err)
+    ),
+    onSnapshot(
       collection(db, 'examStudyResources'),
       snap => { mem.examStudyResources = snap.docs.map(d => d.data() as ExamStudyResource); saveCache(); callback(); },
       err => console.warn('examStudyResources listener error:', err)
@@ -1538,6 +1552,22 @@ export function saveExamStudySchedule(schedule: ExamStudySchedule): void {
   if (idx >= 0) mem.examStudySchedules[idx] = schedule;
   else mem.examStudySchedules.push(schedule);
   persist('examStudySchedules', schedule.userId, schedule);
+  saveCache();
+}
+
+export function getExamSharedSchedule(): ExamSharedSchedule | null { return mem.examSharedSchedule; }
+
+export function setExamSharedSchedule(schedule: ExamSharedSchedule): void {
+  mem.examSharedSchedule = schedule;
+  persist('appSettings', 'examSharedSchedule', schedule);
+  saveCache();
+}
+
+export function getExamStudyCheckAssignments(): ExamStudyCheckAssignment[] { return [...mem.examStudyCheckAssignments]; }
+
+export function setExamStudyCheckAssignments(assignments: ExamStudyCheckAssignment[]): void {
+  mem.examStudyCheckAssignments = assignments;
+  persist('appSettings', 'examStudyCheckAssignments', { assignments });
   saveCache();
 }
 

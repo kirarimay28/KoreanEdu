@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import type { User, ExamPeriod, ExamStudySchedule, ExamDayPlan, Weekday, ExamStudyResource, ExamMaterialRequest, ExamResourceCategory } from '../../types';
+import type { User, ExamPeriod, ExamDayPlan, Weekday, ExamStudyCheckAssignment, ExamStudyResource, ExamMaterialRequest, ExamResourceCategory } from '../../types';
 import { isPrivileged } from '../../types';
 import {
   subscribeExamPeriodData, getExamPeriod, setExamPeriod, clearExamPeriod,
-  getExamStudySchedules, saveExamStudySchedule,
+  getExamSharedSchedule, setExamSharedSchedule,
+  getExamStudyCheckAssignments, setExamStudyCheckAssignments,
   getExamStudyResources, saveExamStudyResource, deleteExamStudyResource, uploadExamStudyResourcePdf,
   getExamMaterialRequests, saveExamMaterialRequest, uploadExamRequestRefPdf,
-  getAllUserIds, getPrivilegedUserIds, deleteExamStudyResourceFile,
+  getAllUserIds, getPrivilegedUserIds, deleteExamStudyResourceFile, getUsers,
 } from '../../store';
 import { sendPush } from '../../notifications';
 import {
   CalendarDays, Trash2, Check, Users, Clock, BookOpen, Upload, FileText,
-  MessageSquarePlus, ExternalLink, CheckCircle2, ChevronDown, ChevronUp,
+  MessageSquarePlus, ExternalLink, CheckCircle2, ArrowRight,
 } from 'lucide-react';
 import { getKSTToday } from '../common/DateNavigator';
 
@@ -93,138 +94,252 @@ function AdminPeriodForm({ onSave }: { onSave: (start: string, end: string) => v
 /* ── 탭1: 계획표 ── */
 function ScheduleTab({
   currentUser,
+  isAdmin,
   onSaved,
 }: { currentUser: User; isAdmin: boolean; onSaved: () => void }) {
-  const schedules = getExamStudySchedules();
-  const mySchedule = schedules.find(s => s.userId === currentUser.id) ?? null;
+  const sharedSchedule = getExamSharedSchedule();
+  const assignments = getExamStudyCheckAssignments();
+  const allUsers = getUsers();
 
+  /* 공유 일정 편집 상태 */
+  const [editingSchedule, setEditingSchedule] = useState(false);
   const [days, setDays] = useState<ExamDayPlan[]>(() =>
     DAYS.map(day => {
-      const found = mySchedule?.days.find(d => d.day === day);
+      const found = sharedSchedule?.days.find(d => d.day === day);
       return found ?? { day, willCome: false, startTime: '09:00', endTime: '18:00' };
     })
   );
-  const [saved, setSaved] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  /* 담당 배정 편집 상태 (방장용) */
+  const [editingAssign, setEditingAssign] = useState(false);
+  const [assignMap, setAssignMap] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    assignments.forEach(a => { m[a.checkerId] = a.checkeeId; });
+    return m;
+  });
 
   function toggleCome(i: number) {
     setDays(prev => prev.map((d, idx) => idx === i ? { ...d, willCome: !d.willCome } : d));
-    setSaved(false);
+    setScheduleSaved(false);
   }
   function updateTime(i: number, field: 'startTime' | 'endTime', val: string) {
     setDays(prev => prev.map((d, idx) => idx === i ? { ...d, [field]: val } : d));
-    setSaved(false);
+    setScheduleSaved(false);
   }
-  function handleSave() {
-    saveExamStudySchedule({
-      userId: currentUser.id,
-      username: currentUser.username,
+  function handleSaveSchedule() {
+    setExamSharedSchedule({
       days,
       updatedAt: new Date().toISOString(),
+      updatedById: currentUser.id,
+      updatedByName: currentUser.username,
     });
-    setSaved(true);
+    setScheduleSaved(true);
+    setEditingSchedule(false);
     onSaved();
   }
 
+  function handleSaveAssignments() {
+    const list: ExamStudyCheckAssignment[] = Object.entries(assignMap)
+      .filter(([, checkeeId]) => checkeeId)
+      .map(([checkerId, checkeeId]) => {
+        const checker = allUsers.find(u => u.id === checkerId)!;
+        const checkee = allUsers.find(u => u.id === checkeeId)!;
+        return {
+          checkerId, checkerName: checker?.username ?? '',
+          checkeeId, checkeeName: checkee?.username ?? '',
+        };
+      });
+    setExamStudyCheckAssignments(list);
+    setEditingAssign(false);
+    onSaved();
+  }
+
+  /* 내 담당 정보 */
+  const myCheck = assignments.find(a => a.checkerId === currentUser.id);
+  const checkingMe = assignments.find(a => a.checkeeId === currentUser.id);
+
   const totalHours = days.filter(d => d.willCome).reduce((sum, d) => sum + calcHours(d.startTime, d.endTime), 0);
-  const totalByMember = (s: ExamStudySchedule) =>
-    s.days.filter(d => d.willCome).reduce((sum, d) => sum + calcHours(d.startTime, d.endTime), 0);
 
   return (
     <div className="space-y-4">
-      {/* 내 계획 입력 */}
+      {/* ── 스터디 일정 ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold text-gray-600">내 공부 계획</p>
-          <span className="text-xs text-primary-600 font-bold">총 {totalHours}시간</span>
+          <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" /> 스터디 일정
+          </p>
+          {isAdmin && !editingSchedule && (
+            <button
+              onClick={() => { setEditingSchedule(true); setScheduleSaved(false); }}
+              className="text-xs text-primary-500 font-bold"
+            >
+              {sharedSchedule ? '수정' : '설정'}
+            </button>
+          )}
         </div>
-        {days.map((d, i) => (
-          <div key={d.day} className={`rounded-xl border transition ${d.willCome ? 'border-primary-200 bg-primary-50/30' : 'border-gray-100 bg-gray-50'}`}>
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <button
-                onClick={() => toggleCome(i)}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm transition shrink-0 ${d.willCome ? 'text-white' : 'text-gray-400 bg-white border border-gray-200'}`}
-                style={d.willCome ? { background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' } : {}}
-              >
-                {d.day}
-              </button>
-              {d.willCome ? (
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <Clock className="w-3.5 h-3.5 text-primary-400 shrink-0" />
-                  <input
-                    type="time" value={d.startTime}
-                    onChange={e => updateTime(i, 'startTime', e.target.value)}
-                    className="flex-1 min-w-0 border border-primary-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:border-primary-400 bg-white"
-                  />
-                  <span className="text-xs text-gray-400 shrink-0">~</span>
-                  <input
-                    type="time" value={d.endTime}
-                    onChange={e => updateTime(i, 'endTime', e.target.value)}
-                    className="flex-1 min-w-0 border border-primary-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:border-primary-400 bg-white"
-                  />
-                  <span className="text-xs text-primary-500 font-bold shrink-0">
-                    {calcHours(d.startTime, d.endTime)}h
-                  </span>
+
+        {!sharedSchedule && !editingSchedule ? (
+          <p className="text-sm text-gray-300 text-center py-4">
+            {isAdmin ? '스터디 일정을 설정해 주세요' : '방장이 아직 일정을 설정하지 않았습니다'}
+          </p>
+        ) : editingSchedule ? (
+          <>
+            <p className="text-xs text-gray-400">스터디 진행 요일과 시간을 선택하세요</p>
+            {days.map((d, i) => (
+              <div key={d.day} className={`rounded-xl border transition ${d.willCome ? 'border-primary-200 bg-primary-50/30' : 'border-gray-100 bg-gray-50'}`}>
+                <div className="flex items-center gap-3 px-3 py-2.5">
+                  <button
+                    onClick={() => toggleCome(i)}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm transition shrink-0 ${d.willCome ? 'text-white' : 'text-gray-400 bg-white border border-gray-200'}`}
+                    style={d.willCome ? { background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' } : {}}
+                  >
+                    {d.day}
+                  </button>
+                  {d.willCome ? (
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <input
+                        type="time" value={d.startTime}
+                        onChange={e => updateTime(i, 'startTime', e.target.value)}
+                        className="flex-1 min-w-0 border border-primary-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:border-primary-400 bg-white"
+                      />
+                      <span className="text-xs text-gray-400 shrink-0">~</span>
+                      <input
+                        type="time" value={d.endTime}
+                        onChange={e => updateTime(i, 'endTime', e.target.value)}
+                        className="flex-1 min-w-0 border border-primary-200 rounded-lg px-2 py-1 text-sm text-gray-700 focus:outline-none focus:border-primary-400 bg-white"
+                      />
+                      <span className="text-xs text-primary-500 font-bold shrink-0">{calcHours(d.startTime, d.endTime)}h</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">탭하면 시간 설정</span>
+                  )}
                 </div>
-              ) : (
-                <span className="text-xs text-gray-300">탭하면 공부 시간 입력</span>
-              )}
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <button onClick={() => setEditingSchedule(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 border border-gray-200">취소</button>
+              <button
+                onClick={handleSaveSchedule}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              >
+                {scheduleSaved ? <span className="flex items-center justify-center gap-1"><Check className="w-4 h-4" /> 저장됨</span> : '저장'}
+              </button>
             </div>
-          </div>
-        ))}
-        <button
-          onClick={handleSave}
-          className="w-full py-3 rounded-xl text-sm font-bold text-white transition flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
-        >
-          {saved ? <><Check className="w-4 h-4" /> 저장 완료</> : '계획 저장'}
-        </button>
+          </>
+        ) : sharedSchedule && (
+          <>
+            <div className="grid grid-cols-7 gap-1">
+              {DAYS.map(day => {
+                const plan = sharedSchedule.days.find(d => d.day === day);
+                const active = plan?.willCome;
+                return (
+                  <div key={day} className={`rounded-xl p-2 text-center ${active ? 'bg-primary-50' : 'bg-gray-50'}`}>
+                    <p className={`text-xs font-bold ${active ? 'text-primary-600' : 'text-gray-300'}`}>{day}</p>
+                    {active && plan ? (
+                      <p className="text-[9px] text-primary-500 mt-1 leading-tight">
+                        {plan.startTime}<br />~{plan.endTime}
+                      </p>
+                    ) : (
+                      <p className="text-[9px] text-gray-200 mt-1">—</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-gray-400 text-right">
+              주 {totalHours}시간 · {sharedSchedule.updatedByName} 설정
+            </p>
+          </>
+        )}
       </div>
 
-      {/* 전체 멤버 일정 */}
-      {schedules.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <button
-            className="w-full flex items-center justify-between"
-            onClick={() => setShowAll(v => !v)}
-          >
-            <p className="text-xs font-bold text-gray-500 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5" /> 멤버 일정 ({schedules.length}명)
-            </p>
-            {showAll ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-          </button>
-          {showAll && (
-            <div className="mt-3 space-y-3">
-              {schedules.map(s => (
-                <div key={s.userId}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-xs font-bold text-gray-700">{s.username}</p>
-                    <span className="text-[11px] text-primary-600 font-bold">총 {totalByMember(s)}h</span>
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {DAYS.map(day => {
-                      const plan = s.days.find(d => d.day === day);
-                      const come = plan?.willCome;
-                      return (
-                        <div key={day} className={`rounded-lg p-1.5 text-center ${come ? 'bg-primary-50' : 'bg-gray-50'}`}>
-                          <p className={`text-[10px] font-bold ${come ? 'text-primary-600' : 'text-gray-300'}`}>{day}</p>
-                          {come && plan ? (
-                            <p className="text-[8px] text-primary-500 mt-0.5 leading-tight">
-                              {plan.startTime}<br />~{plan.endTime}
-                            </p>
-                          ) : (
-                            <p className="text-[8px] text-gray-200 mt-0.5">—</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+      {/* ── 공부 체크 담당 ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold text-gray-600 flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5" /> 공부 체크 담당
+          </p>
+          {isAdmin && !editingAssign && (
+            <button onClick={() => setEditingAssign(true)} className="text-xs text-primary-500 font-bold">
+              {assignments.length > 0 ? '수정' : '배정'}
+            </button>
+          )}
+        </div>
+
+        {editingAssign ? (
+          <>
+            <p className="text-xs text-gray-400">각 멤버가 체크할 대상을 선택하세요</p>
+            <div className="space-y-2">
+              {allUsers.map(u => (
+                <div key={u.id} className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-gray-700 w-20 shrink-0 truncate">{u.username}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                  <select
+                    value={assignMap[u.id] ?? ''}
+                    onChange={e => setAssignMap(prev => ({ ...prev, [u.id]: e.target.value }))}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-primary-400"
+                  >
+                    <option value="">미지정</option>
+                    {allUsers.filter(other => other.id !== u.id).map(other => (
+                      <option key={other.id} value={other.id}>{other.username}</option>
+                    ))}
+                  </select>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      )}
+            <div className="flex gap-2">
+              <button onClick={() => setEditingAssign(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 border border-gray-200">취소</button>
+              <button
+                onClick={handleSaveAssignments}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: 'linear-gradient(135deg,#f9a8c9 0%,#de4e80 100%)' }}
+              >
+                저장
+              </button>
+            </div>
+          </>
+        ) : assignments.length === 0 ? (
+          <p className="text-sm text-gray-300 text-center py-4">
+            {isAdmin ? '담당자를 배정해 주세요' : '방장이 아직 담당을 배정하지 않았습니다'}
+          </p>
+        ) : (
+          <>
+            {/* 내 담당 하이라이트 */}
+            {(myCheck || checkingMe) && (
+              <div className="bg-primary-50 rounded-xl p-3 space-y-1.5">
+                {myCheck && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-bold text-primary-700">나</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-primary-400" />
+                    <span className="font-semibold text-primary-600">{myCheck.checkeeName}</span>
+                    <span className="text-xs text-primary-400 ml-auto">내가 체크</span>
+                  </div>
+                )}
+                {checkingMe && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-bold text-gray-500">{checkingMe.checkerName}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300" />
+                    <span className="font-semibold text-gray-600">나</span>
+                    <span className="text-xs text-gray-400 ml-auto">나를 체크</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* 전체 목록 */}
+            <div className="space-y-1.5">
+              {assignments.map(a => (
+                <div key={a.checkerId} className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-gray-50">
+                  <span className="text-sm font-semibold text-gray-700 w-20 truncate shrink-0">{a.checkerName}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+                  <span className="text-sm text-gray-600">{a.checkeeName}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
