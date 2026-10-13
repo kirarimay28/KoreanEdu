@@ -18,6 +18,41 @@ export const THEMES: ThemeMeta[] = [
   { id: 'celadon', name: '고려청자',   emoji: '🏺', desc: '비색 청록',     previewFrom: '#72b8a0', previewTo: '#0f5244' },
 ];
 
+// ── Color scheme ───────────────────────────────────────────
+export type ColorScheme = 'light' | 'dark' | 'system';
+
+const CS_KEY = 'colorScheme';
+
+export function getColorScheme(): ColorScheme {
+  try {
+    const v = localStorage.getItem(CS_KEY) as ColorScheme | null;
+    if (v === 'light' || v === 'dark' || v === 'system') return v;
+  } catch {}
+  return 'system';
+}
+
+function resolveScheme(scheme: ColorScheme): 'light' | 'dark' {
+  if (scheme !== 'system') return scheme;
+  try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch {}
+  return 'light';
+}
+
+export function applyColorScheme(scheme: ColorScheme): void {
+  document.documentElement.setAttribute('data-color-scheme', resolveScheme(scheme));
+  try { localStorage.setItem(CS_KEY, scheme); } catch {}
+  window.dispatchEvent(new CustomEvent('colorschemechange', { detail: scheme }));
+}
+
+export function initColorScheme(): void {
+  applyColorScheme(getColorScheme());
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (getColorScheme() === 'system') applyColorScheme('system');
+    });
+  } catch {}
+}
+
+// ── Theme ───────────────────────────────────────────────────
 const STORAGE_KEY = 'theme';
 
 export function getTheme(): ThemeId {

@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import type { User } from '../../types';
 import { changeUsername, changePassword, deleteAccount, updateAvatar } from '../../store';
 import { registerAndSubscribe } from '../../pushSubscription';
-import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, Bell, BellOff, Palette } from 'lucide-react';
+import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, Bell, BellOff, Palette, Sun, Moon, Monitor } from 'lucide-react';
 import NameWithCrown from '../common/NameWithCrown';
 import Avatar from '../common/Avatar';
-import { THEMES, getTheme, applyTheme, type ThemeId } from '../../theme';
+import { THEMES, getTheme, applyTheme, type ThemeId, getColorScheme, applyColorScheme, type ColorScheme } from '../../theme';
 
 interface Props {
   currentUser: User;
@@ -48,11 +48,17 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
   const [mySub, setMySub] = useState<PushSubscriptionJSON | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<ThemeId>(getTheme);
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(getColorScheme);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleThemeChange(id: ThemeId) {
     applyTheme(id);
     setCurrentTheme(id);
+  }
+
+  function handleColorScheme(cs: ColorScheme) {
+    applyColorScheme(cs);
+    setColorScheme(cs);
   }
 
   useEffect(() => {
@@ -366,6 +372,35 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
         <p className="text-[11px] text-gray-400 text-center">
           {THEMES.find(t => t.id === currentTheme)?.emoji} {THEMES.find(t => t.id === currentTheme)?.desc}
         </p>
+      </div>
+
+      {/* 화면 모드 */}
+      <div className="card space-y-3">
+        <div className="flex items-center gap-2">
+          <Monitor className="w-4 h-4 text-primary-500" />
+          <p className="text-sm font-bold text-gray-800">화면 모드</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { id: 'light' as ColorScheme,  label: '라이트', Icon: Sun },
+            { id: 'system' as ColorScheme, label: '시스템',  Icon: Monitor },
+            { id: 'dark'  as ColorScheme,  label: '다크',   Icon: Moon },
+          ] as const).map(({ id, label, Icon }) => {
+            const active = colorScheme === id;
+            return (
+              <button
+                key={id}
+                onClick={() => handleColorScheme(id)}
+                className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border-2 transition ${
+                  active ? 'border-primary-500 bg-primary-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${active ? 'text-primary-500' : 'text-gray-400'}`} />
+                <span className={`text-[11px] font-semibold ${active ? 'text-primary-600' : 'text-gray-500'}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Push notifications */}
