@@ -15,6 +15,7 @@ import {
   CalendarDays, Trash2, Check, Users, Clock, BookOpen, Upload, FileText,
   MessageSquarePlus, ExternalLink, CheckCircle2, ArrowRight,
 } from 'lucide-react';
+import StudyPlannerTab from './StudyPlannerTab';
 import { getKSTToday } from '../common/DateNavigator';
 
 interface Props { currentUser: User; }
@@ -911,8 +912,8 @@ function PlannerTab({ currentUser }: { currentUser: User }) {
 }
 
 /* ── 메인 ── */
-type TabKey = '계획표' | '자료 도서관' | '자료 요청' | '문제 은행' | '플래너';
-const TABS: TabKey[] = ['계획표', '자료 도서관', '자료 요청' , '문제 은행', '플래너'];
+type TabKey = '학습 계획' | '계획표' | '자료 도서관' | '자료 요청' | '문제 은행' | '플래너';
+const TABS: TabKey[] = ['학습 계획', '계획표', '자료 도서관', '자료 요청', '문제 은행', '플래너'];
 
 export default function ExamPeriodTab({ currentUser }: Props) {
   const [, setTick] = useState(0);
@@ -940,84 +941,93 @@ export default function ExamPeriodTab({ currentUser }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 시험기간 배너 */}
-      {period ? (
-        <div className={`rounded-2xl p-4 ${active ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarDays className={`w-4 h-4 ${active ? 'text-amber-500' : 'text-gray-400'}`} />
-              <div>
-                <p className={`text-sm font-bold ${active ? 'text-amber-700' : 'text-gray-600'}`}>
-                  {active ? '시험기간 진행 중' : '설정된 시험기간'}
-                </p>
-                <p className={`text-xs mt-0.5 ${active ? 'text-amber-600' : 'text-gray-400'}`}>
-                  {period.startDate} ~ {period.endDate}
-                </p>
-              </div>
-            </div>
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  if (confirm('시험기간을 삭제하시겠습니까?')) {
-                    clearExamPeriod();
-                    sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간 종료', body: '시험기간이 종료되었습니다.' });
-                  }
-                }}
-                className="text-xs text-red-400 border border-red-100 rounded-lg px-2.5 py-1 hover:bg-red-50 transition flex items-center gap-1"
-              >
-                <Trash2 className="w-3 h-3" /> 삭제
-              </button>
-            )}
-          </div>
-          {active && (
-            <div className="mt-3 pt-3 border-t border-amber-100">
-              <p className="text-xs text-amber-600">
-                🎓 시험기간 중 <strong>스터디 일지 · 과제 · 체크리스트 · 고어 시험</strong>은 의무 정지됩니다.
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        isAdmin ? null : (
-          <div className="text-center py-6">
-            <p className="text-sm text-gray-300 font-semibold">설정된 시험기간이 없습니다</p>
-          </div>
-        )
-      )}
+      {/* ── 탭 바 (항상 표시) ── */}
+      <div className="flex gap-1 overflow-x-auto pb-0.5 bg-gray-100 rounded-2xl p-1" style={{ scrollbarWidth: 'none' }}>
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`shrink-0 flex-1 py-2 rounded-xl text-[10px] font-bold transition min-w-0 ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-      {/* 방장: 기간 설정 폼 */}
-      {isAdmin && !period && <AdminPeriodForm onSave={handleSetPeriod} />}
+      {/* ── 학습 계획 (항상 접근 가능) ── */}
+      {activeTab === '학습 계획' && <StudyPlannerTab currentUser={currentUser} />}
 
-      {/* 탭 네비게이션 */}
-      {period && (
+      {/* ── 나머지 탭들 ── */}
+      {activeTab !== '학습 계획' && (
         <>
-          <div className="flex gap-1 bg-gray-100 rounded-2xl p-1">
-            {TABS.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+          {/* 시험기간 배너 */}
+          {period ? (
+            <div className={`rounded-2xl p-4 ${active ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 border border-gray-100'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className={`w-4 h-4 ${active ? 'text-amber-500' : 'text-gray-400'}`} />
+                  <div>
+                    <p className={`text-sm font-bold ${active ? 'text-amber-700' : 'text-gray-600'}`}>
+                      {active ? '시험기간 진행 중' : '설정된 시험기간'}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${active ? 'text-amber-600' : 'text-gray-400'}`}>
+                      {period.startDate} ~ {period.endDate}
+                    </p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      if (confirm('시험기간을 삭제하시겠습니까?')) {
+                        clearExamPeriod();
+                        sendPush({ userIds: getAllUserIds().filter(id => id !== currentUser.id), title: '📅 시험기간 종료', body: '시험기간이 종료되었습니다.' });
+                      }
+                    }}
+                    className="text-xs text-red-400 border border-red-100 rounded-lg px-2.5 py-1 hover:bg-red-50 transition flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" /> 삭제
+                  </button>
+                )}
+              </div>
+              {active && (
+                <div className="mt-3 pt-3 border-t border-amber-100">
+                  <p className="text-xs text-amber-600">
+                    🎓 시험기간 중 <strong>스터디 일지 · 과제 · 체크리스트 · 고어 시험</strong>은 의무 정지됩니다.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            isAdmin ? null : (
+              <div className="text-center py-6">
+                <p className="text-sm text-gray-300 font-semibold">설정된 시험기간이 없습니다</p>
+              </div>
+            )
+          )}
 
-          {activeTab === '계획표' && (
-            <ScheduleTab
-              currentUser={currentUser}
-              isAdmin={isAdmin}
-              onSaved={() => setTick(t => t + 1)}
-            />
+          {/* 방장: 기간 설정 폼 */}
+          {isAdmin && !period && <AdminPeriodForm onSave={handleSetPeriod} />}
+
+          {/* 탭별 컨텐츠 */}
+          {period && (
+            <>
+              {activeTab === '계획표' && (
+                <ScheduleTab
+                  currentUser={currentUser}
+                  isAdmin={isAdmin}
+                  onSaved={() => setTick(t => t + 1)}
+                />
+              )}
+              {activeTab === '자료 도서관' && (
+                <ResourceLibraryTab currentUser={currentUser} isAdmin={isAdmin} />
+              )}
+              {activeTab === '자료 요청' && (
+                <MaterialRequestTab currentUser={currentUser} isAdmin={isAdmin} />
+              )}
+              {activeTab === '문제 은행' && <ProblemBankTab />}
+              {activeTab === '플래너' && <PlannerTab currentUser={currentUser} />}
+            </>
           )}
-          {activeTab === '자료 도서관' && (
-            <ResourceLibraryTab currentUser={currentUser} isAdmin={isAdmin} />
-          )}
-          {activeTab === '자료 요청' && (
-            <MaterialRequestTab currentUser={currentUser} isAdmin={isAdmin} />
-          )}
-          {activeTab === '문제 은행' && <ProblemBankTab />}
-          {activeTab === '플래너' && <PlannerTab currentUser={currentUser} />}
         </>
       )}
     </div>
