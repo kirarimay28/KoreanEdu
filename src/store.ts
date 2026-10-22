@@ -1854,11 +1854,25 @@ export function uploadVideoFile(
     const path = `videoLectures/${lectureId}/${file.name}`;
     const sRef = storageRef(storage, path);
     const task = uploadBytesResumable(sRef, file);
+
+    // Timeout: if no progress for 20s assume network/rules issue
+    let lastBytes = -1;
+    const watchdog = setInterval(() => {
+      const cur = task.snapshot.bytesTransferred;
+      if (cur === lastBytes && task.snapshot.state === 'running') {
+        clearInterval(watchdog);
+        task.cancel();
+        reject(new Error('storage/timeout — Firebase Storage 권한 설정이 필요하거나 네트워크를 확인해 주세요'));
+      }
+      lastBytes = cur;
+    }, 20_000);
+
     task.on(
       'state_changed',
       snap => onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      reject,
+      err => { clearInterval(watchdog); reject(err); },
       async () => {
+        clearInterval(watchdog);
         const url = await getDownloadURL(task.snapshot.ref);
         resolve({ url, storagePath: path });
       },
