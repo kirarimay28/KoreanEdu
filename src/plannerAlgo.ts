@@ -1,7 +1,7 @@
 import type {
   PlannerProfile, PlannerSubject, PlannerFixedSchedule, PlannerTag,
   Phase, GeneratedDayPlan, DayStudyBlock, ChecklistItem,
-  Weekday,
+  Weekday, ManualBlock,
 } from './plannerTypes';
 
 // ── Semester config ─────────────────────────────────────────
@@ -534,6 +534,40 @@ export function makeSeedProfileA(userId: string, _username: string): PlannerProf
     },
     updatedAt: new Date().toISOString(),
   };
+}
+
+// ── Merge auto plan with pinned manual blocks ────────────────
+export function mergeWithPinned(
+  autoPlan: GeneratedDayPlan[],
+  pinnedBlocks: Map<string, ManualBlock[]>,
+): GeneratedDayPlan[] {
+  return autoPlan.map(day => {
+    const pinned = pinnedBlocks.get(day.date) ?? [];
+    if (pinned.length === 0) return day;
+
+    const pinnedStudyBlocks: DayStudyBlock[] = pinned.map(b => ({
+      start: b.start,
+      end: b.end,
+      subjectId: b.subjectId,
+      subjectName: b.subjectName,
+      label: b.label,
+      blockType: 'study' as const,
+    }));
+
+    const filteredAuto = day.studyBlocks.filter(ab => {
+      const as = toMin(ab.start), ae = toMin(ab.end);
+      return !pinned.some(pb => as < toMin(pb.end) && ae > toMin(pb.start));
+    });
+
+    const all = [...pinnedStudyBlocks, ...filteredAuto].sort(
+      (a, b) => toMin(a.start) - toMin(b.start),
+    );
+
+    const pinnedMins = pinned.reduce((s, b) => s + toMin(b.end) - toMin(b.start), 0);
+    const autoMins  = filteredAuto.reduce((s, b) => s + toMin(b.end) - toMin(b.start), 0);
+
+    return { ...day, studyBlocks: all, totalStudyMinutes: pinnedMins + autoMins };
+  });
 }
 
 // Seed profile B (different from A)
