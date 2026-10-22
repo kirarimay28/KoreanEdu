@@ -95,9 +95,11 @@ function UploadForm({
         const id = crypto.randomUUID();
         if (tab === 'file') {
           if (!file) return;
-          const thumbnail = await generateThumbnail(file);
           setProgress(0);
-          const { storagePath } = await uploadVideoFile(file, id, pct => setProgress(pct));
+          const [thumbnail, { storagePath }] = await Promise.all([
+            generateThumbnail(file),
+            uploadVideoFile(file, id, pct => setProgress(pct)),
+          ]);
           await createVideoLecture({
             id,
             title: title.trim(),
