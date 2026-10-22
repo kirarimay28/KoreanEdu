@@ -1,5 +1,5 @@
 import { db, storage } from './firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
@@ -17,6 +17,7 @@ import type {
   ExamPlanEntry, ExamPlanCheckResult,
   AttendanceCheckIn,
   MeetingRecord,
+  VideoLecture, VideoProgress, VideoMemo,
 } from './types';
 
 const ADMIN_USERNAME = '박민성';
@@ -70,6 +71,8 @@ const defaultData: AppData = {
   examPlanCheckResults: [],
   attendanceCheckIns: [],
   meetingRecords: [],
+  videoLectures: [],
+  videoMemos: [],
 };
 
 const CACHE_KEY = 'korean_edu_cache';
@@ -232,6 +235,8 @@ async function fetchFromFirestore(): Promise<void> {
     examPlanCheckResults:     mem.examPlanCheckResults,
     attendanceCheckIns:       mem.attendanceCheckIns,
     meetingRecords:           mr.docs.map(d => d.data() as MeetingRecord),
+    videoLectures:            mem.videoLectures,
+    videoMemos:               mem.videoMemos,
   };
   for (const d of cfg.docs) {
     const tagData = d.data() as { tags?: string[] };
@@ -1806,4 +1811,109 @@ export function setUserTreasurer(userId: string, isTreasurer: boolean): void {
     persist('users', userId, user);
     saveCache();
   }
+}
+
+// ── Video Lectures ───────────────────────────────────────────
+export function subscribeVideoLectures(cb: () => void): () => void {
+  return onSnapshot(
+    collection(db, 'videoLectures'),
+    snap => { mem.videoLectures = snap.docs.map(d => d.data() as VideoLecture); cb(); },
+    err => console.warn('videoLectures listener', err),
+  );
+}
+
+export function getVideoLectures(): VideoLecture[] {
+  return [...mem.videoLectures].sort((a, b) => a.week - b.week);
+}
+
+export async function createVideoLecture(v: VideoLecture): Promise<void> {
+  mem.videoLectures.push(v);
+  await setDoc(doc(db, 'videoLectures', v.id), v);
+}
+
+export async function updateVideoLecture(v: VideoLecture): Promise<void> {
+  const idx = mem.videoLectures.findIndex(l => l.id === v.id);
+  if (idx >= 0) mem.videoLectures[idx] = v;
+  await setDoc(doc(db, 'videoLectures', v.id), v);
+}
+
+export async function deleteVideoLecture(id: string, storagePath?: string): Promise<void> {
+  mem.videoLectures = mem.videoLectures.filter(l => l.id !== id);
+  await deleteDoc(doc(db, 'videoLectures', id));
+  if (storagePath) {
+    try { await deleteObject(storageRef(storage, storagePath)); } catch {}
+  }
+}
+
+export function uploadVideoFile(
+  file: File,
+  lectureId: string,
+  onProgress: (pct: number) => void,
+): Promise<{ url: string; storagePath: string }> {
+  return new Promise((resolve, reject) => {
+    const path = `videoLectures/${lectureId}/${file.name}`;
+    const sRef = storageRef(storage, path);
+    const task = uploadBytesResumable(sRef, file);
+    task.on(
+      'state_changed',
+      snap => onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      reject,
+      async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        resolve({ url, storagePath: path });
+      },
+    );
+  });
+}
+
+// ── Video Progress ───────────────────────────────────────────
+export async function saveVideoProgress(p: VideoProgress): Promise<void> {
+  const docId = `${p.userId}_${p.videoId}`;
+  await setDoc(doc(db, 'videoProgress', docId), { ...p, updatedAt: new Date().toISOString() });
+}
+
+export async function loadVideoProgress(userId: string, videoId: string): Promise<VideoProgress | null> {
+  try {
+    const snap = await getDoc(doc(db, 'videoProgress', `${userId}_${videoId}`));
+    if (snap.exists()) return snap.data() as VideoProgress;
+  } catch {}
+  return null;
+}
+
+// ── Video Memos ──────────────────────────────────────────────
+export function subscribeVideoMemos(videoId: string, cb: () => void): () => void {
+  return onSnapshot(
+    query(collection(db, 'videoMemos'), where('videoId', '==', videoId)),
+    snap => {
+      const incoming = snap.docs.map(d => d.data() as VideoMemo);
+      mem.videoMemos = [
+        ...mem.videoMemos.filter(m => m.videoId !== videoId),
+        ...incoming,
+      ];
+      cb();
+    },
+    err => console.warn('videoMemos listener', err),
+  );
+}
+
+export function getVideoMemos(videoId: string, userId: string): VideoMemo[] {
+  return mem.videoMemos
+    .filter(m => m.videoId === videoId && (m.shared || m.userId === userId))
+    .sort((a, b) => a.positionSeconds - b.positionSeconds);
+}
+
+export async function createVideoMemo(m: VideoMemo): Promise<void> {
+  mem.videoMemos.push(m);
+  await setDoc(doc(db, 'videoMemos', m.id), m);
+}
+
+export async function updateVideoMemo(m: VideoMemo): Promise<void> {
+  const idx = mem.videoMemos.findIndex(x => x.id === m.id);
+  if (idx >= 0) mem.videoMemos[idx] = m;
+  await setDoc(doc(db, 'videoMemos', m.id), m);
+}
+
+export async function deleteVideoMemo(id: string): Promise<void> {
+  mem.videoMemos = mem.videoMemos.filter(m => m.id !== id);
+  await deleteDoc(doc(db, 'videoMemos', id));
 }

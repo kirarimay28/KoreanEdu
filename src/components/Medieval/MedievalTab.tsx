@@ -3,9 +3,10 @@ import type { User } from '../../types';
 import { subscribeMedievalData } from '../../store';
 import MedievalReviewTab from './MedievalReviewTab';
 import MedievalBlankExamTab from './MedievalBlankExamTab';
-import { BookOpen, FileText } from 'lucide-react';
+import MedievalVideoTab from './MedievalVideoTab';
+import { BookOpen, FileText, Play } from 'lucide-react';
 
-type SubTab = 'review' | 'exam';
+type SubTab = 'review' | 'exam' | 'video';
 
 interface Props { currentUser: User; }
 
@@ -20,7 +21,7 @@ export default function MedievalTab({ currentUser }: Props) {
 
   return (
     <div>
-      <div className="flex bg-gray-100 p-1 rounded-xl mb-4">
+      <div className="flex bg-gray-100 p-1 rounded-xl mb-4 gap-0.5">
         <button
           onClick={() => setSubTab('review')}
           className={`flex-1 py-2 text-sm rounded-lg transition-all font-medium flex items-center justify-center gap-1.5 ${subTab === 'review' ? 'tab-active' : 'tab-inactive'}`}
@@ -33,10 +34,17 @@ export default function MedievalTab({ currentUser }: Props) {
         >
           <FileText className="w-3.5 h-3.5" /> 빈칸 시험
         </button>
+        <button
+          onClick={() => setSubTab('video')}
+          className={`flex-1 py-2 text-sm rounded-lg transition-all font-medium flex items-center justify-center gap-1.5 ${subTab === 'video' ? 'tab-active' : 'tab-inactive'}`}
+        >
+          <Play className="w-3.5 h-3.5" /> 강의 영상
+        </button>
       </div>
 
       {subTab === 'review' && <MedievalReviewTab currentUser={currentUser} tick={tick} />}
       {subTab === 'exam'   && <MedievalBlankExamTab currentUser={currentUser} tick={tick} />}
+      {subTab === 'video'  && <MedievalVideoTab currentUser={currentUser} />}
     </div>
   );
 }
