@@ -1,0 +1,21 @@
+name: Deploy Firebase Storage Rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'storage.rules'
+      - 'firebase.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      - name: Deploy Storage Rules
+        run: firebase deploy --only storage --project ${{ secrets.FIREBASE_PROJECT_ID }} --token ${{ secrets.FIREBASE_TOKEN }}

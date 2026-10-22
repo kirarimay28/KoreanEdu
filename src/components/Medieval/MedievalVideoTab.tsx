@@ -62,6 +62,7 @@ function UploadForm({
   const [linkUrl, setLinkUrl] = useState(editing?.linkUrl ?? '');
   const [file, setFile] = useState<File | null>(null);
   const [sizeError, setSizeError] = useState('');
+  const [uploadError, setUploadError] = useState('');
   const [progress, setProgress] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -80,6 +81,7 @@ function UploadForm({
   async function handleSave() {
     if (!title.trim()) return;
     setSaving(true);
+    setUploadError('');
     try {
       if (editing) {
         // Edit: only metadata, not re-upload
@@ -128,8 +130,12 @@ function UploadForm({
         }
       }
       onDone();
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
+      const msg = (e as {code?: string; message?: string})?.code
+        ?? (e as {message?: string})?.message
+        ?? '알 수 없는 오류';
+      setUploadError(`업로드 실패: ${msg}`);
     } finally {
       setSaving(false);
       setProgress(null);
@@ -201,6 +207,7 @@ function UploadForm({
                 className="text-sm text-gray-600 w-full"
               />
               {sizeError && <p className="text-xs text-red-500">{sizeError}</p>}
+              {uploadError && <p className="text-xs text-red-500 break-all">{uploadError}</p>}
               {progress !== null && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs text-gray-500">
