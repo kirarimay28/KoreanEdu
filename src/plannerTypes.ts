@@ -66,6 +66,7 @@ export interface PlannerProfile {
   subjects: PlannerSubject[];
   fixedSchedules: PlannerFixedSchedule[];
   settings: PlannerPersonalSettings;
+  planMode?: PlanMode;
   updatedAt: string;
 }
 
@@ -102,5 +103,36 @@ export interface PlannerChecklist {
   userId: string;
   username: string;
   completedIds: string[];
+  updatedAt: string;
+}
+
+// ── Manual planning types ───────────────────────────────────
+export type PlanMode = 'auto' | 'manual' | 'auto+edit';
+
+export interface ManualBlock {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  label: string;
+  start: string;
+  end: string;
+  pinned?: boolean;
+}
+
+export interface ManualDayPlan {
+  date: string;
+  blocks: ManualBlock[];
+}
+
+export interface ManualWeekTemplate {
+  userId: string;
+  template: Partial<Record<Weekday, ManualBlock[]>>;
+  updatedAt: string;
+}
+
+export interface ManualDayOverride {
+  userId: string;
+  date: string;
+  blocks: ManualBlock[];
   updatedAt: string;
 }
