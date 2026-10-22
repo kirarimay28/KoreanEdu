@@ -448,6 +448,8 @@ export interface AppData {
   examPlanCheckResults: ExamPlanCheckResult[];
   attendanceCheckIns: AttendanceCheckIn[];
   meetingRecords: MeetingRecord[];
+  videoLectures: VideoLecture[];
+  videoMemos: VideoMemo[];
 }
 
 export type MeetingRuleCategory = 'new' | 'modified' | 'removed' | 'other';
@@ -720,4 +722,39 @@ export interface ExamMaterialRequest {
   completed: boolean;
   completedAt?: string;
   completedById?: string;
+}
+
+// ── 강의 영상 ────────────────────────────────────────────────
+export interface VideoLecture {
+  id: string;
+  title: string;
+  week: number;
+  classDate?: string;
+  description?: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  createdAt: string;
+  storagePath?: string;
+  linkUrl?: string;
+  durationSeconds?: number;
+  thumbnailUrl?: string;
+}
+
+export interface VideoProgress {
+  userId: string;
+  videoId: string;
+  positionSeconds: number;
+  completed: boolean;
+  updatedAt: string;
+}
+
+export interface VideoMemo {
+  id: string;
+  videoId: string;
+  userId: string;
+  username: string;
+  positionSeconds: number;
+  text: string;
+  shared: boolean;
+  createdAt: string;
 }
