@@ -1,0 +1,24 @@
+CLC 과제 페이지 분석 메모
+======================
+외부 URL: /ilos/st/course/report_list_form.acl?acl=report_list_form.acl&s=menu
+내부 AJAX URL: POST /ilos/st/course/report_list.acl
+AJAX 파라미터:
+  - ud: 학번 (예: A20253350)  
+  - ky: KJKEY (예: 01202632506801)
+  - start: 페이지 시작 ("" = 처음)
+  - display: "1"
+  - SCH_VALUE: 검색어
+  - encoding: "utf-8"
+
+같은 패턴으로 추정:
+  - 온라인강의: POST /ilos/st/course/online_list.acl
+  - 시험: POST /ilos/st/course/test_list.acl
+  - 공지: POST /ilos/st/course/notice_list.acl
+
+과목 메뉴 URL 목록:
+  - 강의계획서: /ilos/st/course/plan_form.acl
+  - 온라인강의: /ilos/st/course/online_list_form.acl
+  - 실시간강의: /ilos/st/course/zoom_list_form.acl
+  - 공지사항:   /ilos/st/course/notice_list_form.acl
+  - 과제:       /ilos/st/course/report_list_form.acl
+  - 시험:       /ilos/st/course/test_list_form.acl

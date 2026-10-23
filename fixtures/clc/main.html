@@ -1,0 +1,2781 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+
+
+<html lang="ko">
+<head>
+
+
+
+
+
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta content="조선대학교" name>
+    <meta content="noindex, nofollow" name>
+    <!-- 설치된 IE중 최신버전 렌더링 설정 -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+
+    <meta content="Copyright(C) IMAXSOFT" name>
+    <link rel="shortcut icon" href="/ilos/favicon.ico?v=20260813" />
+    <link rel="icon" href="/ilos/favicon-16x16.png" sizes="16x16"> 
+    <link rel="icon" href="/ilos/favicon-32x32.png" sizes="32x32"> 
+    <link rel="icon" href="/ilos/favicon-96x96.png" sizes="96x95">     
+    <link rel="apple-touch-icon-precomposed" href="/ilos/images/m/e-Class-icon.png" />
+    <title>조선대학교 e-Class System </title>
+
+
+
+
+
+
+
+<link type="text/css" rel="stylesheet" href="/ilos/css/ass.css?v=20260813">
+<link type="text/css" rel="stylesheet" href="/ilos/css/themes/cyan.css?v=20260813">
+<link type="text/css" rel="stylesheet" href="/ilos/css/osms/chosun/default.css?v=20260813">
+<link type="text/css" rel="stylesheet" href="/ilos/css/font/ko.css?v=20260813">
+<script type="text/javascript" src="/ilos/js/common.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/ctrl.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/util.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/session_check.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/util_check.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/fck_util.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/hrd_check.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/hrd_ctrl.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/srcZoom.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/i18n/lang.js?v=20260813"></script>
+<script type="text/javascript" src="/ilos/js/i18n/ko.js?v=20260813"></script>
+<style>
+#top2m1,#top2m2,#top2m3 {display:none;}
+
+.gnb-top-class > div {
+  width: 176px; height: 25px; 
+  padding-top: 6px;
+}
+.gnb-top-class > div > a { color: #fff; text-decoration: none; }
+.gnb-top-class-off  { background-color: #b6b6b6;}
+
+.gnb-sub-class > a{
+  padding: 3px 15px 5px 15px; 
+  text-align: center; 
+  overflow: hidden;
+  width: 100%;
+  text-decoration: none;
+}
+</style>
+<script>
+//top navi
+
+function top2menuView(a){ //2차메뉴보기
+  if(this.id){
+    eidStr = this.id;
+    var _$aa = eidStr.lastIndexOf("m",eidStr.length)+1;
+    eidNum=eidStr.substring(_$aa,eidStr.length);
+    a = parseInt(eidNum);
+  }
+  top2menuHideAll();
+  top1Menu = document.getElementById("top1m"+a);
+  top2Menu = document.getElementById("top2m"+a);
+  ann=a;
+  if (a=0) { //메인은2차메뉴활성화안함
+  } else {
+    if (top1Menu) {
+      top1Menu.firstChild.className = "site-background-color";
+      if (top2Menu) { top2Menu.style.display = 'inline'; }
+    }
+  }
+}
+
+function top2menuHide(a){ //2차메뉴감추기
+  if(this.id && a != 1){
+    eidStr = this.id;
+    var _$aa = eidStr.lastIndexOf("m",eidStr.length)+1;
+    eidNum=eidStr.substring( _$aa,eidStr.length);
+    a = parseInt(eidNum);
+  }
+  top2menuHideAll();
+  top1Menu = document.getElementById("top1m"+a);
+  top2Menu = document.getElementById("top2m"+a);
+  top1MenuCurr = document.getElementById("top1m0");
+  top2MenuCurr = document.getElementById("top2m0");
+  //if(a<10){ann='0'+a;} else {ann=''+a;}
+  ann=a;
+  if (top1Menu) {
+    top1Menu.firstChild.className = "gnb-top-class-off";
+    if (top2Menu) { top2Menu.style.display = 'none'; }
+    if (top1MenuCurr) { 
+      }
+    if (top2MenuCurr) { top2MenuCurr.style.display = 'inline'; }
+  }
+}
+
+function top2menuHideAll(){ //2차메뉴모두감추기
+  top1menuEl = document.getElementById("top1menu").getElementsByTagName("ul");
+  for (i=1;i<=top1menuEl.length;i++){
+    top1Menu = document.getElementById("top1m"+i);
+    top2Menu = document.getElementById("top2m"+i);
+    //if(i<10){inn='0'+i;} else {inn=''+i;}
+    inn=i;
+    if (top1Menu){
+      top1Menu.firstChild.className = "gnb-top-class-off";
+      if (top2Menu) { top2Menu.style.display = 'none'; }
+    }
+  }
+}
+
+function initTopMenu() {
+  top1menuEl = document.getElementById("top1menu").getElementsByTagName("ul");
+  for (i=1;i<=top1menuEl.length;i++){
+    top1Menu = document.getElementById("top1m"+i);
+    top2Menu = document.getElementById("top2m"+i);
+    if (top1Menu) {
+      top1Menu.onmouseover = top1Menu.onfocus = top2menuView;
+      top1Menu.onmouseout  = top2menuHide;
+      if (top2Menu) {
+        top2Menu.onmouseover = top2Menu.onfocus = top2menuView;
+        top2Menu.onmouseout  = top2menuHide;
+      }
+    }
+  }
+}
+
+function depth2over(a,b){ 
+  var de2Str = document.getElementById("top2m"+a);
+  var de2StrLi = de2Str.getElementsByTagName("li");
+  for(var i=1;i<de2StrLi.length+6;i++){
+    if(b==i){
+
+    }
+  }
+}
+
+function depth2out(a,b){
+  var de2Str = document.getElementById("top2m"+a);
+  var de2StrLi = de2Str.getElementsByTagName("li");
+  for(var i=1;i<de2StrLi.length+6;i++){
+    if(b==i){
+
+    }
+  }
+}
+function noDoubleClick(){
+  
+}
+function pageGo(url){
+  document.location.href=url;
+}
+</script>
+
+
+<link type="text/css" href="/ilos/css/jquery-ui-1.11.4/jquery-ui.min.css?v=20260813" rel="stylesheet" />
+<script type="text/javascript" src="/ilos/js/lib/jquery-1.11.3.min.js?v=20260813" ></script>
+<script type="text/javascript" src="/ilos/js/lib/ui/jquery-ui-1.11.4.js?v=20260813"  ></script>
+<script type="text/javascript" src="/ilos/js/pop_calendar_ko.js?v=20260813"  ></script>
+<script type="text/JavaScript" src="/ilos/js/jqueryBlockUI.js?v=20260813"></script>
+<script type="text/JavaScript" src="/ilos/js/spin.js?v=20260813"></script>
+
+<script>
+$(function() {
+  //testBlockUI();
+	$("span.button button").mouseover(function() {
+		$(this).css("color", "#FFFFFF");
+
+    var icon = $(this).find("img");
+    if(icon != null) {
+      icon.attr("src", "/ilos/images/common/btn_icon_over.gif");
+    }
+
+	});
+	$("span.button button").mouseout(function() {
+	    $(this).css("color", "#f8f8f8");
+	    
+	    var icon = $(this).find("img");
+	    if(icon != null) {
+	      icon.attr("src", "/ilos/images/common/btn_icon.gif");
+	    }
+	    
+	  });
+	resetListStyle();
+	resetListStyle("board-content");
+});
+
+function resetListStyle(root) {
+  if (!root) {
+    root = "textviewer";
+  }
+  $("." + root + " ol").each(function() {
+    var _parent = $(this); 
+    var _parent_css_style = _parent.css("list-style-type");
+    var _parent_inline_style = _parent.attr("style");
+    if (_parent_inline_style && _parent_inline_style.indexOf("list-style") > -1) { // inline style //
+      var _list_style_chk_patt = /(list-style|list-style-type)\s*\:\s*([^\;\"]+)/i;
+      var _list_style_chk = _parent_inline_style.match(_list_style_chk_patt);
+      var _list_style_key = "";
+      var _list_style_val = "";
+      if (_list_style_chk && _list_style_chk.length > 1) {
+        _list_style_key = _list_style_chk[1] // group 1
+        _list_style_val = _list_style_chk[2]; // group 2
+      }
+      
+      if (_list_style_val && _list_style_val.length > 0) {
+        _parent.find("li").each(function(idx, elm) {
+          var _li = $(elm);
+          var _li_inline_style = _li.attr("style");
+          if (!_li_inline_style || _li_inline_style.indexOf("list-style") == -1) {
+            _li.css(_list_style_key, _list_style_val);
+          }
+        });
+      }
+      
+    } else { // css style // circle, ...
+      if (!_parent_css_style || _parent_css_style == "none") { // css() return >>> none
+        var _parent_attr_type = _parent.attr("type");
+        var _list_style_val = "decimal"; // default
+        
+        if(_parent_attr_type == '1') {
+          _list_style_val = "decimal";
+        } else if(_parent_attr_type == 'A') {
+          _list_style_val = "upper-alpha";
+        } else if(_parent_attr_type == 'a') {
+          _list_style_val = "lower-alpha";
+        } else if(_parent_attr_type == 'I') {
+          _list_style_val = "upper-roman";
+        } else if(_parent_attr_type == 'i') {
+          _list_style_val = "lower-roman";
+        }
+
+        _parent.find("li").each(function(idx, elm) {
+          var _li = $(elm);
+          var _li_inline_style = _li.attr("style");
+          if (!_li_inline_style || _li_inline_style.indexOf("list-style-type") == -1) {
+            _li.css("list-style-type", _list_style_val);
+          }
+        });
+          
+      }
+    }
+  });
+
+  $("." + root + " ul").each(function() {
+    var _parent = $(this); 
+    var _parent_css_style = _parent.css("list-style-type");
+    var _parent_inline_style = _parent.attr("style");
+    if (_parent_inline_style && _parent_inline_style.indexOf("list-style") > -1) { // inline style //
+      var _list_style_chk_patt = /(list-style|list-style-type)\s*\:\s*([^\;\"]+)/i;
+      var _list_style_chk = _parent_inline_style.match(_list_style_chk_patt);
+      var _list_style_key = "";
+      var _list_style_val = "";
+      if (_list_style_chk && _list_style_chk.length > 1) {
+        _list_style_key = _list_style_chk[1] // group 1
+        _list_style_val = _list_style_chk[2]; // group 2
+      }
+      
+      if (_list_style_val && _list_style_val.length > 0) {
+        _parent.find("li").each(function(idx, elm) {
+          var _li = $(elm);
+          var _li_inline_style = _li.attr("style");
+          if (!_li_inline_style || _li_inline_style.indexOf("list-style") == -1) {
+            _li.css(_list_style_key, _list_style_val);
+          }
+        });
+      }
+      
+    } else { // css style // circle, ...
+      if (!_parent_css_style || _parent_css_style == "none") { // css() return >>> none
+        var _parent_attr_type = _parent.attr("type");
+        var _list_style_val = "disc"; // default
+        
+        if(_parent_attr_type == 'circle') {
+          _list_style_val = "circle";
+        } else if(_parent_attr_type == 'square') {
+          _list_style_val = "square";
+        } else if(_parent_attr_type == 'disc') {
+          _list_style_val = "disc";
+        }
+
+        _parent.find("li").each(function(idx, elm) {
+          var _li = $(elm);
+          var _li_inline_style = _li.attr("style");
+          if (!_li_inline_style || _li_inline_style.indexOf("list-style-type") == -1) {
+            _li.css("list-style-type", _list_style_val);
+          }
+        });
+          
+      }
+    }
+  });
+}
+
+function testBlockUI(){
+  //가운데 로딩이미지 세팅구역
+  var opts = {
+      lines: 11, // The number of lines to draw
+      length: 5, // The length of each line
+      width: 4, // The line thickness
+      radius: 10, // The radius of the inner circle
+      corners: 1, // Corner roundness (0..1)
+      rotate: 0, // The rotation offset
+      direction: 1, // 1: clockwise, -1: counterclockwise
+      color: '#fff', // #rgb or #rrggbb or array of colors
+      speed: 1.2, // Rounds per second
+      trail: 36, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: '50%', // Top position relative to parent
+      left: '50%' // Left position relative to parent
+    };
+    var target = document.getElementById('progress');
+    var spinner = new Spinner(opts).spin(target);
+  
+    var left1 = 
+  //블록UI 세팅구역
+  $.blockUI.defaults = { 
+    message: $('#progress'),
+    css: { 
+      padding:        0, 
+      margin:         0, 
+      width:          'auto', 
+      top:            Number((Number(window.innerHeight)/2)-30), 
+      left:           Number((Number(window.innerWidth)/2)-30),
+      textAlign:      'center', 
+      color:          '#000', 
+      border:         'none', 
+      backgroundColor:'auto', 
+      cursor:         'wait' 
+    },
+    overlayCSS:  { 
+      background: 'auto', 
+      opacity:         1, 
+      cursor:          'wait' 
+    },
+    showOverlay: true,
+    
+    growlCSS: { 
+      width:    '350px', 
+      top:      '20px', 
+      left:     '', 
+      right:    '20px', 
+      border:   'none', 
+      padding:  '5px', 
+      opacity:   0.6, 
+      cursor:    null, 
+      color:    '#fff', 
+      '-webkit-border-radius': '10px', 
+      '-moz-border-radius':    '10px', 
+      'background' : 'url(/ilos/images/common/check_icon.png) no-repeat 20px 15px #000'
+    }, 
+     
+    // IE issues: 'about:blank' fails on HTTPS and javascript:false is s-l-o-w 
+    // (hat tip to Jorge H. N. de Vasconcelos) 
+    iframeSrc: /^https/i.test(window.location.href || '') ? 'javascript:false' : 'about:blank', 
+  
+    // force usage of iframe in non-IE browsers (handy for blocking applets) 
+    forceIframe: true, 
+  
+    // z-index for the blocking overlay 
+    baseZ: 1000, 
+  
+    // set these to true to have the message automatically centered 
+    centerX: true, // <-- only effects element blocking (page block controlled via css above) 
+    centerY: true, 
+  
+    // allow body element to be stetched in ie6; this makes blocking look better 
+    // on "short" pages.  disable if you wish to prevent changes to the body height 
+    allowBodyStretch: true, 
+  
+    // enable if you want key and mouse events to be disabled for content that is blocked 
+    bindEvents: true, 
+  
+    // be default blockUI will supress tab navigation from leaving blocking content 
+    // (if bindEvents is true) 
+    constrainTabKey: true, 
+  
+  
+    // disable if you don't want to show the overlay 
+    showOverlay: true, 
+  
+    // if true, focus will be placed in the first available input field when 
+    // page blocking 
+    focusInput: true, 
+  
+    // suppresses the use of overlay styles on FF/Linux (due to performance issues with opacity) 
+    // no longer needed in 2012 
+    // applyPlatformOpacityRules: true, 
+  
+    // callback method invoked when fadeIn has completed and blocking message is visible 
+    onBlock: null, 
+  
+    // callback method invoked when unblocking has completed; the callback is 
+    // passed the element that has been unblocked (which is the window object for page 
+    // blocks) and the options that were passed to the unblock call: 
+    //   onUnblock(element, options) 
+    onUnblock: null, 
+  
+    // don't ask; if you really must know: http://groups.google.com/group/jquery-en/browse_thread/thread/36640a8730503595/2f6a79a77a78e493#2f6a79a77a78e493 
+    quirksmodeOffsetHack: 4, 
+  
+    // class name of the message block 
+    blockMsgClass: 'blockMsg', 
+  
+    // if it is already blocked, then ignore it (don't unblock and reblock) 
+    ignoreIfBlocked: false 
+  };
+  //$(document).ajaxStart($.blockUI).ajaxStop($.unblockUI);    //아작스 중복호출 방지
+  
+}
+
+// 글 내용중 img 태그 팝업
+function txtImagePopView(url){
+  $.ajax({
+    url: "/ilos/co/txt_image_pop_form.acl",
+    type: "POST",
+    data: {
+             URL : url,
+             encoding : "utf-8"
+            },
+    async: false,
+    success: function(data) {
+                $("#txtImagePopForm").append(data);
+            },
+    error : ajaxErrorMsg
+  });
+}
+
+// 탭 라인 길이 설정
+function setTabLine() {
+  var width = $(".tab-wrap").outerWidth();
+  var tabCnt = 0;
+  var tabWidth = 0;
+  
+  $(".tab").each(function() {
+    tabCnt++;
+    tabWidth += $(this).outerWidth();
+  });
+  
+  $(".tab-line").css("width", width - tabWidth + tabCnt - 2); 
+  $(".tab-line").css("height", $(".tab").innerHeight() + 1);
+  $(".tab-line").prev(".tab").addClass("tab-last");
+}
+
+function getAjaxErrorMessage(jqXHR, exception) {
+  var errMsg = "";
+  try {
+    if (jqXHR.status == 0) {
+      errMsg = 'Unable to connect.Please verify your network connection.';
+    } else if (jqXHR.status == 404) {
+      errMsg = 'Requested page not found. [404]';
+    } else if (jqXHR.status == 500) {
+      errMsg = 'Internal Server Error [500].';
+    } else if (exception == 'parsererror') {
+      errMsg = 'Requested JSON parse failed.';
+    } else if (exception == 'timeout') {
+      errMsg = 'Time out error.';
+    } else if (exception == 'abort') {
+      errMsg = 'Ajax request aborted.';
+    } else {
+      errMsg = 'Uncaught Error. ' + jqXHR.responseText;
+    }
+  } catch (e) {
+    errMsg = "Get message exception : " + e.message; 
+  }
+  return errMsg;
+}
+
+//상단 센터 알림메시지 잠시 보여줌
+function showAlertMessageBox(msg, tm) {
+  do {
+    $("#alert_message_box").remove();    
+  } while($("#alert_message_box").length > 0);
+  
+  $("html body").append('<div id="alert_message_box"></div>');  
+  
+  var box = $('#alert_message_box');
+  
+  box.text(msg);  
+  box.stop().fadeIn(200);
+  box.css("left", Math.max(0, (($(window).width() - box.outerWidth()) / 2)) + "px");
+
+  if (!tm) {
+    tm = 1500;
+  }
+  
+  setTimeout(function() {
+    box.stop().fadeOut(200, function(){
+      box.remove();
+    });
+  }, tm);
+}
+
+function textareaAutoResize(obj) {
+  obj.css("height", "auto");
+  var height = obj[0].scrollHeight + parseInt(obj.css("border-top-width")) +  + parseInt(obj.css("border-bottom-width"));
+  obj.css("height", height + "px");
+}
+
+//외부사용자 비밀번호 변경 팝업
+function exPwdInit(){
+  $( "#pwChangePop" ).dialog({
+    autoOpen: false,
+    show: "blind",
+    hide: "fade", //explode"
+    modal: true,
+    width:400,
+    close: function(ev, ui) { $("#popPwForm").remove() }
+  });
+  $.ajax({
+    url: "/ilos/mp/myinfo_pw_pop_form2.acl",
+    type: "POST",
+    data: {
+      encoding : "utf-8"
+        },
+    async: true,
+    success: function(data){
+        $("#pwChangePop").html(data);
+        $("#pwChangePop").dialog("open");
+      },
+    error : ajaxErrorMsg
+  });
+}
+</script>
+<div id="pwChangePop" title="비밀번호변경"></div>
+<div id="progress" style="display: none; width: 80px; height: 80px; -webkit-border-radius: 10px; border-radius:10px; background-color: #000;"></div> 
+<link type="text/css" rel="stylesheet" href="/ilos/css/main.css?v=20260813">
+<link type="text/css" rel="stylesheet" href="/ilos/css/schedule.css?v=20260813">
+<script type="text/javascript" src="/ilos/js/main_calendar.js?v=20260813"></script>
+<script type="text/javascript">
+$(function() {
+  quickMenuIndex();
+  addCalendar("SCH_DT");
+  
+  
+  getMainSchedule2('to','1');
+  
+  
+
+  
+  getCtlNoticeList();
+  
+  
+  
+  getMyImptList();
+  
+  $.fx.speeds._default = 500;
+  $( "#dialog-course-eval" ).dialog({
+    resizable: false,
+    width:973,
+    autoOpen: false,
+    show: "blind",
+    hide: "fade", //explode"    
+    modal: true,
+    dialogClass: "noTitleStuff",
+    closeOnEscape: false,
+    closeOnClick: false,
+    position:{top:"20px"},
+    close: function(ev, ui) {$("#dialog-course-eval-form").remove();} 
+  }); 
+  ocwTab(1);
+  shareTab(1);
+  
+  checkCourseHasUnread();
+  
+  $("#NewEventAddBtn").click(function() {
+    var d = Number($("#NewEventAddBtn").attr("d")) + 5;
+    $("#NewEventAddBtn").attr("d", d);
+    NewEventList(d);
+  });  
+  NewEventList(5);
+  
+  // impt-list hover
+  $(document).on('mouseover','.impt-link',function(){
+    $(this).find('span').addClass('site-font-color');
+  });
+  $(document).on('mouseleave','.impt-link',function(){
+    $(this).find('span').removeClass('site-font-color');
+  });
+  // impt-list delete
+  $(document).on('click','.impt',function(){
+    $(this).addClass('impt_off');
+    $(this).removeClass('impt_on');
+    var impt_seq = $(this).attr('seq');
+    var brd_id = $(this).attr('brd');
+    var kjkey = $(this).attr('kjkey');
+    $(this).closest('.impt-list').fadeOut(600, function(){
+      $(this).closest('.impt-list').remove();
+      deleteImportant(impt_seq, brd_id, kjkey);
+      //다 지워졌는지 체크
+      if($('.impt-list').length == 0){
+        getMyImptList();
+      }
+    });
+  });
+  // 더보기 버튼 hover
+  $('#more-impt-list-btn').mouseover(function(){
+    $(this).addClass('site-font-color');
+  });
+  $('#more-impt-list-btn').mouseleave(function(){
+    $(this).removeClass('site-font-color');
+  });
+});
+function ocwTab(flag){
+  $(".box-tab1 .tab1").removeClass("sel-tab");
+  $(".box-tab1 .tab2").removeClass("sel-tab");
+  $(".box-tab1 .tab3").removeClass("sel-tab");
+  $(".box-tab1 .tab1").removeClass("site-font-color");
+  $(".box-tab1 .tab2").removeClass("site-font-color");
+  $(".box-tab1 .tab3").removeClass("site-font-color");
+  $(".box-tab1 .tab1").css("font-weight" ,"normal");
+  $(".box-tab1 .tab2").css("font-weight" ,"normal");
+  $(".box-tab1 .tab3").css("font-weight" ,"normal");
+  $(".box-tab1 .tab"+flag).addClass("sel-tab");
+  $(".box-tab1 .tab"+flag).addClass("site-font-color");
+  $(".box-tab1 .tab"+flag).css("font-weight" ,"bold");
+  $.ajax({
+    url: "/ilos/main/ocw_list.acl",
+    type: "POST",
+    async: false,
+    data: {
+      FLAG : flag,
+        encoding : "utf-8"
+      },
+    success: function(data){
+        $("#ocw-list").html(data);
+      },
+    error : ajaxErrorMsg
+  });
+}
+function shareTab(flag){
+  $(".box-tab2 .tab1").removeClass("sel-tab");
+  $(".box-tab2 .tab2").removeClass("sel-tab");
+  $(".box-tab2 .tab3").removeClass("sel-tab");
+  $(".box-tab2 .tab1").removeClass("site-font-color");
+  $(".box-tab2 .tab2").removeClass("site-font-color");
+  $(".box-tab2 .tab3").removeClass("site-font-color");
+  $(".box-tab2 .tab1").css("font-weight" ,"normal");
+  $(".box-tab2 .tab2").css("font-weight" ,"normal");
+  $(".box-tab2 .tab3").css("font-weight" ,"normal");
+  $(".box-tab2 .tab"+flag).addClass("sel-tab");
+  $(".box-tab2 .tab"+flag).addClass("site-font-color");
+  $(".box-tab2 .tab"+flag).css("font-weight" ,"bold");
+  $.ajax({
+    url: "/ilos/main/share_list.acl",
+    type: "POST",
+    async: false,
+    data: {
+      FLAG : flag,
+        encoding : "utf-8"
+      },
+    success: function(data){
+        $("#share-list").html(data);
+      },
+    error : ajaxErrorMsg
+  });
+}         
+function groupInfoPop(grpId, memDiv) {
+  if (memDiv=='0' || memDiv=='S' || memDiv=='1') {
+    document.location.href = "/ilos/community/share_list_form.acl?CLUB_GRP_ID=" + grpId + "&start=&display=&SCH_CLUB_VAL=&encoding=utf-8";
+  } else if (memDiv=='3') {
+    alert("재가입 불가 대상입니다.");
+    return false;
+  } else {
+  $.ajax({
+    url: "/ilos/community/share_group_info_form.acl",
+    type: "POST",
+    data: {
+             CLUB_GRP_ID : grpId,
+             encoding : "utf-8"
+            },
+    async: false,
+    success: function(html) {
+                $("#popup_room").append(html);
+            },
+    error : ajaxErrorMsg
+  });
+  }
+}
+</script>
+<script type="text/javascript">
+var langth = 0;
+$(function() {
+  siteLinkIndex();
+  
+  
+  $(".sub_open").hover(
+    function() {
+      $(this).addClass("site-font-color");
+      $(this).next().addClass("site-font-color");
+    },
+    function() {
+      $(this).removeClass("site-font-color");
+      $(this).next().removeClass("site-font-color");
+    }
+  );
+ 
+  
+});
+
+function eclassRoom(KJKEY) {
+  $.ajax({
+    url: "/ilos/st/course/eclass_room2.acl",
+    type: "POST",
+    data: {
+             KJKEY : KJKEY,
+             returnData : "json",
+             returnURI : "/ilos/st/course/submain_form.acl",
+             encoding : "utf-8" },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert(data.message);
+          document.location.href = "/ilos/main/main_form.acl";
+        }
+        else {
+            document.location.href = data.returnURL;
+          }
+      },
+    error : ajaxErrorMsg
+  }); 
+}
+
+function eclassRoom1(KJKEY,returnURI) {
+  $.ajax({
+     url: "/ilos/st/course/eclass_room2.acl",
+     type: "POST",
+     data: {
+              KJKEY : KJKEY,
+              returnData : "json",
+              returnURI : returnURI,
+              encoding : "utf-8" },
+     async: false,
+     success: function(data){
+         if(data.isError) {
+           alert(data.message);
+           document.location.href = "/ilos/main/main_form.acl";
+         }
+         else {
+             document.location.href = data.returnURL;
+           }
+       },
+     error : ajaxErrorMsg
+   }); 
+ }
+
+function eclassRoom2(KJKEY) {
+  $.ajax({
+    url: "/ilos/st/course/eclass_room2.acl",
+    type: "POST",
+    data: {
+             KJKEY : KJKEY,
+             returnData : "json",
+             returnURI : "/ilos/st/course/submain_form.acl",
+             encoding : "utf-8" },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert(data.message);
+          document.location.href = "/ilos/main/main_form.acl";
+        }
+        else {
+            document.location.href = data.returnURL;
+          }
+      },
+    error : ajaxErrorMsg
+  }); 
+}
+
+function eclassAssistRoom(KJKEY, ix) {
+  var id = 'eclassAssistform_'+ix;
+  var f = document.getElementById(id);
+  $("form[name=eclassAssistform_"+ix+"]>input[name=KJKEY]").val(KJKEY);
+ 
+  f.target="";
+  f.submit();
+}
+
+
+function eclassAssistRoom2(KJKEY) {
+  var f = document.eclassAssistform2;
+  $("form[name=eclassAssistform2]>input[name=KJKEY]").val(KJKEY);
+ 
+  f.target="";
+  f.submit();
+}
+
+//전체 시간표 조회
+function pop_timetable(a_href) {
+  var win = window.open(a_href, "pop_timetable", "width=696, height=608, scrollbars=1");
+  win.focus();
+}
+
+//비정규과정목록 화면들어가기
+function eclassRoom3(KJKEY) {
+  $.ajax({
+    url: "/ilos/st/course/eclass_room2.acl",
+    type: "POST",
+    data: {
+             KJKEY : KJKEY,
+             returnData : "json",
+             returnURI : "/ilos/st/course/submain_form.acl",
+             encoding : "utf-8" },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert(data.message);
+          document.location.href = "/ilos/main/main_form.acl";
+        }
+        else {
+            document.location.href = data.returnURL;
+          }
+      },
+    error : ajaxErrorMsg
+  }); 
+}
+//비정규과정목록 강의 화면들어가기
+function eclassRoom4(KJKEY) {
+  $.ajax({
+    url: "/ilos/pf/course/eclass_room2.acl",
+    type: "POST",
+    data: {
+             KJKEY : KJKEY,
+             returnData : "json",
+             returnURI : "/ilos/pf/course/submain_form.acl",
+             encoding : "utf-8" },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert(data.message);
+          document.location.href = "/ilos/main/main_form.acl";
+        }
+        else {
+            document.location.href = data.returnURL;
+          }
+      },
+    error : ajaxErrorMsg
+  }); 
+}
+
+//캘린더 이동
+function eclassRoom5(KJKEY,returnURI,url) {
+  $.ajax({
+    url: url,
+    type: "POST",
+    data: {
+      KJKEY : KJKEY,
+      returnData : "json",
+      returnURI : returnURI,
+      encoding : "utf-8" },
+     async: false,
+     success: function(data){
+       if(data.isError) {
+         alert(data.message);
+         document.location.href = "/ilos/main/main_form.acl";
+       }
+       else {
+           document.location.href = data.returnURL;
+       }
+     },
+     error : ajaxErrorMsg
+  }); 
+}
+
+//레이어 공지 팝업
+function popNotice2(ARTL_NUM,UPT_DTM,langth) {
+   //alert(ARTL_NUM);
+  $.ajax({
+    url: "/ilos/popup/notice_popup_form.acl",
+    type: "POST",
+    data: {
+           ARTL_NUM : ARTL_NUM,  
+           UPT_DTM  : UPT_DTM,
+           langth:langth,
+           encoding : "utf-8"
+          },
+    async: true,
+    success: function(html){
+        $("#popup_notice2_"+ARTL_NUM).append(html);
+      },
+      error : ajaxErrorMsg
+  });  
+}
+function siteLinkIndex() {
+  $.ajax({
+    url: "/ilos/main/site_link_form.acl",
+    type: "POST",
+    data: {
+           encoding : "utf-8"
+          },
+    async: false,
+    success: function(html){
+            $("#site_link_index").append(html);
+           },
+     error : ajaxErrorMsg
+  });    
+  
+}
+
+function quickMenuIndex() {
+  $.ajax({
+    url: "/ilos/main/quick_menu_list.acl",
+    type: "POST",
+    data: {
+           encoding : "utf-8"
+          },
+    async: false,
+    success: function(html){
+            $("#quick-menu-index").append(html);
+           },
+     error : ajaxErrorMsg
+  });    
+}
+
+//미리보기
+function popEval(){
+  $.ajax({
+    url: "/ilos/popup/pop_course_eval_form.acl",
+    type: "POST",
+    data: { 
+      encoding  : "utf-8"
+    },
+    async: false,
+    success: function(data){
+      if(data.isError){
+        alert(data.message);
+      }
+      else{
+        $("#dialog-course-eval").html(data);
+        $("#dialog-course-eval").dialog("open");
+      }
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+//수강과목 목록
+function popEvalCourseList(org_dv, online_flag, eval_seq){
+  $.ajax({
+    url: "/ilos/popup/pop_course_eval_list1.acl",
+    type: "POST",
+    data: {
+      ORG_DV      : org_dv,
+      ONLINE_FLAG : online_flag,
+      EVAL_SEQ    : eval_seq,
+      encoding    : "utf-8"
+    },
+    async: false,
+    success: function(data){
+      if(data.isError){
+        alert(data.message);
+      }
+      else{
+        $('html, body').scrollTop(0);
+        $('div[name="EVAL_TITLE"]').show();
+        $('div[name="EVAL_INFO"]').show();
+        $('div[name="COURSE_LIST"]').show();
+        $("#pop_eval_list_"+eval_seq).html(data);
+        $("#pop_eval_couse_list_btn_"+eval_seq).hide();
+      }
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+var answer_data; 
+var idx;
+//설문문항 
+function popEvalList(org_dv, eval_seq, kjkey, complete_yn, emp_no, maxQtnNo){
+  if(complete_yn == 'Y'){
+    alert("강의평가가 완료된 과목입니다.");
+    return;
+  }
+  else{
+    answer_data = new Array(Number(maxQtnNo));
+    idx = 0;
+    
+    $.ajax({
+      url: "/ilos/popup/pop_course_eval_list2.acl",
+      type: "POST",
+      data: { 
+        ORG_DV   : org_dv,
+        EVAL_SEQ : eval_seq,
+        KJKEY    : kjkey,
+        EMP_NO   : emp_no,
+        encoding : "utf-8"
+      },
+      async: false,
+      success: function(data){
+        if(data.isError){
+          alert(data.message);
+        }
+        else{
+          $('div[name="EVAL_TITLE"]').hide();
+          $('div[name="EVAL_INFO"]').hide();
+          $('#EVAL_'+eval_seq).show();
+          $('#EVAL_INFO_'+eval_seq).show();
+          $('div[name="COURSE_LIST"]').hide();
+          $("#pop_eval_list_"+eval_seq).html(data);
+          $("#pop_eval_couse_list_btn_"+eval_seq).show();
+        }
+      },
+      error : ajaxErrorMsg
+    });
+  }
+}
+
+function prevMnu() {
+  var no = 0;
+  var curr_no = "";
+  //no = parseInt($("#cur_page").html())-1 < 0 ? 1 :parseInt($("#cur_page").html())-1;
+  curr_no = answer_data[idx];
+  $("#qtn_"+curr_no).hide();
+  idx--;
+  no = answer_data[idx];
+ 
+  $("#qtn_"+no).show();
+  $("#cur_page").html(no);
+
+  if(idx == 0) {
+    $("#prevBtn").hide();
+  }
+  else {
+    $("#nextBtn").show();
+    $("#completeBtn").hide();
+    
+    $("#prevBtn").show();
+  }
+}
+
+function autoMovePage() {
+  var curr_no = "";
+  curr_no = answer_data[idx];
+  var qtnType = $("#qtn_"+curr_no).attr("qtn_type");
+  var ans_min = $("#qtn_"+curr_no).attr("ans_min"); 
+  var ans_max = $("#qtn_"+curr_no).attr("ans_max");
+  
+  //alert(curr_no+":"+qtnType+":"+ans_min+":"+ans_max);
+  var answer = [];
+  var to_qtn_no = "";
+  
+  if( qtnType == "1" || qtnType == "3" ) {
+    $("input[name=answer_ex_no_"+curr_no+"]").each(function(index2) {
+      if($(this).prop("checked")) {
+         answer.push({ 
+           "ex_no"     : $(this).val(),
+           "to_qtn_no" : $(this).attr("toNo"),
+           "etc"       : ''
+         });
+       }
+    });
+    
+    if(answer.length == ans_max) {
+      if(curr_no < answer_data.length ) {
+        nextMnu();
+      }
+    }
+  }
+  else {
+    if($.trim($("#answer_"+curr_no).val()) != "") {
+      answer.push({ 
+        "ex_no"     : '1', 
+        "to_qtn_no" : '',
+        "etc"       : $("#answer_"+curr_no).val()
+      });
+    }
+    else {
+      $("#answer_"+curr_no).focus();
+      $("#answer_"+curr_no).select();
+    }
+    
+    if(answer.length == ans_max) {
+      //alert("딱이에요.");
+      if(curr_no < answer_data.length ) {
+        nextMnu();
+      }
+    }
+  }
+}
+
+function nextMnu() {
+  var no = 0;
+  var curr_no = "";
+  var answer  = [];
+
+  curr_no = answer_data[idx];
+  var qtnType = $("#qtn_"+curr_no).attr("qtn_type");
+  var ans_min = $("#qtn_"+curr_no).attr("ans_min"); 
+  var ans_max = $("#qtn_"+curr_no).attr("ans_max");
+
+  var to_qtn_no = "";
+  if( qtnType == "1" || qtnType == "3" ) {
+    $("input[name=answer_ex_no_"+curr_no+"]").each(function(index2) {
+      if($(this).prop("checked")) {
+         answer.push({ 
+           "ex_no"     : $(this).val(),
+           "to_qtn_no" : $(this).attr("toNo"),
+           "etc"       : ''
+         });
+         to_qtn_no = $(this).attr("toNo");
+       }
+    });
+    
+    if(ans_min == ans_max) {
+      if(answer.length != ans_min ) {
+        alert(ans_min+"개 선택하세요.");
+        return false;
+      }
+    }
+    else {
+      if(answer.length == 0 ) {
+        alert(ans_min+"~"+ans_max+"개 선택하세요.");
+        return false;
+      }
+      
+      else if( ans_min > answer.length || ans_max < answer.length  ) {
+        alert(ans_min+"~"+ans_max+"개 선택하세요.");
+        return false;
+      } 
+    }
+  }
+  else {
+    if($.trim($("#answer_"+curr_no).val()) != "") {
+      answer.push({ 
+        "ex_no"     : '1', 
+        "to_qtn_no" : '',
+        "etc"       : $("#answer_"+curr_no).val()
+      });
+    }
+    else {
+      $("#answer_"+curr_no).focus();
+      $("#answer_"+curr_no).select();
+    }
+    
+    if(answer.length == 0) {
+      alert("필수질문입니다. 답변을 입력하세요.");
+      return false;
+    }
+  }
+ 
+  if(to_qtn_no == "") {
+    no = parseInt($("#cur_page").html())+1;
+  }
+  else {
+    no = parseInt(to_qtn_no);
+  }
+ 
+  if(parseInt($("#total_pages").html()) < no  || no == "0" ) {
+    $("#completeBtn").click();
+    return false;
+  }
+  else {
+    $("#qtn_"+curr_no).hide();
+    $("#qtn_"+no).show();
+    $("#cur_page").html(no);
+    idx++;
+    answer_data[idx]=no;
+    if(idx == 0) {
+      $("#prevBtn").hide();
+    }
+    else {
+      if(no == parseInt($("#total_pages").html())) {
+        $("#nextBtn").hide();
+        $("#completeBtn").show();
+      }
+      else {
+        $("#nextBtn").show();
+        $("#completeBtn").hide();
+      }
+      $("#prevBtn").show();
+    }
+  }
+}
+
+function popEvalExChk(obj){
+  var min = obj.attr('min');
+  var max = obj.attr('max');
+  var nm  = obj.attr('name');
+  
+  if(1 < max){
+    var chkCnt = 0;
+    $('input[name="'+nm+'"]').each(function(){
+      if($(this).is(':checked')){
+        chkCnt++;
+      }
+    });
+    
+    if(max < chkCnt){
+      alert( imaxsoft.i18n.Resource.getString('alert.ExMaxChoose',{'$num':max}) );
+      obj.prop('checked', false);
+      return false;
+    }
+  }
+}
+
+function popEvalSave(org_dv, eval_seq, kjkey, emp_no, online_flag, dcSize){
+  var q_id = [];
+  var q_tp = [];
+  var q_as = [];
+  var q_no = [];
+  var q_min = [];
+  var q_max = [];
+  
+  $('div[name="eval_qtn"]').each(function(idx){
+    var qid = $(this).attr("QUESTION_ID");
+    var qno = $(this).attr("QUESTION_NO");
+    var qtp = $(this).attr("QUESTION_KIND");
+    q_id.push(qid);
+    q_tp.push(qtp);
+    
+    if('1' == qtp){
+      var temp_no = [];
+      $("input[name='answer_ex_no_"+qno+"']").each(function(index){
+        if(index == 0){
+          q_min.push( $(this).attr('min') );
+          q_max.push( $(this).attr('max') );
+        }
+        
+        if($(this).is(":checked")) {
+          temp_no.push( $(this).val() );
+        }
+      });
+      q_as.push( "" );
+      q_no.push( temp_no.join('|$') );
+    }
+    else if('2' == qtp){
+      q_as.push($("#answer_"+qid).val());
+      q_no.push("1");
+      q_min.push("1");
+      q_max.push("1");
+    }
+    else if('3' == qtp){
+      var temp_as = '';
+      var temp_no = '';
+      $("input:radio[name='answer_ex_no_"+qno+"']").each(function(index){
+        if($(this).is(":checked")) {
+          temp_as = $(this).val();
+          temp_no = $(this).attr("ex_no");
+        }
+      });
+      q_as.push(temp_as);
+      q_no.push(temp_no);
+      q_min.push("1");
+      q_max.push("1");
+    }
+    else{
+    }
+  });
+  
+  for(var a in q_as){
+    if(q_tp[a] == '2'){
+      if(trim(q_as[a]) == "") {
+        alert('[Q'+Number(Number(a)+1)+']'+' 내용을 입력하세요.');
+        $("#QUESTION_ID_"+q_id[a]).focus();
+        return;
+      }
+    }
+  }
+  
+  var dataSet = { 
+    ORG_DV   : org_dv,
+    EVAL_SEQ : eval_seq,
+    KJKEY    : kjkey,
+    EMP_NO   : emp_no,
+    tot_q_id : q_id.join('^'),
+    tot_q_tp : q_tp.join('^'),
+    tot_q_as : q_as.join('^'),
+    tot_q_no : q_no.join('^'),
+    encoding : "utf-8"
+  };
+  
+//   console.log(dataSet);
+//   return false;
+
+  $.ajax({
+    url: "/ilos/popup/pop_course_eval_save.acl",
+    type: "POST",
+    data: dataSet,
+    async: false,
+    success: function(data){
+      if(data.isError){
+        alert(data.message);
+        if(data.messageCode == 'E_EVAL_FINISHED'){
+          $('#dialog-course-eval').dialog('close');
+        }
+      }
+      else{
+        alert("설문이 완료 되었습니다.");
+        popEvalCourseList(org_dv, online_flag, eval_seq);
+      }
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+function allComlete(){
+  var flag = true;
+  $("input[name='all_comlete']").each(function(){
+    if($(this).val() == 'false'){
+      flag = false;
+    }
+  });
+  
+  if(flag) $("#pop_eval_close_btn2").show();
+}
+function NewEventList(d){
+  if(typeof d == "undefined") d = 5;
+  
+  $.ajax({
+      url: "/ilos/main/new_event_list.acl",
+      type: "POST",
+      data: { 
+         start :  1, 
+         display : d,  
+         encoding : "utf-8"
+            },
+      async: true,
+      success: function(html){
+           $("#new-event-list").html(html);
+        },
+      error : ajaxErrorMsg
+    });
+}
+
+function getCtlNoticeList() {
+  $.ajax({
+    url: "/ilos/main/main_ctl_notice_list.acl",
+    type: "POST",
+    data: {
+     encoding : "utf-8"
+    },
+    async: false,
+    success: function(html){
+      $("#ctl_notice_list").append(html);
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+function getCsProgramList(){
+  $.ajax({
+    url: "/ilos/main/career_link_form.acl",
+    type: "POST",
+    data: {
+     encoding : "utf-8"
+    },
+    async: false,
+    success: function(html){
+      $("#career_link_list_zone").append(html);
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+function checkCourseHasUnread() {
+  var _e_list = $('.sub_open');
+  var _kj_p = [];
+  var _kj_t = [];
+  var _kj_s = [];
+  var _kj_a = [];
+  
+  var _kj_map = {};
+  
+  _e_list.each(function(idx, e) {
+    var _e = $(this);
+    var _kj = _e.attr("kj");
+    var _kj_auth = _e.attr("kj_auth");
+    if (_kj_auth == 'P') {
+      _kj_p.push(_kj);
+    } else if (_kj_auth == 'T') {
+      _kj_t.push(_kj);
+    } else if (_kj_auth == 'S') {
+      _kj_s.push(_kj);
+    } else if (_kj_auth == 'A') {
+      _kj_a.push(_kj);
+    }
+
+    _kj_map[_kj_auth + "_" + _kj] = _e;
+  });
+  
+  var _kj_list = "";
+  var _prefix_1 = "$";
+  var _prefix_2 = "~";
+  var _prefix_3 = ",";
+  if (_kj_p.length > 0) {
+    _kj_list += _prefix_1 + "P" + _prefix_2 + _kj_p.join(_prefix_3);
+  }
+  if (_kj_t.length > 0) {
+    _kj_list += _prefix_1 + "T" + _prefix_2 + _kj_t.join(_prefix_3);
+  }
+  if (_kj_s.length > 0) {
+    _kj_list += _prefix_1 + "S" + _prefix_2 + _kj_s.join(_prefix_3);
+  }
+  if (_kj_a.length > 0) {
+    _kj_list += _prefix_1 + "A" + _prefix_2 + _kj_a.join(_prefix_3);
+  }
+  
+  if (_kj_list.length > 0) {
+    try {
+      _kj_list = _kj_list.substring(1);
+//       console.log(_kj_list);
+    
+      $.ajax({
+        url: "/ilos/co/course_unread_list.acl",
+        type: "POST",
+        data: {
+          "chkList" : _kj_list
+        , "_prefix_1" : _prefix_1  
+        , "_prefix_2" : _prefix_2  
+        , "_prefix_3" : _prefix_3  
+        ,  encoding : "utf-8"
+        },
+        async: true,
+        success: function(data){
+//           console.log(data);
+          if (data) {
+            if (data.isError) {
+//               alert(data.isError);
+            } else {
+//               $('.unread_icon_new').remove();
+              $('.course_unread_cnt').remove();
+              
+              var item_list = data.item_list;
+//               console.log(item_list);
+              if (item_list && item_list.length > 0) {
+                var _item;
+                for (var i = 0; i < item_list.length; i++) {
+                  _item = item_list[i];
+                  var _kj = _item.KJKEY;
+                  var _kj_auth = _item.KJ_AUTH;
+                  var _is_unread = _item.IS_UNREAD;
+                  var _unread_cnt = _item.UNREAD_CNT;
+                  
+                  if (_is_unread == "Y") {
+//                     appendUnreadIcon(_kj_map[_kj], _unread_cnt);
+                    appendUnreadCnt(_kj_map[_kj_auth + "_" + _kj], _unread_cnt);
+                  }
+                }
+              }
+              
+            }
+          } else {
+//             console.log("Response error");
+//             console.log(data);
+          }
+        },
+        error : function(jqXHR, exception){
+          ajaxErrorMsg(jqXHR, exception);
+          return false;
+        }
+      });
+    } catch (e) {
+//       console.log(e);
+    }
+  }
+}
+
+// e : jquery element
+function appendUnreadIcon(e, cnt) {
+  var unread_icon_new = "";
+  unread_icon_new += "<img src=\"/ilos/images/common/icon_new.png\"";
+  unread_icon_new += " class=\"unread_icon_new\"";
+  unread_icon_new += " title=\"안읽은항목 : " + cnt + "\"";
+  unread_icon_new += " alt=\"안읽은항목 : " + cnt + "\"";
+  unread_icon_new += " />";
+  
+  e.parent().append(unread_icon_new);
+}
+function appendUnreadCnt(e, cnt) {
+  var course_unread_cnt = "";
+  course_unread_cnt += "<img";
+  course_unread_cnt += " class=\"course_unread_cnt\"";
+  course_unread_cnt += " style=\"margin-top: 2px;\"";
+  course_unread_cnt += " title=\"안읽은 글 : " + cnt + "\"";
+  course_unread_cnt += " src= \"/ilos/images/new.png\"";
+  course_unread_cnt += " >";
+  
+  e.parent().append(course_unread_cnt);
+}
+
+var imptIndex = 1;
+function getMyImptList(){
+  $('#impt-loading').show();
+  setTimeout(function(){
+    $.ajax({
+      url: "/ilos/st/main/impt_list.acl",
+      type: "POST",
+      data: {
+        start    : imptIndex,
+        display  : 5,
+        encoding : "utf-8"
+      },
+      async: true,
+      success: function(html){
+        $("#impt-list-zone").append(html);
+      },
+      error : ajaxErrorMsg,
+      complete: function(){
+        $('#impt-loading').hide();
+      }
+    });
+    imptIndex += 5;
+  });
+}
+
+function deleteImportant(impt_seq, brd_id, kjkey){
+  $.ajax({
+    url: "/ilos/st/course/delete_important.acl",
+    type: "POST",
+    data: {
+      IMPT_SEQ : impt_seq,
+      BRD_ID   : brd_id,
+      KJKEY    : kjkey,
+      encoding : "utf-8"
+          },
+    async: true,
+    success: function(data){
+        if(!data.isError){
+        }else{
+          alert("중요글 삭제에 실패하였습니다.");
+        }
+      },
+    error : ajaxErrorMsg
+  });
+}
+</script> 
+<style>
+#loading{
+  position: absolute;
+  background-color: #f0faf0;
+  filter: alpha(opacity=30);
+  -moz-opacity: 0.3;
+  -khtml-opacity: 0.3;
+  opacity: 0.3; 
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+  display: none;
+  top: 0;
+  text-align: center;
+  overflow: hidden;
+}
+#loadingimg{
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: url('/ilos/images/loading.png') no-repeat center center;
+}
+#impt-loading {
+  display: none;
+}
+#impt-loadingimg{
+  position: relative;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  vertical-align: middle;
+  border-radius: 50%;
+  border: 1px solid #999;
+  border-top: 1px solid #eee;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+}
+.noTitleStuff .ui-dialog-titlebar {display:none}
+</style>
+</head>
+ 
+<body>
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+
+jQuery(function($){
+    $('#skipNavigation li a').click(function(){
+        $($('a[href^=#]').attr('href')).attr('tabindex','0').focus();
+    });
+}); 
+
+</script>
+
+  
+<ul id="skipNavigation">
+	<li><a href="#containerWrap" class="site-color site-border-color">본문내용 바로가기</a></li>
+	<li><a href="#gnbIndex" class="site-color site-border-color">주메뉴 바로가기</a></li>
+</ul>
+<hr>
+<div id="popup_room"></div>
+<div id="wrap">
+	<div id="headerWrap">
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+<!--
+$(function() { 
+  $(window).scroll( function () {
+	  $(this).scrollTop() > 400 ? $(".scrollup").fadeIn() : $(".scrollup").fadeOut();
+  });
+  
+	$(".scrollup").click(function () {
+      $("html, body").animate({
+          scrollTop: 0
+      }, 600);
+  });
+	      
+  $("#LANG").change( function() {
+      $.ajax({
+        url: "/ilos/main/lang_change.acl",
+        type: "POST",
+        data: { 
+        LANG :  $("#LANG").val(),
+        encoding : "utf-8"
+              },
+        async: false,
+        success: function(data){
+                document.location.href = location.href;
+          },
+        error : ajaxErrorMsg
+    });  
+  });
+  
+  $("#user").click(function() {
+	  //$("#pPop").show();
+	  document.location.href = "/ilos/mp/myinfo_form.acl";
+  }).css("cursor","pointer");
+  $("#user_photo").click(function() {
+	    //$("#pPop").show();
+	    document.location.href = "/ilos/mp/myinfo_form.acl";
+	  }).css("cursor","pointer");
+  /*
+  $("#pPop").mouseleave(function() {
+	  $(this).fadeOut(800,"linear",function(){});
+  });
+  */
+
+  //close event setting
+  var closeMEevnt = function (){
+    $(document).keydown(function(e){
+      if (e.keyCode != 27) return true;
+      if($("#outerMenual").css("display") === 'block') {
+        $("#outerMenual").hide("blind",300, closeMenual );
+      }   
+      return false;
+    });
+  }( ); 
+  //closeMEevnt();
+  
+  
+  $.ajax({
+    url: "/ilos/message/received_new_message_check.acl",
+    type: "POST",
+    async: true,
+    data: { 
+        encoding : "utf-8"
+            },
+    success: function(data){
+            if(data.isError) {
+              //읽지않은 쪽지 없음. alert(data.message);
+              $("#message_cnt").hide();
+              $("#message_cnt").text("");
+            }
+            else {
+              if(data.records[0].NEW_MSG_CNT > 0) {
+                $("#message_cnt").text(data.records[0].NEW_MSG_CNT);
+                $("#message_cnt").show();
+              } else {
+                $("#message_cnt").hide();
+                $("#message_cnt").text("");
+              }
+            }  
+      },
+    error : ajaxErrorMsg
+  });
+  
+  $.ajax({
+    url: "/ilos/co/notification_count.acl",
+    type: "POST",
+    async: true,
+    data: { 
+        encoding : "utf-8"
+            },
+    success: function(data){
+            if(data.isError) {
+              //읽지않은 쪽지 없음. alert(data.message);
+              $("#notice_cnt").hide();
+              $("#notice_cnt").text("");
+            }
+            else {
+              if(data.records[0].CNT > 0) {
+                $("#notice_cnt").text(data.records[0].CNT);
+                $("#notice_cnt").show();
+              } else {
+                $("#notice_cnt").hide();
+                $("#notice_cnt").text("");
+              }
+            }  
+      },
+    error : ajaxErrorMsg
+  });
+  
+  
+  $.ajax({
+    url: "/ilos/co/todo_list_count.acl",
+    type: "POST",
+    async: true,
+    data: { 
+        encoding : "utf-8"
+            },
+    success: function(data){
+            if(data.isError) {
+              $("#todoList_cnt").hide();
+              $("#todoList_cnt").text("");
+            }
+            else {   
+              $("#todoList_cnt").text(data.param.TODO_CNT);
+              if(data.param.TODO_CNT > 0) {               
+                $("#todoList_cnt").show();
+              } else {
+                $("#todoList_cnt").hide();                
+              }
+            }  
+      },
+    error : ajaxErrorMsg
+  });
+   
+  $.fx.speeds._default = 500;
+  $( "#notification_pop" ).dialog({
+    autoOpen: false,
+    show: "blind",
+    hide: "fade", //explode"
+    modal: true,
+    width: "400px",
+    open: function(ev, ui){
+      $(this).css("padding","0");
+      $(this).parent().css({
+        "marginTop": "15px",
+        "marginBottom": "15px"
+      });
+    },
+    close: function(ev, ui){
+      $(this).html('');
+    }
+  });
+
+  $( "#todo_pop" ).dialog({
+    autoOpen: false,
+    show: "blind",
+    hide: "fade", //explode"
+    modal: true,
+    resizable : false,
+    width: "400px",
+    open: function(ev, ui){
+      $(this).css("padding","0");
+    },
+    close: function(ev, ui){
+      $(this).html('');
+    }
+  });
+  
+  if(navigator.userAgent.indexOf("MSIE 10.0") > 0 ){
+    $("#browser_header_logo").hide();
+  }
+  else if(navigator.userAgent.indexOf("MSIE 9.0") > 0 ){
+    $("#browser_header_logo").hide();
+  }
+  else if(navigator.userAgent.indexOf("MSIE 8.0") > 0 ){
+    $("#browser_header_logo").hide();
+  }
+  else if(navigator.userAgent.indexOf("MSIE 7.0") > 0 ){
+    $("#browser_header_logo").hide();
+  }
+  else if(navigator.userAgent.indexOf("MSIE 6.0") > 0 ){
+    $("#browser_header_logo").hide();
+  }else{
+    $("#low_browser_header_logo").hide();
+  }
+  
+      
+});
+
+jQuery.fn.center = function () {
+  this.css("position","absolute");
+  this.css("top", Math.max(0, (($(window).height() - $(this).outerHeight()) / 2) - 30) + "px");
+  this.css("left", Math.max(0, (($(window).width() - $(this).outerWidth()) / 2) + $(window).scrollLeft()) + "px");
+  return this;
+}
+
+function closeMenual(){
+  $(".menual-full-layer").remove();
+};
+
+function menual_pop_close(){
+  $("#outerMenual").hide("blind",300, closeMenual );
+};
+
+function menualPop(i,w,l,t){
+  if($("#outerMenual").css("display") == 'none'){
+    $.ajax({
+      url: "/ilos/menual/menual_main_form.acl",
+      type: "POST",
+      data: {
+         SCREEN_ID : i,
+         w : w,
+         link : l,
+         t : t,
+         encoding : "utf-8"
+        },
+      async: false,
+      success: function(data){
+          if(data.isError) {
+            alert(data.message);
+          }
+          else {
+            $("#outerMenual").html(data);
+          }
+        },
+      error : ajaxErrorMsg
+    });
+    $("#outerMenual").show("blind",300);
+  }
+  else {
+    $("#outerMenual").hide("blind",300, closeMenual );
+  }
+}
+
+function popNotification(start,openDt){
+  $.ajax({
+    url: "/ilos/mp/notification_list.acl",
+    type: "POST",
+    data: {
+       start : start,
+       display : "5",
+       OPEN_DTM : openDt,
+       encoding : "utf-8"
+      },
+    async: false,
+    success: function(html){
+      $(".notification_more").remove();
+      $("#notification_pop").append(html);
+      $("#notification_pop").dialog("open");
+      },
+    error : ajaxErrorMsg
+  });
+}
+
+function popTodo(){
+  $.ajax({
+    url: "/ilos/mp/todo_list_form.acl",
+    type: "POST",
+    data: {
+      TODO_CNT : $("#todoList_cnt").text(),
+       encoding : "utf-8"
+      },
+    async: false,
+    success: function(html){
+      $("#todo_pop").html(html);
+      $("#todo_pop").dialog("open");
+
+      },
+    error : ajaxErrorMsg
+  });
+}
+
+function goMessagePop(seq,send_id){
+  $.ajax({
+    url : "/ilos/mp/notification_connect.acl",
+    type : "POST",
+    data : {
+      returnData : "json",
+      NOTIFIER_SEQ : seq,
+      encoding : "utf-8"
+    },
+    async: false,
+    success: function(data){
+      var url = "/ilos/message/received_view_pop_form.acl?SEQ="+data.SEQ+"&SEND_ID="+send_id;
+      winOpen2(url,'msg','720','700');
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+function goCommunityPage(seq){
+  document.location.href = "/ilos/mp/notification_connect.acl?NOTIFIER_SEQ="+seq;
+}
+
+function goSubjectPage(kj, seq, authDiv){
+  var chkUrl = "";
+  if (authDiv == "P") {
+    chkUrl = "/ilos/lo/pf_room_auth_check2.acl";
+  } else {
+    chkUrl = "/ilos/lo/st_room_auth_check2.acl";
+  }
+  $.ajax({
+    url : chkUrl,
+    type : "POST",
+    data : {
+      returnData : "json",
+      ky : kj,
+      encoding : "utf-8"
+    },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert("해당 과목에 접근 권한이 없습니다.");
+        }
+        else {
+          document.location.href = "/ilos/mp/notification_connect.acl?NOTIFIER_SEQ="+seq;
+        }
+    },
+    error : ajaxErrorMsg
+  });
+}
+
+function goLecture(kj, seq, gubun){
+  var chkUrl = "";
+ 
+    chkUrl = "/ilos/lo/st_room_auth_check2.acl";
+  
+  $.ajax({
+    url : chkUrl,
+    type : "POST",
+    data : {
+      returnData : "json",
+      ky : kj,
+      encoding : "utf-8"
+    },
+    async: false,
+    success: function(data){
+        if(data.isError) {
+          alert("해당 과목에 접근 권한이 없습니다.");
+       
+        }
+        else {
+          document.location.href = "/ilos/mp/todo_list_connect.acl?SEQ="+seq+"&gubun="+gubun+"&KJKEY="+kj;
+        }
+    },
+    error : ajaxErrorMsg
+  });
+  
+}
+
+function goAbsencePage(seq){
+  document.location.href = "/ilos/mp/notification_connect.acl?NOTIFIER_SEQ="+seq;
+}
+
+
+  
+ 
+//-->
+</script>    
+<style>
+.header_login {
+  font-family: 'Dotum','Apple SD Gothic Neo';
+  font-size: 11px;
+  color: #888;
+  border: 1px solid #BEBEBE;
+  background-color: #fff;
+  padding: 6px 8px 6px 8px !important;
+}
+.header_login_img {
+  margin-right: 6px;
+  width: 8px;
+  height: 8px;
+  background-image: url('/ilos/images/default.png');
+  background-repeat:  no-repeat;
+  background-size: 100% 100%;
+}
+.header_login > div {
+  display: inline-block;
+}
+.welcome-message > strong:hover {
+  text-decoration: underline;
+}
+.header_exit {
+  position: relative;
+  top: -2px;
+  display: inline-block;
+  vertical-align: middle;
+  padding: 5px 5px 4px 5px;
+  font-family: 'Dotum','Apple SD Gothic Neo';
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  border: 1px solid #EF6C00;
+  background-color: #FB8C00;
+}
+.header_exit:hover {
+  background-color: #EF6C00;
+}
+.header_logout {
+  position: relative;
+  top: -2px;
+  display: inline-block;
+  vertical-align: middle;
+  padding: 4px 5px;
+  font-family: 'Dotum','Apple SD Gothic Neo';
+  font-size: 11px;
+  line-height: 1;
+  color: #666;
+  border: 1px solid #BEBEBE;
+  background-color: #F5F5F5;
+}
+.header_logout:hover {
+  color: #666;
+  border: 1px solid #999;
+  background-color: #fff;
+  
+}
+</style>
+    <div id="header">
+    
+      <!-- IE 10 이상 -->
+      <div id="browser_header_logo">
+       <!-- 로고 이미지 -->
+  			<h1 class="h_ko">
+          <img id="logo_img" src="/ilos/images/osms/chosun/ko/logo.gif?v=20260813" alt="e-class system">
+        </h1>
+        <!-- 로고 a 태그용 -->
+        <a href="/ilos/main/main_form.acl"><div id="logo_link" style="width: 110px; height: 105px; position: absolute; top:14px; left:438px;"></div></a>
+      </div>
+      <!-- IE 9 이하 -->
+      <div id="low_browser_header_logo">
+       <!-- 로고 이미지 -->
+        <h1 class="h_ko">
+          <a href="/ilos/main/main_form.acl"><img id="logo_img" src="/ilos/images/osms/chosun/ko/logo.gif?v=20260813" alt="e-class system"></a>
+        </h1>
+      </div>
+			<div class="languages">
+			
+				<!-- 관리자일 경우-->
+				
+		    <form method="post" name="langform" id="langform"  action="/ilos/main/lang_change.acl" onsubmit="return false;">
+		    
+		    
+ 				<select name="LANG" id="LANG" title="언어 선택" style="background-color:#4C4C4C; height: 21px;">
+          
+              <option value="ko" selected>한국어</option>
+          
+              <option value="en" >English</option>
+          
+				</select>
+ 			</form>
+			</div>
+			
+					
+      <div id="notification_pop" title="알림" style="background-color: #F3F5F7;"></div>
+      <div id="todo_pop" title="Todo List" ></div>
+		  <div class="utillmenu" style="margin-top: 87px;">
+				<!-- 로그인 했을시 -->
+				<div id="" class="login" style="position:relative;">
+
+				  <div class="user_photo" style=" margin-top: -6px; margin-right: 5px; vertical-align:middle;">
+          
+           <img alt="" src="/ilos/mp/user_image_view.acl?id=XXXXXXXXXX&ext=.png&size=32" style="float: left;  width: 25px; height: 25px;" id="user_photo">  
+				  </div>
+
+					<fieldset class="welcome-message" style="position:relative; top: 1px; overflow: visible; vertical-align:middle;">
+						<legend>로그인</legend>
+						<strong class="site-font-color" id="user" style="float: left ;letter-spacing:-1px;">홍길동</strong>
+            
+                        
+          <div class="message_content">
+            <div class="message_item">
+              <a href="/ilos/message/received_list_pop_form.acl" onclick="winOpen2(this.href,'msg','720','700');return false;" target="msg" title="Message (새창으로 연결)"><img src="/ilos/images/message.png" alt="쪽지" style="display:inline-block;" onmouseover="$(this).attr('src','/ilos/images/themes/cyan/message.png');" onmouseout="$(this).attr('src','/ilos/images/message.png');"><div id="message_cnt" class="new_cnt site-background-color"></div></a>
+            </div>
+            <div class="message_item" title="Todo List" onclick="popTodo(1,'');">
+              <img src="/ilos/images/todolist.png" alt="Todo List" style="display:inline-block;" onmouseover="$(this).attr('src','/ilos/images/themes/cyan/todolist.png');" onmouseout="$(this).attr('src','/ilos/images/todolist.png');"><div id="todoList_cnt" class="new_cnt site-background-color"></div>
+            </div>
+            <div class="message_item" title="알림" onclick="popNotification(1,'');">
+              <img src="/ilos/images/notification.png" alt="알림" style="display:inline-block;" onmouseover="$(this).attr('src','/ilos/images/themes/cyan/notification.png');" onmouseout="$(this).attr('src','/ilos/images/notification.png');"><div id="notice_cnt" class="new_cnt site-background-color"></div>
+            </div>
+          </div>
+						
+						  <a href="/ilos/lo/logout.acl" style="float:left;"><div class="header_logout">로그아웃</div></a>
+						
+					</fieldset>
+				</div>
+ 
+				
+			
+      
+			</div>
+			<a class="scrollup">Back to the top</a>
+		</div> 
+		<hr>
+    
+    <!-- Start Menual form -->
+    <div style="width:500px; float: right;  position: absolute; z-index: 1000; margin-left: 451px; margin-top: 129px; ">
+      <div id="outerMenual" style="position:absolute; z-index: 8; display: none; padding-top: 13px; clear: both;"></div>
+    </div>
+    <!-- End Menual form -->
+    <div class="users_list_wrap" id="show_users_dialog"></div>     	
+		
+
+
+
+
+
+
+
+
+
+
+
+    
+<div id="gnb" style="height: 61px;">  
+  <div id="gnbIndex">
+  <h2>주 메뉴</h2>
+    <ul id="top1menu" style="margin-left: 216px; width: 543px;">
+      <li style="overflow: hidden;">
+        <div class="gnb-top-class" id="top1m1" onclick="pageGo('/ilos/st/main/course_ing_list_form.acl'); return false;"><div class="gnb-top-class-off"><a href="/ilos/st/main/course_ing_list_form.acl">교육현황</a></div></div>
+        
+        <ul id="top2m1" style="left: 216px">
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/st/main/course_ing_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/st/main/course_ing_list_form.acl">개설과목검색</a>
+          </li>    
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/ocw/courseware_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/ocw/courseware_list_form.acl">OCW</a>
+          </li>
+          
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/st/schedule/academic_calendar_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/st/schedule/academic_calendar_list_form.acl">학사일정</a>
+          </li>
+          
+        </ul>
+      </li>
+      <li class="space">
+        <div class="gnb-top-class" id="top1m2" onclick="pageGo('/ilos/community/notice_list_form.acl'); return false;"><div class="gnb-top-class-off"><a href="/ilos/community/notice_list_form.acl">커뮤니티</a></div></div>
+        <ul id="top2m2">
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/community/notice_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/community/notice_list_form.acl">공지사항</a>
+          </li>
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/community/qna_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/community/qna_list_form.acl">질의응답</a>
+          </li>
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/community/material_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/community/material_list_form.acl">자료실</a>
+          </li>
+          
+          
+            
+              
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/community/share_group_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/community/share_group_list_form.acl">소모임</a>
+          </li>
+              
+            
+          
+          
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/community/total_survey_list_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/community/total_survey_list_form.acl">설문</a>
+          </li>
+        </ul>
+      </li>         
+      
+      <li class="space">
+        <div class="gnb-top-class" id="top1m3" onclick="pageGo('/ilos/introduce/introduce.acl'); return false;"><div class="gnb-top-class-off"><a href="/ilos/introduce/introduce.acl">소개</a></div></div>
+        <ul id="top2m3">
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/introduce/introduce.acl'); return false;">
+            <a class="site-link2" href="/ilos/introduce/introduce.acl" >소개</a>
+          </li>
+          <li class="gnb-sub-class" onclick="pageGo('/ilos/guide/guide_main_form.acl'); return false;">
+            <a class="site-link2" href="/ilos/guide/guide_main_form.acl">FAQ</a>
+          </li>
+          
+        </ul>
+      </li>
+    </ul>
+    <script type="text/javascript">
+      $(function() {
+        initTopMenu();
+        $("#top2m2").css("left", (973-$("#top2m2").width())/2+"px");
+        $("#top2m3").css("left", (973-$("#top2m3").width())-213+"px");
+        top2menuHide(1);
+      });
+    </script>
+  </div>
+  <hr>
+</div>
+	</div>
+	<div id="containerWrap">
+		<div id="container">
+			<div id="contentsIndex">
+				<h2>본문 내용</h2>
+				<div class="locationmap">현재 본문 위치 : <strong>홈</strong></div>
+				<!-- Start Edit -->
+				<div class="index-leftarea02">
+          
+          <div style="overflow: hidden; position: relative; width: 578px;">
+            <div class="shedule_form">
+              <div style="overflow: hidden; padding: 12px 15px;" class="site-background-color">
+                <div style="float: left; font-size: 18px; font-weight: bold; color: #fff; font-family: malgun gothic; ">일정</div>
+                <input id="show_schedule_list" type="image" src="/ilos/images/common/view_list.png" style="width: 16px; height: 10px; float: right; margin-top: 2px; border-radius: 0px;" title="목록보기" onclick="getMainScheduleList('');">
+              </div>
+            </div>
+            <div id="loading"><div id="loadingimg"></div></div>
+          </div>
+        
+          
+          <div class="m-box2">
+            <div class="title-01">
+              <div class="bar site-background-color"></div>
+              <span>수강과목</span>
+            </div>
+            <ol>
+           
+              <li class="term_info">2학기</li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202634648681'); return false;" title="AI기반디지털학습환경설계 강의실 들어가기" kj="01202634648681" kj_auth="S">
+              
+                  
+                    AI기반디지털학습환경설계
+                  
+                    (46486-81) 
+                </em>
+                <span>
+                  
+                  화 13A~13B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202634268680'); return false;" title="교육과정 강의실 들어가기" kj="01202634268680" kj_auth="S">
+              
+                  
+                    교육과정
+                  
+                    (42686-80) 
+                </em>
+                <span>
+                  
+                  월 10A~11B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202632253001'); return false;" title="국어의미론 강의실 들어가기" kj="01202632253001" kj_auth="S">
+              
+                  
+                    국어의미론
+                  
+                    (22530-01) 
+                </em>
+                <span>
+                  
+                  월 7A~8B,화 8A~8B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202630017002'); return false;" title="논리와사고 강의실 들어가기" kj="01202630017002" kj_auth="S">
+              
+                  
+                    논리와사고
+                  
+                    (00170-02) 
+                </em>
+                <span>
+                  
+                  화 1A~2B,목 2A~2B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202634276901'); return false;" title="이해교육론 강의실 들어가기" kj="01202634276901" kj_auth="S">
+              
+                  
+                    이해교육론
+                  
+                    (42769-01) 
+                </em>
+                <span>
+                  
+                  월 2A~2B,수 1A~2B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202633676901'); return false;" title="중세국어의이해 강의실 들어가기" kj="01202633676901" kj_auth="S">
+              
+                  
+                    중세국어의이해
+                  
+                    (36769-01) 
+                </em>
+                <span>
+                  
+                  화 6A~7B,수 6A~6B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202634247203'); return false;" title="특수교육학개론 강의실 들어가기" kj="01202634247203" kj_auth="S">
+              
+                  
+                    특수교육학개론
+                  
+                    (42472-03) 
+                </em>
+                <span>
+                  
+                  목 3A~4B
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('01202632506801'); return false;" title="현대소설론 강의실 들어가기" kj="01202632506801" kj_auth="S">
+              
+                  
+                    현대소설론
+                  
+                    (25068-01) 
+                </em>
+                <span>
+                  
+                  월 3A~4B,화 5A~5B
+                  
+                </span>
+              </li>
+            
+              <li class="term_info">비정규과목</li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bonestop02'); return false;" title="2026 도박문제 예방교육(2학년) 강의실 들어가기" kj="N2026Bonestop02" kj_auth="S">
+              
+                  
+                    2026 도박문제 예방교육(2학년)
+                  
+                    (onestop-02) 
+                </em>
+                <span>
+                  
+                    
+                    2026.04.27~2026.10.30
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bonestop10'); return false;" title="2026 보고듣고 말하기 생명존중예방교육(2학년) 강의실 들어가기" kj="N2026Bonestop10" kj_auth="S">
+              
+                  
+                    2026 보고듣고 말하기 생명존중예방교육(2학년)
+                  
+                    (onestop-10) 
+                </em>
+                <span>
+                  
+                    
+                    2026.04.27~2026.10.30
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bonestop06'); return false;" title="2026 스마트폰 과의존 예방교육(2학년) 강의실 들어가기" kj="N2026Bonestop06" kj_auth="S">
+              
+                  
+                    2026 스마트폰 과의존 예방교육(2학년)
+                  
+                    (onestop-06) 
+                </em>
+                <span>
+                  
+                    
+                    2026.04.27~2026.10.30
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bpreven05'); return false;" title="2026년도 온라인 폭력예방 통합교육(E) 강의실 들어가기" kj="N2026Bpreven05" kj_auth="S">
+              
+                  
+                    2026년도 온라인 폭력예방 통합교육(E)
+                  
+                    (preven-05) 
+                </em>
+                <span>
+                  
+                    
+                    2026.06.15~2026.12.31
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bawareness201'); return false;" title="2026학년도 장애인식개선교육(학부생) 강의실 들어가기" kj="N2026Bawareness201" kj_auth="S">
+              
+                  
+                    2026학년도 장애인식개선교육(학부생)
+                  
+                    (awareness2-01) 
+                </em>
+                <span>
+                  
+                    
+                    2026.09.28~2026.12.11
+                  
+                </span>
+              </li>
+            
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+              
+                <em class="sub_open" onclick="eclassRoom('N2026Bservice11'); return false;" title="국어교육과 교육봉사활동 강의실 들어가기" kj="N2026Bservice11" kj_auth="S">
+              
+                  
+                    국어교육과 교육봉사활동
+                  
+                    (service-11) 
+                </em>
+                <span>
+                  
+                    
+                    2026.03.11~2027.02.28
+                  
+                </span>
+              </li>
+            
+             
+              <li style="border-bottom: 1px dotted #E6E6E6;"></li>    
+            </ol>
+          </div>
+          
+          
+          
+          
+                
+          <div class="m-box2">
+            <div class="title-01">
+              <div class="bar site-background-color"></div>
+              <span>공지사항</span>
+              <div class="whole" style="float: right; margin-top: 8px;">
+                 <a href="/ilos/community/notice_list_form.acl"><img src="/ilos/images/ko/btn_all.gif" alt="공지사항"></a>
+              </div>
+            </div>
+            <ol>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=12406729">
+                    [공통] 교내 및 광주전남 교류 사이버강좌 기말고사 일정 관련 안내
+                  </a>
+                </em>
+                <span class="date">2026.09.07</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=12377437">
+                    [공통] ★★(필독)2026학년도 2학기 교내 사이버강좌 수강 안내★★
+                  </a>
+                </em>
+                <span class="date">2026.08.20</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=10086250">
+                    [공통] (구성원 공통)학번 찾기, 비밀번호 찾기, 정보변경 안내
+                  </a>
+                </em>
+                <span class="date">2024.12.04</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=9039324">
+                    [공통] 청강신청(학생) 및 청강승인(교수) 방법
+                  </a>
+                </em>
+                <span class="date">2024.03.08</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=9033689">
+                    [공통] 사이버캠퍼스 스마트 출석 방법
+                  </a>
+                </em>
+                <span class="date">2024.03.06</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=7738585">
+                    [학생] 사이버강좌 2차 본인인증 이메일 정보 추가(수정) 방법
+                  </a>
+                </em>
+                <span class="date">2023.03.02</span>
+              </li>
+                
+              <li style="padding-left: 10px; background: url('/ilos/images/main/ul_dot.png') no-repeat 0 49%;">
+                <em style="font-weight: normal;">
+                  <a class="site-link" href="/ilos/community/notice_view_form.acl?ARTL_NUM=1892348">
+                    [공통] 스마트폰 앱(HelloLMS)을 이용한 기기인증 및 본인인증 방법 안내
+                  </a>
+                </em>
+                <span class="date">2020.03.15</span>
+              </li>
+            
+                
+              <li style="border-bottom: 1px dotted #E6E6E6;"></li>
+            </ol>
+          </div>
+          
+          
+					<div class="m-box2">
+            <div class="title-01">
+              <div class="bar site-background-color"></div>
+              <span>오늘시간표</span>
+              <span class="info"> (2026.10.24 토요일)  </span>
+              <div class="whole" style="float: right; margin-top: 8px;">
+                 <a href="/ilos/st/main/pop_academic_timetable_form.acl" onclick="pop_timetable(this.href);return false;" target="pop_timetable"><img src="/ilos/images/ko/btn_all.gif" alt="오늘시간표 전체보기"></a>
+              </div>
+            </div>
+            <table class="course-datatable" border="1" summary="오늘시간표 보기">
+              <caption>오늘시간표 보기</caption>
+              <colgroup>
+                <col style="width:85px;">
+                <col>
+                <col style="width:85px;">
+                <col style="width:85px;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col" class="first">강의시간</th>
+                  <th scope="col">과목</th>
+                  <th scope="col">교수</th>
+                  <th scope="col" class="last">강의실</th>
+                </tr>
+              </thead>
+              <tbody>
+                 
+              
+                <tr><td colspan="4" height="30" class="last">조회할 자료가 없습니다</td></tr>
+              
+              </tbody>
+            </table>
+            
+          </div>
+          
+          <div class="m-box2" id="ctl_notice_list"></div>
+          
+          <div id="site_link_index"></div>
+		</div>
+		<div class="index-rightarea02">
+          <div class="icon-box" style="min-height: 230px;"> 
+            <div class="title-01" style="margin: 19px 19px 0px 19px;">
+              <span class="site-font-color" >Quick Menu</span>
+              <div style="clear: both;'"></div>
+              <div style="border: 1px solid #F1F1F1; margin-top: 15px;"></div>
+            </div>
+            <div id="quick-menu-index" ></div>          
+          </div>
+          <!-- 중요(즐겨찾기) -->   
+          <div class="m-box1" style="margin-top: 20px; position: relative;">
+            <div class="title-01" style="margin: 15px 19px 15px 19px;">
+              <span class="site-font-color">중요</span>
+            </div>
+            <div id="impt-list-zone" style="border-top: 1px #d2d2d2 solid;"></div>
+            <div id="more-impt-list-btn" onclick="getMyImptList();" style="border-top: 1px dashed #DDDDDD;">더보기+</div>
+            <div id="impt-loading"><div id="impt-loadingimg"></div></div>
+          </div>
+          
+          <div id="new-event-form" class="m-box1" style="margin-top: 20px; padding-bottom: 10px; display: none;">
+            <div class="title-01" style="padding: 15px 19px; margin: auto auto 6px auto; border-bottom: 1px solid #e1e1e1;">
+              <span class="site-font-color">New Event</span>
+            </div>
+            <div id="new-event-list"></div>
+            <div style="margin: 6px auto 4px auto; text-align: center;" id="NewEventAddBtn" d="">
+              <img alt="더보기" src="/ilos/images/common/add_view.png" style="cursor: pointer;">
+            </div>
+          </div>    
+          
+          <div id="career_link_list_zone"></div>
+          
+          <div class="m-box1" style="margin-top: 20px; padding-bottom: 19px;">
+            <div class="title-01" style="margin: 15px 19px 15px 19px;">
+              <span class="site-font-color">OCW</span>
+              <div class="more"><a href="/ilos/ocw/courseware_list_form.acl"><img src="/ilos/images/themes/cyan/more.png" alt="OCW 목록이동"></a></div>
+            </div>
+            <div class="box-tab1">
+              <div class="tab1" val="1" onclick="ocwTab('1');">신규</div>
+              <div class="tab2" val="2" onclick="ocwTab('2');">인기</div>
+              <div class="tab3" val="3" onclick="ocwTab('3');">관심</div>
+            </div>
+            <div id="ocw-list"></div>
+          </div>
+          
+            
+              
+          <div class="m-box1" style="margin-top: 20px; padding-bottom: 19px;">
+            <div class="title-01" style="margin: 15px 19px 15px 19px;">
+              <span class="site-font-color">소모임</span>
+              <div class="more"><a href="/ilos/community/share_group_list_form.acl"><img src="/ilos/images/themes/cyan/more.png" alt="OCW 목록이동"></a></div>
+            </div>
+            <div class="box-tab2">
+              <div class="tab1" val="1" onclick="shareTab('1');">신규</div>
+              <div class="tab2" val="2" onclick="shareTab('2');">인기</div>
+              <div class="tab3" val="3" onclick="shareTab('3');">나의모임</div>
+            </div>
+            <div id="share-list"></div>
+          </div>
+              
+            
+          
+				</div>
+				<!-- //End Edit -->
+			</div>
+		</div>
+	</div>
+	<div id="footerWrap02">
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+$(function() {
+});
+
+function popupOpen(url) {
+  var openNewWindow = window.open('about:blank');
+  openNewWindow.location.href=url; 
+  /*
+  var popUrl = "http://home.chungwoon.ac.kr/www/getHomeContents.do?target=menu07_07&page=home&tab=0";
+  var popOption = "width=900, height=500, resizable=no, scrollbars=yes, status=no;";    //팝업창 옵션(optoin)
+  window.open(popUrl,"",popOption);
+  */
+}
+</script>
+    <div id="footer">
+      <h2>홈페이지이용 관련 메뉴</h2>
+      <div class="left-footer">
+        <div><img src="/ilos/images/osms/chosun/ko/tit_system.png" alt=""></div>
+        <div class="copyright">
+          <p>COPYRIGHT 2014 Chosun University. All Rights Reserved.</p>
+          <p>(61452)광주광역시 동구 필문대로 309(서석동, 조선대학교) <br>TEL. 062-230-6046  FAX. 062-232-0504</p>   
+          
+          <!-- 개인정보 -->
+          <p style="margin-top: 10px;"><span style="font-weight: bold; cursor: pointer; color: yellow;" onclick="javascript:popupOpen('https://www3.chosun.ac.kr/chosun/656/subview.do');">개인정보처리방침</span></p>
+                            
+        </div>
+      </div>
+      <div class="right-footer">
+        <div class="site-map-box">
+          <h1>교육현황</h1>
+          <ul>
+            <li><a href="/ilos/st/main/course_ing_list_form.acl">개설과목검색</a></li>
+            <li><a href="/ilos/ocw/courseware_list_form.acl">OCW</a></li>
+            <li><a href="/ilos/st/schedule/academic_calendar_list_form.acl">학사일정</a></li>
+          </ul>
+        </div>
+        <div class="site-map-box">
+          <h1>커뮤니티</h1>
+          <ul>
+            <li><a href="/ilos/community/notice_list_form.acl">공지사항</a></li>
+            <li><a href="/ilos/community/qna_list_form.acl">질의응답</a></li>
+            <li><a href="/ilos/community/material_list_form.acl">자료실</a></li>
+          
+          
+            <li><a href="/ilos/community/share_group_list_form.acl">소모임</a></li>
+          
+            <li><a href="/ilos/community/total_survey_list_form.acl">설문</a></li>
+          </ul>
+        </div>
+        <div class="site-map-box">
+          <h1>소개</h1>
+          <ul>
+            <li><a href="/ilos/introduce/introduce.acl">소개</a></li>
+            <li><a href="/ilos/guide/guide_main_form.acl">FAQ</a></li>
+          </ul>
+        </div>
+        
+        <div class="site-map-box">
+          <h1>마이페이지</h1> 
+          <ul>
+
+          
+            <li>
+              <a href="/ilos/mp/myinfo_form.acl">개인정보</a>
+            </li>
+          
+            <li>
+              <a href="/ilos/mp/course_register_list_form.acl">수강과목</a>
+            </li>
+          
+            <li>
+              <a href="/ilos/mp/file_list_form.acl">올린파일함</a>
+            </li>
+          
+          
+          </ul>
+        </div>
+        
+      </div>
+    </div>
+    <div id="footerBottom"></div>
+
+
+
+      
+	</div>
+</div>
+
+<div id="dialog-course-eval"></div>
+<div style="position: absolute; z-index:9; top:0; left:0;">
+ 
+</div>
+</body>
+</html>

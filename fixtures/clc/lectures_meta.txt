@@ -1,0 +1,22 @@
+온라인강의 페이지 분석 (online_list_form.acl)
+===============================================
+AJAX URL: POST /ilos/st/course/online_list.acl
+AJAX 파라미터:
+  - ud: 학번 (A20253350)
+  - ky: KJKEY (01202632506801)
+  - WEEK_NO: 주차 번호 (예: "5")
+  - encoding: utf-8
+
+주차 탭 HTML:
+  <div class="ibox3 wb wb-on" id="week-5">  ← wb-on = 강의 있는 주차
+  <div class="ibox3 wb" id="week-2">          ← wb-on 없음 = 강의 없음
+
+주차별로 따로 요청해야 함:
+  WEEK_NO = element.id.substring(5) -> "5"
+
+진도율 표시:
+  <div class="graph_gage site-background-color" style="width: 90.0%"> → 90%
+  텍스트: 100%
+
+주의: stSessionRoomCheck(ud, ky) 호출 확인됨
+  → 스크래퍼는 과목 강의실 세션 유지 필요

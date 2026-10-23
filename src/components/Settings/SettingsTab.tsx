@@ -6,6 +6,7 @@ import { Settings, UserCircle, Lock, Trash2, ChevronRight, X, Camera, ImageOff, 
 import NameWithCrown from '../common/NameWithCrown';
 import Avatar from '../common/Avatar';
 import { THEMES, getTheme, applyTheme, type ThemeId, getColorScheme, applyColorScheme, type ColorScheme } from '../../theme';
+import CLCSettings from '../CLC/CLCSettings';
 
 interface Props {
   currentUser: User;
@@ -237,6 +238,9 @@ export default function SettingsTab({ currentUser, onUserUpdate, onLogout }: Pro
           );
         })}
       </div>
+
+      {/* CLC 연동 */}
+      <CLCSettings uid={currentUser.id} />
 
       {/* Delete account */}
       <button
