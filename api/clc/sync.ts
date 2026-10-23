@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
-import { clcLogin, scrapeAll } from './scraper';
-import { decrypt } from './crypto';
+import { clcLogin, scrapeAll } from '../../lib/clc/scraper';
+import { decrypt } from '../../lib/clc/crypto';
 
 function initFirebase() {
   if (admin.apps.length > 0) return;
