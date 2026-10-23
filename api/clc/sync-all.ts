@@ -1,32 +1,24 @@
-// POST /api/clc/sync-all
-// Called by cron-job.org 3x/day (07:00, 13:00, 21:00 KST)
-// Header: x-cron-secret must match CLC_CRON_SECRET env var
-// Syncs all enabled users with staggered timing
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 import { clcLogin, scrapeAll } from './scraper';
 import { decrypt } from './crypto';
 
 function initFirebase() {
-  if (getApps().length > 0) return;
-  initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')) });
+  if (admin.apps.length > 0) return;
+  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')) });
 }
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Verify cron secret
   const secret = req.headers['x-cron-secret'];
   if (!secret || secret !== process.env.CLC_CRON_SECRET) {
     return res.status(403).json({ error: 'forbidden' });
   }
 
-  // Check kill switch
   initFirebase();
-  const db = getFirestore();
+  const db = admin.firestore();
   const cfg = await db.collection('adminConfig').doc('clc').get();
   if (cfg.exists && cfg.data()?.killSwitch === true) {
     return res.status(200).json({ ok: true, skipped: 'kill switch active' });
@@ -39,7 +31,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const doc = snapshot.docs[i];
     const uid = doc.id;
 
-    // Stagger: 2s between users to avoid hammering CLC server
     if (i > 0) await sleep(2000);
 
     let creds: { id: string; pwd: string };

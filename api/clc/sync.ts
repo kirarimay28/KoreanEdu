@@ -1,25 +1,20 @@
-// POST /api/clc/sync
-// Body: { uid }
-// Scrapes CLC for this user and writes results to Firestore
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 import { clcLogin, scrapeAll } from './scraper';
 import { decrypt } from './crypto';
 
 function initFirebase() {
-  if (getApps().length > 0) return;
-  initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')) });
+  if (admin.apps.length > 0) return;
+  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')) });
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { uid } = req.body ?? {};
   if (!uid) return res.status(400).json({ error: 'missing uid' });
 
   initFirebase();
-  const db = getFirestore();
+  const db = admin.firestore();
 
   const credDoc = await db.collection('clcCredentials').doc(uid).get();
   if (!credDoc.exists || !credDoc.data()?.enabled) {
