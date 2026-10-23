@@ -1,19 +1,14 @@
-// Security: Firebase Storage rules should restrict reads to authenticated users.
-// Set rules: allow read, write: if request.auth != null;
-// Download URLs from getDownloadURL() require auth token in production.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { User, VideoLecture, VideoMemo } from '../../types';
 import { isPrivileged } from '../../types';
 import {
   subscribeVideoLectures, getVideoLectures,
   createVideoLecture, updateVideoLecture, deleteVideoLecture,
-  uploadVideoFile,
+  uploadVideoFile, loadVideoChunk,
   saveVideoProgress, loadVideoProgress,
   subscribeVideoMemos, getVideoMemos,
   createVideoMemo, updateVideoMemo, deleteVideoMemo,
 } from '../../store';
-import { getDownloadURL, ref as storageRef } from 'firebase/storage';
-import { storage } from '../../firebase';
 import {
   Play, Plus, Trash2, Edit2, ArrowLeft, Check,
   ExternalLink, Clock, MessageSquare, Share2, Lock,
@@ -69,8 +64,8 @@ function UploadForm({
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] ?? null;
     setSizeError('');
-    if (f && f.size > 1_073_741_824) {
-      setSizeError('파일이 너무 커요 (최대 1GB)');
+    if (f && f.size > 104_857_600) {
+      setSizeError('파일이 너무 커요 (최대 100MB)');
       setFile(null);
       e.target.value = '';
       return;
@@ -298,12 +293,16 @@ function VideoPlayer({
   const isYoutube = lecture.linkUrl &&
     (lecture.linkUrl.includes('youtube.com') || lecture.linkUrl.includes('youtu.be'));
 
-  // Load download URL for file-based videos
+  // Load video URL (Firestore chunks or Firebase Storage legacy)
   useEffect(() => {
     if (!lecture.storagePath) return;
-    getDownloadURL(storageRef(storage, lecture.storagePath))
-      .then(url => setVideoSrc(url))
-      .catch(e => console.error('getDownloadURL', e));
+    if (lecture.storagePath.startsWith('firestorechunk/')) {
+      const lectureId = lecture.storagePath.replace('firestorechunk/', '');
+      loadVideoChunk(lectureId)
+        .then(url => setVideoSrc(url))
+        .catch(e => console.error('loadVideoChunk', e));
+    }
+    // legacy Firebase Storage paths are no longer served (Spark plan)
   }, [lecture.storagePath]);
 
   // Load progress

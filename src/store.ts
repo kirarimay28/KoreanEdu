@@ -1841,43 +1841,94 @@ export async function deleteVideoLecture(id: string, storagePath?: string): Prom
   mem.videoLectures = mem.videoLectures.filter(l => l.id !== id);
   await deleteDoc(doc(db, 'videoLectures', id));
   if (storagePath) {
-    try { await deleteObject(storageRef(storage, storagePath)); } catch {}
+    if (storagePath.startsWith('firestorechunk/')) {
+      await deleteVideoChunks(storagePath.replace('firestorechunk/', ''));
+    } else {
+      try { await deleteObject(storageRef(storage, storagePath)); } catch {}
+    }
   }
 }
 
-export function uploadVideoFile(
+// Firestore-based chunked video storage (no Firebase Storage / Blaze plan needed)
+const VIDEO_CHUNK_SIZE = 600_000; // 600KB raw → ~800KB base64, safely under 1MB Firestore doc limit
+
+function uint8ToBase64(arr: Uint8Array): string {
+  let binary = '';
+  const BATCH = 8192;
+  for (let i = 0; i < arr.length; i += BATCH) {
+    binary += String.fromCharCode(...arr.subarray(i, Math.min(i + BATCH, arr.length)));
+  }
+  return btoa(binary);
+}
+
+export async function uploadVideoFile(
   file: File,
   lectureId: string,
   onProgress: (pct: number) => void,
 ): Promise<{ url: string; storagePath: string }> {
-  return new Promise((resolve, reject) => {
-    const path = `videoLectures/${lectureId}/${file.name}`;
-    const sRef = storageRef(storage, path);
-    const task = uploadBytesResumable(sRef, file);
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const totalChunks = Math.ceil(bytes.length / VIDEO_CHUNK_SIZE);
 
-    // Timeout: if no progress for 20s assume network/rules issue
-    let lastBytes = -1;
-    const watchdog = setInterval(() => {
-      const cur = task.snapshot.bytesTransferred;
-      if (cur === lastBytes && task.snapshot.state === 'running') {
-        clearInterval(watchdog);
-        task.cancel();
-        reject(new Error('storage/timeout — Firebase Storage 권한 설정이 필요하거나 네트워크를 확인해 주세요'));
-      }
-      lastBytes = cur;
-    }, 20_000);
-
-    task.on(
-      'state_changed',
-      snap => onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      err => { clearInterval(watchdog); reject(err); },
-      async () => {
-        clearInterval(watchdog);
-        const url = await getDownloadURL(task.snapshot.ref);
-        resolve({ url, storagePath: path });
-      },
-    );
+  await setDoc(doc(db, 'videoChunkMeta', lectureId), {
+    lectureId,
+    totalChunks,
+    fileName: file.name,
+    mimeType: file.type || 'video/mp4',
+    size: file.size,
+    createdAt: new Date().toISOString(),
   });
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * VIDEO_CHUNK_SIZE;
+    const slice = bytes.slice(start, start + VIDEO_CHUNK_SIZE);
+    await setDoc(doc(db, 'videoChunks', `${lectureId}_${i}`), {
+      lectureId,
+      index: i,
+      data: uint8ToBase64(slice),
+    });
+    onProgress(Math.round(((i + 1) / totalChunks) * 100));
+  }
+
+  return { url: '', storagePath: `firestorechunk/${lectureId}` };
+}
+
+export async function loadVideoChunk(lectureId: string): Promise<string> {
+  const metaSnap = await getDoc(doc(db, 'videoChunkMeta', lectureId));
+  if (!metaSnap.exists()) throw new Error('영상 데이터를 찾을 수 없습니다');
+  const { totalChunks, mimeType } = metaSnap.data() as { totalChunks: number; mimeType: string };
+
+  const chunks: Uint8Array[] = [];
+  for (let i = 0; i < totalChunks; i++) {
+    const snap = await getDoc(doc(db, 'videoChunks', `${lectureId}_${i}`));
+    if (!snap.exists()) throw new Error(`청크 ${i} 누락`);
+    const b64 = (snap.data() as { data: string }).data;
+    const binary = atob(b64);
+    const arr = new Uint8Array(binary.length);
+    for (let j = 0; j < binary.length; j++) arr[j] = binary.charCodeAt(j);
+    chunks.push(arr);
+  }
+
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const combined = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) { combined.set(c, offset); offset += c.length; }
+
+  return URL.createObjectURL(new Blob([combined], { type: mimeType }));
+}
+
+async function deleteVideoChunks(lectureId: string): Promise<void> {
+  try {
+    const metaSnap = await getDoc(doc(db, 'videoChunkMeta', lectureId));
+    if (!metaSnap.exists()) return;
+    const { totalChunks } = metaSnap.data() as { totalChunks: number };
+    await Promise.all(
+      Array.from({ length: totalChunks }, (_, i) =>
+        deleteDoc(doc(db, 'videoChunks', `${lectureId}_${i}`))
+      )
+    );
+    await deleteDoc(doc(db, 'videoChunkMeta', lectureId));
+  } catch (e) { console.warn('chunk delete', e); }
 }
 
 // ── Video Progress ───────────────────────────────────────────
