@@ -1851,7 +1851,7 @@ export async function deleteVideoLecture(id: string, storagePath?: string): Prom
 
 // Firestore-based chunked video storage (no Firebase Storage / Blaze plan needed)
 // Uses Firestore native Bytes type — no base64 overhead, no string encoding issues
-const VIDEO_CHUNK_SIZE = 750_000; // 750KB raw bytes per Firestore doc (well under 1MB limit)
+const VIDEO_CHUNK_SIZE = 50_000; // 50KB per chunk — small enough to rule out document size limits
 
 export async function uploadVideoFile(
   file: File,

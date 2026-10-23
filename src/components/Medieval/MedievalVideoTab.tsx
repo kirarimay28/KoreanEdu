@@ -127,10 +127,11 @@ function UploadForm({
       onDone();
     } catch (e: unknown) {
       console.error(e);
-      const msg = (e as {code?: string; message?: string})?.code
-        ?? (e as {message?: string})?.message
-        ?? '알 수 없는 오류';
-      setUploadError(`업로드 실패: ${msg}`);
+      const err = e as { code?: string; message?: string };
+      const code = err?.code ?? '';
+      const message = err?.message ?? '';
+      const detail = [code, message].filter(Boolean).join(' — ');
+      setUploadError(`업로드 실패: ${detail || '알 수 없는 오류'}`);
     } finally {
       setSaving(false);
       setProgress(null);
