@@ -1,5 +1,5 @@
 import { db, storage } from './firebase';
-import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, where, getDoc, Bytes } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import type {
   AppData, User, UserRole, UserRestrictions, ClassicalLiteratureEntry, ModernLiteratureEntry,
@@ -1850,16 +1850,8 @@ export async function deleteVideoLecture(id: string, storagePath?: string): Prom
 }
 
 // Firestore-based chunked video storage (no Firebase Storage / Blaze plan needed)
-const VIDEO_CHUNK_SIZE = 600_000; // 600KB raw → ~800KB base64, safely under 1MB Firestore doc limit
-
-function uint8ToBase64(arr: Uint8Array): string {
-  let binary = '';
-  const BATCH = 8192;
-  for (let i = 0; i < arr.length; i += BATCH) {
-    binary += String.fromCharCode(...arr.subarray(i, Math.min(i + BATCH, arr.length)));
-  }
-  return btoa(binary);
-}
+// Uses Firestore native Bytes type — no base64 overhead, no string encoding issues
+const VIDEO_CHUNK_SIZE = 750_000; // 750KB raw bytes per Firestore doc (well under 1MB limit)
 
 export async function uploadVideoFile(
   file: File,
@@ -1873,7 +1865,6 @@ export async function uploadVideoFile(
   await setDoc(doc(db, 'videoChunkMeta', lectureId), {
     lectureId,
     totalChunks,
-    fileName: file.name,
     mimeType: file.type || 'video/mp4',
     size: file.size,
     createdAt: new Date().toISOString(),
@@ -1883,9 +1874,8 @@ export async function uploadVideoFile(
     const start = i * VIDEO_CHUNK_SIZE;
     const slice = bytes.slice(start, start + VIDEO_CHUNK_SIZE);
     await setDoc(doc(db, 'videoChunks', `${lectureId}_${i}`), {
-      lectureId,
       index: i,
-      data: uint8ToBase64(slice),
+      data: Bytes.fromUint8Array(slice),
     });
     onProgress(Math.round(((i + 1) / totalChunks) * 100));
   }
@@ -1902,11 +1892,7 @@ export async function loadVideoChunk(lectureId: string): Promise<string> {
   for (let i = 0; i < totalChunks; i++) {
     const snap = await getDoc(doc(db, 'videoChunks', `${lectureId}_${i}`));
     if (!snap.exists()) throw new Error(`청크 ${i} 누락`);
-    const b64 = (snap.data() as { data: string }).data;
-    const binary = atob(b64);
-    const arr = new Uint8Array(binary.length);
-    for (let j = 0; j < binary.length; j++) arr[j] = binary.charCodeAt(j);
-    chunks.push(arr);
+    chunks.push((snap.data()!.data as Bytes).toUint8Array());
   }
 
   const total = chunks.reduce((s, c) => s + c.length, 0);
