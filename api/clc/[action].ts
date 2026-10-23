@@ -1,14 +1,13 @@
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { clcLogin, scrapeAll } from '../../lib/clc/scraper';
 import { encrypt, decrypt } from '../../lib/clc/crypto';
 
-let _initialized = false;
 function initFirebase() {
-  if (_initialized || admin.apps.length > 0) { _initialized = true; return; }
+  if (getApps().length > 0) return;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var not set');
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
-  _initialized = true;
+  initializeApp({ credential: cert(JSON.parse(raw)) });
 }
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -21,7 +20,7 @@ async function handleConnect(req: any, res: any) {
     await clcLogin(clcId, clcPwd);
     const token = encrypt(JSON.stringify({ id: clcId, pwd: clcPwd }));
     initFirebase();
-    await admin.firestore().collection('clcCredentials').doc(uid).set({
+    await getFirestore().collection('clcCredentials').doc(uid).set({
       token,
       connectedAt: new Date().toISOString(),
       enabled: true,
@@ -29,7 +28,11 @@ async function handleConnect(req: any, res: any) {
     res.status(200).json({ ok: true });
   } catch (e: any) {
     console.error('[clc/connect]', e);
-    const msg = String(e?.message ?? '').includes('로그인 실패') ? e.message : 'CLC 연결 실패';
+    const msg = String(e?.message ?? '').includes('로그인 실패')
+      ? e.message
+      : e?.name === 'TimeoutError' || e?.name === 'AbortError'
+        ? 'CLC 서버 응답 시간 초과 (8초)'
+        : 'CLC 연결 실패: ' + String(e?.message ?? '');
     res.status(400).json({ error: msg });
   }
 }
@@ -40,7 +43,7 @@ async function handleSync(req: any, res: any) {
 
   try {
     initFirebase();
-    const db = admin.firestore();
+    const db = getFirestore();
 
     const credDoc = await db.collection('clcCredentials').doc(uid).get();
     if (!credDoc.exists || !credDoc.data()?.enabled) {
@@ -63,7 +66,7 @@ async function handleSync(req: any, res: any) {
     res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
   } catch (e: any) {
     console.error('[clc/sync]', e);
-    const msg = String(e?.message ?? '').includes('로그인 실패') ? e.message : '동기화 실패';
+    const msg = String(e?.message ?? '').includes('로그인 실패') ? e.message : '동기화 실패: ' + String(e?.message ?? '');
     res.status(500).json({ error: msg });
   }
 }
@@ -74,7 +77,7 @@ async function handleDisconnect(req: any, res: any) {
 
   try {
     initFirebase();
-    const db = admin.firestore();
+    const db = getFirestore();
     await Promise.all([
       db.collection('clcCredentials').doc(uid).delete(),
       db.collection('clcData').doc(uid).delete(),
@@ -82,7 +85,7 @@ async function handleDisconnect(req: any, res: any) {
     res.status(200).json({ ok: true });
   } catch (e: any) {
     console.error('[clc/disconnect]', e);
-    res.status(500).json({ error: '연동 해제 실패' });
+    res.status(500).json({ error: '연동 해제 실패: ' + String(e?.message ?? '') });
   }
 }
 
@@ -94,7 +97,7 @@ async function handleSyncAll(req: any, res: any) {
 
   try {
     initFirebase();
-    const db = admin.firestore();
+    const db = getFirestore();
 
     const cfg = await db.collection('adminConfig').doc('clc').get();
     if (cfg.exists && cfg.data()?.killSwitch === true) {
