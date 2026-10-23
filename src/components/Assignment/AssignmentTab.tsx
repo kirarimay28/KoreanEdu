@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import type { User } from '../../types';
-import { ClipboardList, ClipboardCheck, PauseCircle } from 'lucide-react';
+import { ClipboardList, ClipboardCheck, PauseCircle, CalendarClock } from 'lucide-react';
 import CheckListTab from './CheckListTab';
 import AssignmentNoticeTab from './AssignmentNoticeTab';
+import CLCDeadlineList from '../CLC/CLCDeadlineList';
+import { useCLCData } from '../CLC/useCLCData';
 
 interface Props {
   currentUser: User;
   isExamPeriod?: boolean;
 }
 
-type SubTab = 'notice' | 'checklist';
+type SubTab = 'notice' | 'checklist' | 'clc';
 
 export default function AssignmentTab({ currentUser, isExamPeriod }: Props) {
   const [subTab, setSubTab] = useState<SubTab>('notice');
+  const { credMeta } = useCLCData(currentUser.id);
+  const clcConnected = !!credMeta?.enabled;
 
   return (
     <div>
@@ -37,10 +41,20 @@ export default function AssignmentTab({ currentUser, isExamPeriod }: Props) {
           <ClipboardCheck className="w-3.5 h-3.5" />
           체크리스트
         </button>
+        {clcConnected && (
+          <button
+            onClick={() => setSubTab('clc')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg transition-all ${subTab === 'clc' ? 'tab-active' : 'tab-inactive'}`}
+          >
+            <CalendarClock className="w-3.5 h-3.5" />
+            CLC 마감
+          </button>
+        )}
       </div>
 
       {subTab === 'notice' && <AssignmentNoticeTab currentUser={currentUser} />}
       {subTab === 'checklist' && <CheckListTab currentUser={currentUser} />}
+      {subTab === 'clc' && <CLCDeadlineList uid={currentUser.id} />}
     </div>
   );
 }
