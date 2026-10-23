@@ -1828,13 +1828,13 @@ export function getVideoLectures(): VideoLecture[] {
 
 export async function createVideoLecture(v: VideoLecture): Promise<void> {
   mem.videoLectures.push(v);
-  await setDoc(doc(db, 'videoLectures', v.id), v);
+  await setDoc(doc(db, 'videoLectures', v.id), stripUndefined(v));
 }
 
 export async function updateVideoLecture(v: VideoLecture): Promise<void> {
   const idx = mem.videoLectures.findIndex(l => l.id === v.id);
   if (idx >= 0) mem.videoLectures[idx] = v;
-  await setDoc(doc(db, 'videoLectures', v.id), v);
+  await setDoc(doc(db, 'videoLectures', v.id), stripUndefined(v));
 }
 
 export async function deleteVideoLecture(id: string, storagePath?: string): Promise<void> {
@@ -1851,7 +1851,7 @@ export async function deleteVideoLecture(id: string, storagePath?: string): Prom
 
 // Firestore-based chunked video storage (no Firebase Storage / Blaze plan needed)
 // Uses Firestore native Bytes type — no base64 overhead, no string encoding issues
-const VIDEO_CHUNK_SIZE = 50_000; // 50KB per chunk — small enough to rule out document size limits
+const VIDEO_CHUNK_SIZE = 500_000; // 500KB per chunk → ~67KB base64 overhead, well under 1MB Firestore limit
 
 export async function uploadVideoFile(
   file: File,
