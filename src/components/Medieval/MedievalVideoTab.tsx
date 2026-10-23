@@ -432,6 +432,13 @@ function VideoPlayer({
               controls
               className="w-full rounded-xl bg-black"
               onTimeUpdate={handleTimeUpdate}
+              onError={e => {
+                const v = e.currentTarget;
+                const code = v.error?.code ?? 0;
+                const msg = v.error?.message || `MediaError ${code}`;
+                setVideoError(msg);
+                setVideoSrc(null);
+              }}
             />
           )}
 
