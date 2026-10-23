@@ -1900,7 +1900,10 @@ export async function loadVideoChunk(lectureId: string): Promise<string> {
   let offset = 0;
   for (const c of chunks) { combined.set(c, offset); offset += c.length; }
 
-  return URL.createObjectURL(new Blob([combined], { type: mimeType }));
+  // video/quicktime Blobs don't play in Chrome/Firefox; use video/mp4 which handles
+  // iOS .mov files (H.264 or HEVC in QuickTime container)
+  const blobType = mimeType === 'video/quicktime' ? 'video/mp4' : (mimeType || 'video/mp4');
+  return URL.createObjectURL(new Blob([combined], { type: blobType }));
 }
 
 async function deleteVideoChunks(lectureId: string): Promise<void> {
