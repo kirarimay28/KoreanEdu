@@ -1,0 +1,52 @@
+// POST /api/clc/sync
+// Body: { uid }
+// Scrapes CLC for this user and writes results to Firestore
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { clcLogin, scrapeAll } from './scraper';
+import { decrypt } from './crypto';
+
+function initFirebase() {
+  if (getApps().length > 0) return;
+  initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? '{}')) });
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') return res.status(405).end();
+
+  const { uid } = req.body ?? {};
+  if (!uid) return res.status(400).json({ error: 'missing uid' });
+
+  initFirebase();
+  const db = getFirestore();
+
+  const credDoc = await db.collection('clcCredentials').doc(uid).get();
+  if (!credDoc.exists || !credDoc.data()?.enabled) {
+    return res.status(404).json({ error: 'CLC 연동이 설정되지 않았습니다' });
+  }
+
+  let creds: { id: string; pwd: string };
+  try {
+    creds = JSON.parse(decrypt(credDoc.data()!.token));
+  } catch {
+    return res.status(500).json({ error: '자격증명 복호화 실패' });
+  }
+
+  try {
+    const cookie = await clcLogin(creds.id, creds.pwd);
+    const result = await scrapeAll(cookie);
+
+    await db.collection('clcData').doc(uid).set({
+      ...result,
+      updatedAt: new Date().toISOString(),
+    });
+
+    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
+  } catch (e: any) {
+    const msg = String(e?.message ?? '').includes('로그인 실패')
+      ? e.message
+      : '동기화 실패';
+    res.status(500).json({ error: msg });
+  }
+}
