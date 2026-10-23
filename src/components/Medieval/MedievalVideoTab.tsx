@@ -284,6 +284,7 @@ function VideoPlayer({
 }: { lecture: VideoLecture; currentUser: User; onBack: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [speed, setSpeed] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [showMemoForm, setShowMemoForm] = useState(false);
@@ -301,7 +302,10 @@ function VideoPlayer({
       const lectureId = lecture.storagePath.replace('firestorechunk/', '');
       loadVideoChunk(lectureId)
         .then(url => setVideoSrc(url))
-        .catch(e => console.error('loadVideoChunk', e));
+        .catch(e => {
+          console.error('loadVideoChunk', e);
+          setVideoError(String(e?.message ?? e));
+        });
     }
     // legacy Firebase Storage paths are no longer served (Spark plan)
   }, [lecture.storagePath]);
@@ -415,8 +419,11 @@ function VideoPlayer({
       {lecture.storagePath && (
         <div className="space-y-2">
           {!videoSrc ? (
-            <div className="w-full aspect-video bg-gray-100 rounded-xl flex items-center justify-center">
-              <p className="text-xs text-gray-400">영상 불러오는 중...</p>
+            <div className="w-full aspect-video bg-gray-100 rounded-xl flex items-center justify-center px-4">
+              {videoError
+                ? <p className="text-xs text-red-500 text-center break-all">영상 로드 실패: {videoError}</p>
+                : <p className="text-xs text-gray-400">영상 불러오는 중...</p>
+              }
             </div>
           ) : (
             <video
