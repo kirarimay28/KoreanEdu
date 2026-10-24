@@ -27,10 +27,7 @@ export default function CLCSettings({ uid }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid, clcId: clcId.trim(), clcPwd }),
       });
-      const rawText = await res.text();
-      let json: any;
-      try { json = JSON.parse(rawText); }
-      catch { throw new Error('[서버 응답] ' + rawText.slice(0, 300)); }
+      const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '연결 실패');
       setSection(null);
       setClcId(''); setClcPwd('');
