@@ -1,27 +1,26 @@
-// 최상위 import 없음 — 모듈 로딩 실패가 try/catch에 걸리도록 동적 import 사용
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { clcLogin, scrapeAll } from '../../lib/clc/scraper';
+import { encrypt, decrypt } from '../../lib/clc/crypto';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function getFirebaseDb() {
-  const { initializeApp, getApps, cert } = await import('firebase-admin/app');
-  const { getFirestore } = await import('firebase-admin/firestore');
-  if (getApps().length === 0) {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var not set');
-    initializeApp({ credential: cert(JSON.parse(raw)) });
-  }
-  return getFirestore();
+function initFirebase() {
+  if (getApps().length > 0) return;
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var not set');
+  initializeApp({ credential: cert(JSON.parse(raw)) });
 }
 
+// connect: CLC 서버 접속 없이 자격증명만 Firestore에 저장
+// 실제 아이디/비밀번호 검증은 /sync 호출 시 이루어짐
 async function handleConnect(req: any, res: any) {
   const { uid, clcId, clcPwd } = req.body ?? {};
   if (!uid || !clcId || !clcPwd) return res.status(400).json({ error: 'missing fields' });
-
   try {
-    const { encrypt } = await import('../../lib/clc/crypto');
-    const db = await getFirebaseDb();
     const token = encrypt(JSON.stringify({ id: clcId, pwd: clcPwd }));
-    await db.collection('clcCredentials').doc(uid).set({
+    initFirebase();
+    await getFirestore().collection('clcCredentials').doc(uid).set({
       token,
       connectedAt: new Date().toISOString(),
       enabled: true,
@@ -36,24 +35,19 @@ async function handleConnect(req: any, res: any) {
 async function handleSync(req: any, res: any) {
   const { uid } = req.body ?? {};
   if (!uid) return res.status(400).json({ error: 'missing uid' });
-
   try {
-    const { decrypt } = await import('../../lib/clc/crypto');
-    const { clcLogin, scrapeAll } = await import('../../lib/clc/scraper');
-    const db = await getFirebaseDb();
-
+    initFirebase();
+    const db = getFirestore();
     const credDoc = await db.collection('clcCredentials').doc(uid).get();
     if (!credDoc.exists || !credDoc.data()?.enabled) {
       return res.status(404).json({ error: 'CLC 연동이 설정되지 않았습니다' });
     }
-
     let creds: { id: string; pwd: string };
     try {
       creds = JSON.parse(decrypt(credDoc.data()!.token));
     } catch {
       return res.status(500).json({ error: '자격증명 복호화 실패' });
     }
-
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     await db.collection('clcData').doc(uid).set({
@@ -71,9 +65,9 @@ async function handleSync(req: any, res: any) {
 async function handleDisconnect(req: any, res: any) {
   const { uid } = req.body ?? {};
   if (!uid) return res.status(400).json({ error: 'missing uid' });
-
   try {
-    const db = await getFirebaseDb();
+    initFirebase();
+    const db = getFirestore();
     await Promise.all([
       db.collection('clcCredentials').doc(uid).delete(),
       db.collection('clcData').doc(uid).delete(),
@@ -90,25 +84,19 @@ async function handleSyncAll(req: any, res: any) {
   if (!secret || secret !== process.env.CLC_CRON_SECRET) {
     return res.status(403).json({ error: 'forbidden' });
   }
-
   try {
-    const { decrypt } = await import('../../lib/clc/crypto');
-    const { clcLogin, scrapeAll } = await import('../../lib/clc/scraper');
-    const db = await getFirebaseDb();
-
+    initFirebase();
+    const db = getFirestore();
     const cfg = await db.collection('adminConfig').doc('clc').get();
     if (cfg.exists && cfg.data()?.killSwitch === true) {
       return res.status(200).json({ ok: true, skipped: 'kill switch active' });
     }
-
     const snapshot = await db.collection('clcCredentials').where('enabled', '==', true).get();
     const results: { uid: string; status: string }[] = [];
-
     for (let i = 0; i < snapshot.docs.length; i++) {
       const doc = snapshot.docs[i];
       const uid = doc.id;
       if (i > 0) await sleep(2000);
-
       let creds: { id: string; pwd: string };
       try {
         creds = JSON.parse(decrypt(doc.data().token));
@@ -116,7 +104,6 @@ async function handleSyncAll(req: any, res: any) {
         results.push({ uid, status: 'decrypt_error' });
         continue;
       }
-
       try {
         const cookie = await clcLogin(creds.id, creds.pwd);
         const result = await scrapeAll(cookie);
@@ -129,7 +116,6 @@ async function handleSyncAll(req: any, res: any) {
         results.push({ uid, status: `error: ${e?.message ?? 'unknown'}` });
       }
     }
-
     res.status(200).json({ ok: true, count: snapshot.size, results });
   } catch (e: any) {
     console.error('[clc/sync-all]', e?.message ?? e);
@@ -139,9 +125,7 @@ async function handleSyncAll(req: any, res: any) {
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
-
   const action = req.query.action as string;
-
   try {
     switch (action) {
       case 'connect':    return await handleConnect(req, res);
