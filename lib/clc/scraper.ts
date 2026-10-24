@@ -14,19 +14,32 @@ export interface ScrapeResult {
   scrapedAt: string;
 }
 
+// AbortSignal.timeout() is unreliable in some serverless runtimes — use explicit controller
+function makeSignal(ms: number): { signal: AbortSignal; clear: () => void } {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(new Error(`fetch timeout ${ms}ms`)), ms);
+  return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
+}
+
 // Login → returns cookie string, throws on failure
 export async function clcLogin(userId: string, password: string): Promise<string> {
-  const res = await fetch(`${BASE}/ilos/lo/login.acl`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      usr_id: userId,
-      usr_pwd: password,
-      encoding: 'utf-8',
-    }),
-    redirect: 'manual',
-    signal: AbortSignal.timeout(3500),
-  });
+  const t1 = makeSignal(4000);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/ilos/lo/login.acl`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        usr_id: userId,
+        usr_pwd: password,
+        encoding: 'utf-8',
+      }),
+      redirect: 'manual',
+      signal: t1.signal,
+    });
+  } finally {
+    t1.clear();
+  }
 
   // On success ILOS issues a redirect; collect Set-Cookie headers
   const rawCookies = res.headers.getSetCookie?.() ?? [];
@@ -74,7 +87,6 @@ export async function scrapeAll(cookie: string): Promise<ScrapeResult> {
         cookie,
       );
       const weeks = parseWeekNumbers(outerHtml);
-      // If no week tabs found, try week 1 as fallback
       const weekList = weeks.length > 0 ? weeks : [1];
 
       for (const weekNo of weekList) {
@@ -102,11 +114,16 @@ export async function scrapeAll(cookie: string): Promise<ScrapeResult> {
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 
 async function clcGet(path: string, cookie: string): Promise<string> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { Cookie: cookie },
-    signal: AbortSignal.timeout(3500),
-  });
-  return res.text();
+  const { signal, clear } = makeSignal(4000);
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { Cookie: cookie },
+      signal,
+    });
+    return res.text();
+  } finally {
+    clear();
+  }
 }
 
 async function clcPost(
@@ -114,14 +131,19 @@ async function clcPost(
   cookie: string,
   body: Record<string, string>,
 ): Promise<string> {
-  const res = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: {
-      Cookie: cookie,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams(body),
-    signal: AbortSignal.timeout(3500),
-  });
-  return res.text();
+  const { signal, clear } = makeSignal(4000);
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(body),
+      signal,
+    });
+    return res.text();
+  } finally {
+    clear();
+  }
 }

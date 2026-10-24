@@ -16,23 +16,38 @@ async function handleConnect(req: any, res: any) {
   const { uid, clcId, clcPwd } = req.body ?? {};
   if (!uid || !clcId || !clcPwd) return res.status(400).json({ error: 'missing fields' });
 
+  // Hard 9s deadline so Vercel's 10s limit never cuts us off before we respond
+  let deadlineTimer: ReturnType<typeof setTimeout>;
+  const deadline = new Promise<never>((_, reject) => {
+    deadlineTimer = setTimeout(() => reject(new Error('__DEADLINE__')), 9000);
+  });
+
   try {
-    await clcLogin(clcId, clcPwd);
-    const token = encrypt(JSON.stringify({ id: clcId, pwd: clcPwd }));
-    initFirebase();
-    await getFirestore().collection('clcCredentials').doc(uid).set({
-      token,
-      connectedAt: new Date().toISOString(),
-      enabled: true,
-    });
+    await Promise.race([
+      (async () => {
+        await clcLogin(clcId, clcPwd);
+        const token = encrypt(JSON.stringify({ id: clcId, pwd: clcPwd }));
+        initFirebase();
+        await getFirestore().collection('clcCredentials').doc(uid).set({
+          token,
+          connectedAt: new Date().toISOString(),
+          enabled: true,
+        });
+      })(),
+      deadline,
+    ]);
+    clearTimeout(deadlineTimer!);
     res.status(200).json({ ok: true });
   } catch (e: any) {
-    console.error('[clc/connect]', e);
-    const msg = String(e?.message ?? '').includes('로그인 실패')
-      ? e.message
-      : e?.name === 'TimeoutError' || e?.name === 'AbortError'
-        ? 'CLC 서버 응답 시간 초과 (3.5초) — 서버가 응답하지 않습니다'
-        : 'CLC 연결 실패: ' + String(e?.message ?? '');
+    clearTimeout(deadlineTimer!);
+    console.error('[clc/connect]', e?.message ?? e);
+    const msg = e?.message === '__DEADLINE__'
+      ? 'CLC 서버 응답 시간 초과 — 나중에 다시 시도해 주세요'
+      : String(e?.message ?? '').includes('로그인 실패')
+        ? e.message
+        : e?.name === 'AbortError' || String(e?.message ?? '').includes('timeout')
+          ? 'CLC 서버가 응답하지 않습니다 (4초 초과)'
+          : 'CLC 연결 실패: ' + String(e?.message ?? '');
     res.status(400).json({ error: msg });
   }
 }
