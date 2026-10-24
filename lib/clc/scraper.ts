@@ -25,7 +25,7 @@ export async function clcLogin(userId: string, password: string): Promise<string
       encoding: 'utf-8',
     }),
     redirect: 'manual',
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(3500),
   });
 
   // On success ILOS issues a redirect; collect Set-Cookie headers
@@ -101,14 +101,10 @@ export async function scrapeAll(cookie: string): Promise<ScrapeResult> {
 
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 
-function timeout(ms: number): AbortSignal {
-  return AbortSignal.timeout(ms);
-}
-
 async function clcGet(path: string, cookie: string): Promise<string> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { Cookie: cookie },
-    signal: timeout(8000),
+    signal: AbortSignal.timeout(3500),
   });
   return res.text();
 }
@@ -125,7 +121,7 @@ async function clcPost(
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams(body),
-    signal: timeout(8000),
+    signal: AbortSignal.timeout(3500),
   });
   return res.text();
 }
