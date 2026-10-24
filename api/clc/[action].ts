@@ -31,7 +31,7 @@ async function handleConnect(req: any, res: any) {
     const msg = String(e?.message ?? '').includes('로그인 실패')
       ? e.message
       : e?.name === 'TimeoutError' || e?.name === 'AbortError'
-        ? 'CLC 서버 응답 시간 초과 (8초)'
+        ? 'CLC 서버 응답 시간 초과 (3.5초) — 서버가 응답하지 않습니다'
         : 'CLC 연결 실패: ' + String(e?.message ?? '');
     res.status(400).json({ error: msg });
   }
