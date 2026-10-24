@@ -1,28 +1,27 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { clcLogin, scrapeAll } from '../../lib/clc/scraper';
-import { encrypt, decrypt } from '../../lib/clc/crypto';
-
-function initFirebase() {
-  if (getApps().length > 0) return;
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var not set');
-  initializeApp({ credential: cert(JSON.parse(raw)) });
-}
+// 최상위 import 없음 — 모듈 로딩 실패가 try/catch에 걸리도록 동적 import 사용
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+async function getFirebaseDb() {
+  const { initializeApp, getApps, cert } = await import('firebase-admin/app');
+  const { getFirestore } = await import('firebase-admin/firestore');
+  if (getApps().length === 0) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT env var not set');
+    initializeApp({ credential: cert(JSON.parse(raw)) });
+  }
+  return getFirestore();
+}
 
 async function handleConnect(req: any, res: any) {
   const { uid, clcId, clcPwd } = req.body ?? {};
   if (!uid || !clcId || !clcPwd) return res.status(400).json({ error: 'missing fields' });
 
-  // 자격증명만 저장 — CLC 서버 접속 없이 즉시 응답
-  // (Vercel 미국 서버 → 조선대 CLC 서버 연결 불안정 문제 회피)
-  // 실제 아이디/비밀번호 검증은 첫 동기화 시 이루어짐
   try {
+    const { encrypt } = await import('../../lib/clc/crypto');
+    const db = await getFirebaseDb();
     const token = encrypt(JSON.stringify({ id: clcId, pwd: clcPwd }));
-    initFirebase();
-    await getFirestore().collection('clcCredentials').doc(uid).set({
+    await db.collection('clcCredentials').doc(uid).set({
       token,
       connectedAt: new Date().toISOString(),
       enabled: true,
@@ -39,8 +38,9 @@ async function handleSync(req: any, res: any) {
   if (!uid) return res.status(400).json({ error: 'missing uid' });
 
   try {
-    initFirebase();
-    const db = getFirestore();
+    const { decrypt } = await import('../../lib/clc/crypto');
+    const { clcLogin, scrapeAll } = await import('../../lib/clc/scraper');
+    const db = await getFirebaseDb();
 
     const credDoc = await db.collection('clcCredentials').doc(uid).get();
     if (!credDoc.exists || !credDoc.data()?.enabled) {
@@ -62,7 +62,7 @@ async function handleSync(req: any, res: any) {
     });
     res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
   } catch (e: any) {
-    console.error('[clc/sync]', e);
+    console.error('[clc/sync]', e?.message ?? e);
     const msg = String(e?.message ?? '').includes('로그인 실패') ? e.message : '동기화 실패: ' + String(e?.message ?? '');
     res.status(500).json({ error: msg });
   }
@@ -73,15 +73,14 @@ async function handleDisconnect(req: any, res: any) {
   if (!uid) return res.status(400).json({ error: 'missing uid' });
 
   try {
-    initFirebase();
-    const db = getFirestore();
+    const db = await getFirebaseDb();
     await Promise.all([
       db.collection('clcCredentials').doc(uid).delete(),
       db.collection('clcData').doc(uid).delete(),
     ]);
     res.status(200).json({ ok: true });
   } catch (e: any) {
-    console.error('[clc/disconnect]', e);
+    console.error('[clc/disconnect]', e?.message ?? e);
     res.status(500).json({ error: '연동 해제 실패: ' + String(e?.message ?? '') });
   }
 }
@@ -93,8 +92,9 @@ async function handleSyncAll(req: any, res: any) {
   }
 
   try {
-    initFirebase();
-    const db = getFirestore();
+    const { decrypt } = await import('../../lib/clc/crypto');
+    const { clcLogin, scrapeAll } = await import('../../lib/clc/scraper');
+    const db = await getFirebaseDb();
 
     const cfg = await db.collection('adminConfig').doc('clc').get();
     if (cfg.exists && cfg.data()?.killSwitch === true) {
@@ -107,7 +107,6 @@ async function handleSyncAll(req: any, res: any) {
     for (let i = 0; i < snapshot.docs.length; i++) {
       const doc = snapshot.docs[i];
       const uid = doc.id;
-
       if (i > 0) await sleep(2000);
 
       let creds: { id: string; pwd: string };
@@ -133,13 +132,13 @@ async function handleSyncAll(req: any, res: any) {
 
     res.status(200).json({ ok: true, count: snapshot.size, results });
   } catch (e: any) {
-    console.error('[clc/sync-all]', e);
+    console.error('[clc/sync-all]', e?.message ?? e);
     res.status(500).json({ error: String(e?.message ?? 'sync-all 실패') });
   }
 }
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
   const action = req.query.action as string;
 
@@ -152,7 +151,7 @@ export default async function handler(req: any, res: any) {
       default:           return res.status(404).json({ error: 'unknown action' });
     }
   } catch (e: any) {
-    console.error('[clc/handler]', e);
+    console.error('[clc/handler]', e?.message ?? e);
     if (!res.headersSent) res.status(500).json({ error: String(e?.message ?? '서버 오류') });
   }
 }
