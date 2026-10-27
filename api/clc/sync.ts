@@ -335,8 +335,7 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     const clHtml = result.courseListHtml;
-    const subOpenCount = (clHtml.match(/sub_open/gi) ?? []).length;
-    const kjCount = (clHtml.match(/\bkj\s*=\s*["']/gi) ?? []).length;
+    const clIlosUrls = [...new Set([...clHtml.matchAll(/["'`](\/?ilos\/[^"'`\s?#]{4,60}\.acl)[^"'`]*/gi)].map(m => m[1]))];
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
     res.status(200).json({
       ok: true,
@@ -344,9 +343,7 @@ export default async function handler(req: any, res: any) {
       _d: {
         courses: result.courses.length,
         clLen: clHtml.length,
-        subOpenCount,
-        kjCount,
-        clSnippet: clHtml.replace(/\s+/g, ' ').slice(0, 400),
+        clIlosUrls,
       },
     });
   } catch (e: any) {
