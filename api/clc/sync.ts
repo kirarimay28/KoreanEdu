@@ -234,7 +234,7 @@ async function scrapeAll(cookie: string) {
   const mainHtml = await clcGet('/ilos/main/main_form.acl', cookie);
   // Fetch actual course list data (AJAX endpoint)
   const courseListHtml = await clcPost('/ilos/st/main/course_ing_list.acl', cookie, {
-    start: '1', display: '50', encoding: 'utf-8',
+    encoding: 'utf-8',
   });
   const courses = parseCourses(courseListHtml);
   // Extract ud from multiple sources
@@ -248,6 +248,7 @@ async function scrapeAll(cookie: string) {
   const assignments: Assignment[] = [];
   const lectures: OnlineLecture[] = [];
   const notices: Notice[] = [];
+  const apiErrors: string[] = [];
 
   for (const { kjkey, name } of courses) {
     try {
@@ -255,7 +256,7 @@ async function scrapeAll(cookie: string) {
         ud, ky: kjkey, start: '1', display: '50', SCH_VALUE: '', encoding: 'utf-8',
       });
       assignments.push(...parseAssignments(html, kjkey, name));
-    } catch { /* ignore */ }
+    } catch (e: any) { apiErrors.push(`assign[${kjkey}]:${e?.message}`); }
 
     try {
       const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, cookie);
@@ -278,7 +279,7 @@ async function scrapeAll(cookie: string) {
     } catch { /* ignore */ }
   }
 
-  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString() };
+  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString(), ud, apiErrors };
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -298,8 +299,9 @@ export default async function handler(req: any, res: any) {
     catch { return res.status(500).json({ error: '자격증명 복호화 실패' }); }
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
-    await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
-    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt, courses: result.courses.length });
+    const { apiErrors, ud, ...saveData } = result;
+    await db.collection('clcData').doc(uid).set({ ...saveData, updatedAt: new Date().toISOString() });
+    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt, courses: result.courses.length, ud: ud ? 'ok' : '', apiErrors: apiErrors.slice(0, 3) });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
     const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';
