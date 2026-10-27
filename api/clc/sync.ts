@@ -347,7 +347,7 @@ export default async function handler(req: any, res: any) {
         clLen: clHtml.length,
         subOpen,
         kjCount,
-        clSnippet: clHtml.replace(/\s+/g, ' ').slice(1500, 2500),
+        clSnippet: clHtml.replace(/\s+/g, ' ').slice(3000, 5000),
       },
     });
   } catch (e: any) {
