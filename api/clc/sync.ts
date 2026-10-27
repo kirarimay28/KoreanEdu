@@ -257,7 +257,7 @@ async function scrapeAll(cookie: string) {
     } catch { /* ignore */ }
   }
 
-  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString() };
+  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString(), mainHtml };
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -277,8 +277,20 @@ export default async function handler(req: any, res: any) {
     catch { return res.status(500).json({ error: '자격증명 복호화 실패' }); }
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
+    const mainHtmlForDebug = result.mainHtml;
+    const emTags = (mainHtmlForDebug.match(/<em\b[^>]*>/gi) ?? []);
+    const subOpenTags = emTags.filter(t => t.includes('sub_open'));
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
-    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
+    res.status(200).json({
+      ok: true,
+      scrapedAt: result.scrapedAt,
+      _d: {
+        courses: result.courses.length,
+        emTotal: emTags.length,
+        subOpenTags,
+        htmlSnippet: mainHtmlForDebug.slice(0, 500),
+      },
+    });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
     const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';

@@ -54,8 +54,10 @@ export default function CLCSettings({ uid }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '동기화 실패');
-      setSyncMsg('동기화 완료!');
-      setTimeout(() => setSyncMsg(''), 3000);
+      const d = json._d;
+      const msg = d ? `완료! 과목${d.courses} em${d.emTotal} sub_open${d.subOpenTags?.length ?? 0}` : '동기화 완료!';
+      setSyncMsg(msg);
+      setTimeout(() => setSyncMsg(''), 8000);
     } catch (e: any) {
       setSyncMsg(e.message ?? '동기화 오류');
     } finally {
