@@ -128,78 +128,27 @@ function extractKoreanDate(text: string): string | null {
   return `${y}-${mo}-${d}T23:59:00+09:00`;
 }
 
-function extractCourseName(raw: string): { name: string; section: string } {
-  const text = raw.trim();
-  const parenIdx = text.indexOf('(');
-  if (parenIdx > 0) {
-    return { name: text.slice(0, parenIdx).trim(), section: text.slice(parenIdx).replace(/[()]/g, '').trim() };
-  }
-  return { name: text, section: '' };
-}
-
 function parseCourses(html: string): Course[] {
   const courses: Course[] = [];
   const seen = new Set<string>();
-
-  function addCourse(kjkey: string, rawName: string) {
-    const k = kjkey.trim();
-    if (!k || seen.has(k)) return;
-    const raw = stripTags(rawName).trim();
-    if (!raw || raw.length < 2) return;
-    seen.add(k);
-    const { name, section } = extractCourseName(raw);
-    courses.push({ kjkey: k, name, section, schedule: '' });
-  }
-
-  // Pattern A: any element with kj="..." attribute that also has sub_open nearby
-  const tagRe = /<([a-z]+)\b([^>]*)\b(?:kj|KJ)\s*=\s*["']([^"']+)["']([^>]*)>([\s\S]*?)<\/\1>/gi;
+  // <tr id="KJKEY" org_sect="..."> ... <td class="left">과목명(코드)<br>교수명</td> ... </tr>
+  const trRe = /<tr\b[^>]*\bid\s*=\s*["']([^"']{5,})["'][^>]*org_sect[^>]*>([\s\S]*?)<\/tr>/gi;
   let m: RegExpExecArray | null;
-  while ((m = tagRe.exec(html)) !== null) {
-    const fullAttrs = m[2] + m[4];
-    const inner = m[5];
-    if (!fullAttrs.toLowerCase().includes('sub_open') && !inner.toLowerCase().includes('sub_open')) continue;
-    addCourse(m[3], inner);
+  while ((m = trRe.exec(html)) !== null) {
+    const kjkey = m[1].trim();
+    if (seen.has(kjkey)) continue;
+    const leftM = m[2].match(/<td[^>]*class\s*=\s*["'][^"']*left[^"']*["'][^>]*>([\s\S]*?)<\/td>/i);
+    if (!leftM) continue;
+    // Split on <br> to get course name (first part) and drop instructor name (second part)
+    const firstPart = leftM[1].split(/<br\s*\/?>/i)[0];
+    const raw = stripTags(firstPart).trim();
+    if (!raw || raw.length < 2) continue;
+    seen.add(kjkey);
+    const parenIdx = raw.indexOf('(');
+    const name = parenIdx > 0 ? raw.slice(0, parenIdx).trim() : raw;
+    const section = parenIdx > 0 ? raw.slice(parenIdx).replace(/[()]/g, '').trim() : '';
+    courses.push({ kjkey, name, section, schedule: '' });
   }
-
-  // Pattern B: onclick="sub_open('KJKEY', ...)" — extract kj from JS call, name from surrounding element
-  if (courses.length === 0) {
-    const onclickRe = /<([a-z]+)\b[^>]*onclick\s*=\s*["'][^"']*sub_open\s*\(\s*['"]([A-Za-z0-9_\-]+)['"]/gi;
-    while ((m = onclickRe.exec(html)) !== null) {
-      const tag = m[1];
-      const kjkey = m[2];
-      // Try to grab text up to closing tag
-      const afterTag = html.slice((m.index ?? 0) + m[0].length);
-      const closeM = afterTag.match(new RegExp(`<\\/${tag}>`, 'i'));
-      const inner = closeM ? afterTag.slice(0, closeM.index) : m[0];
-      addCourse(kjkey, inner);
-    }
-  }
-
-  // Pattern C: JavaScript sub_open('KJKEY', ...) calls anywhere in script blocks
-  if (courses.length === 0) {
-    const scriptRe = /<script[^>]*>([\s\S]*?)<\/script>/gi;
-    while ((m = scriptRe.exec(html)) !== null) {
-      const scriptBody = m[1];
-      const callRe = /sub_open\s*\(\s*['"]([A-Za-z0-9_\-]+)['"]/gi;
-      let cm: RegExpExecArray | null;
-      while ((cm = callRe.exec(scriptBody)) !== null) {
-        // No course name available from script alone; use kjkey as placeholder
-        if (!seen.has(cm[1])) {
-          seen.add(cm[1]);
-          courses.push({ kjkey: cm[1], name: cm[1], section: '', schedule: '' });
-        }
-      }
-    }
-  }
-
-  // Pattern D: href links like ky=KJKEY in course URLs
-  if (courses.length === 0) {
-    const hrefRe = /<a\b[^>]*href=["'][^"']*[?&]ky=([A-Za-z0-9_\-]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
-    while ((m = hrefRe.exec(html)) !== null) {
-      addCourse(m[1], m[2]);
-    }
-  }
-
   return courses;
 }
 
@@ -315,7 +264,7 @@ async function scrapeAll(cookie: string) {
     } catch { /* ignore */ }
   }
 
-  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString(), mainHtml, courseListHtml };
+  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString() };
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -335,21 +284,8 @@ export default async function handler(req: any, res: any) {
     catch { return res.status(500).json({ error: '자격증명 복호화 실패' }); }
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
-    const clHtml = result.courseListHtml;
-    const subOpen = (clHtml.match(/sub_open/gi) ?? []).length;
-    const kjCount = (clHtml.match(/\bkj\s*=\s*["']/gi) ?? []).length;
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
-    res.status(200).json({
-      ok: true,
-      scrapedAt: result.scrapedAt,
-      _d: {
-        courses: result.courses.length,
-        clLen: clHtml.length,
-        subOpen,
-        kjCount,
-        clSnippet: clHtml.replace(/\s+/g, ' ').slice(3000, 5000),
-      },
-    });
+    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
     const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';

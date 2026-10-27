@@ -54,12 +54,8 @@ export default function CLCSettings({ uid }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '동기화 실패');
-      const d = json._d;
-      const msg = d
-        ? `완료! 과목${d.courses} clLen:${d.clLen} sub_open:${d.subOpen} kj:${d.kjCount}\n[CL] ${String(d.clSnippet ?? '').slice(0, 250)}`
-        : '동기화 완료!';
-      setSyncMsg(msg);
-      setTimeout(() => setSyncMsg(''), 30000);
+      setSyncMsg('동기화 완료!');
+      setTimeout(() => setSyncMsg(''), 4000);
     } catch (e: any) {
       setSyncMsg(e.message ?? '동기화 오류');
     } finally {
@@ -135,7 +131,7 @@ export default function CLCSettings({ uid }: Props) {
             </button>
           </div>
           {syncMsg && (
-            <p className={`text-xs font-medium whitespace-pre-wrap break-all ${syncMsg.includes('완료') ? 'text-green-600' : 'text-red-500'}`}>
+            <p className={`text-xs text-center font-medium ${syncMsg.includes('완료') ? 'text-green-600' : 'text-red-500'}`}>
               {syncMsg}
             </p>
           )}
