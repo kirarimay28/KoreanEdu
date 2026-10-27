@@ -4,7 +4,7 @@ import { IncomingMessage } from 'http';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface Course { kjkey: string; name: string; section: string; schedule: string }
+interface Course { kjkey: string; name: string; section: string; schedule: string; ledgYear?: string; ledgSessn?: string }
 interface Assignment { courseKjkey: string; courseName: string; title: string; deadline: string | null; submitted: boolean }
 interface OnlineLecture { courseKjkey: string; courseName: string; weekNo: number; title: string; attendStart: string | null; attendEnd: string | null; completed: boolean }
 interface Notice { courseKjkey: string; courseName: string; title: string; date: string | null; seq: string }
@@ -131,25 +131,34 @@ function extractKoreanDate(text: string): string | null {
 function parseCourses(html: string): Course[] {
   const courses: Course[] = [];
   const seen = new Set<string>();
-  // <tr id="KJKEY" org_sect="..."> ... <td class="left">과목명(코드)<br>교수명</td> ... </tr>
-  const trRe = /<tr\b[^>]*\bid\s*=\s*["']([^"']{5,})["'][^>]*org_sect[^>]*>([\s\S]*?)<\/tr>/gi;
+  // <tr id="KJKEY" org_sect="..." ledg_year="2026" ledg_sessn="3" ...>
+  const trRe = /<tr\b([^>]*\borg_sect[^>]*)>([\s\S]*?)<\/tr>/gi;
   let m: RegExpExecArray | null;
   while ((m = trRe.exec(html)) !== null) {
-    const kjkey = m[1].trim();
+    const attrs = m[1];
+    const idM = attrs.match(/\bid\s*=\s*["']([^"']{5,})["']/i);
+    if (!idM) continue;
+    const kjkey = idM[1].trim();
     if (seen.has(kjkey)) continue;
     const leftM = m[2].match(/<td[^>]*class\s*=\s*["'][^"']*left[^"']*["'][^>]*>([\s\S]*?)<\/td>/i);
     if (!leftM) continue;
-    // Split on <br> to get course name (first part) and drop instructor name (second part)
     const firstPart = leftM[1].split(/<br\s*\/?>/i)[0];
     const raw = stripTags(firstPart).trim();
     if (!raw || raw.length < 2) continue;
     seen.add(kjkey);
+    const ledgYear = (attrs.match(/ledg_year\s*=\s*["']([^"']+)["']/i) ?? [])[1] ?? '';
+    const ledgSessn = (attrs.match(/ledg_sessn\s*=\s*["']([^"']+)["']/i) ?? [])[1] ?? '';
     const parenIdx = raw.indexOf('(');
     const name = parenIdx > 0 ? raw.slice(0, parenIdx).trim() : raw;
     const section = parenIdx > 0 ? raw.slice(parenIdx).replace(/[()]/g, '').trim() : '';
-    courses.push({ kjkey, name, section, schedule: '' });
+    courses.push({ kjkey, name, section, schedule: '', ledgYear, ledgSessn });
   }
-  return courses;
+  // Keep only the most recent semester
+  if (courses.length === 0) return courses;
+  const maxYear = Math.max(...courses.map(c => parseInt(c.ledgYear ?? '0', 10) || 0));
+  const currentSemCourses = courses.filter(c => parseInt(c.ledgYear ?? '0', 10) === maxYear);
+  const maxSessn = Math.max(...currentSemCourses.map(c => parseInt(c.ledgSessn ?? '0', 10) || 0));
+  return currentSemCourses.filter(c => parseInt(c.ledgSessn ?? '0', 10) === maxSessn);
 }
 
 function parseAssignments(html: string, kjkey: string, courseName: string): Assignment[] {
@@ -223,13 +232,18 @@ function parseNotices(html: string, kjkey: string, courseName: string): Notice[]
 
 async function scrapeAll(cookie: string) {
   const mainHtml = await clcGet('/ilos/main/main_form.acl', cookie);
-  const udMatch = mainHtml.match(/["']ud["']\s*:\s*["']([^"']+)["']/);
-  const ud = udMatch ? udMatch[1] : '';
   // Fetch actual course list data (AJAX endpoint)
   const courseListHtml = await clcPost('/ilos/st/main/course_ing_list.acl', cookie, {
-    ud, start: '1', display: '20', encoding: 'utf-8',
+    start: '1', display: '50', encoding: 'utf-8',
   });
   const courses = parseCourses(courseListHtml);
+  // Extract ud from multiple sources
+  const udMatch =
+    mainHtml.match(/["']ud["']\s*:\s*["']([^"']{2,})["']/) ||
+    courseListHtml.match(/["']ud["']\s*:\s*["']([^"']{2,})["']/) ||
+    courseListHtml.match(/<input[^>]*name\s*=\s*["']ud["'][^>]*value\s*=\s*["']([^"']{2,})["']/i) ||
+    courseListHtml.match(/<input[^>]*value\s*=\s*["']([^"']{2,})["'][^>]*name\s*=\s*["']ud["']/i);
+  const ud = udMatch ? udMatch[1] : '';
 
   const assignments: Assignment[] = [];
   const lectures: OnlineLecture[] = [];
@@ -238,7 +252,7 @@ async function scrapeAll(cookie: string) {
   for (const { kjkey, name } of courses) {
     try {
       const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
-        ud, ky: kjkey, start: '', display: '1', SCH_VALUE: '', encoding: 'utf-8',
+        ud, ky: kjkey, start: '1', display: '50', SCH_VALUE: '', encoding: 'utf-8',
       });
       assignments.push(...parseAssignments(html, kjkey, name));
     } catch { /* ignore */ }
@@ -258,7 +272,7 @@ async function scrapeAll(cookie: string) {
 
     try {
       const html = await clcPost('/ilos/st/course/notice_list.acl', cookie, {
-        ud, ky: kjkey, start: '', display: '1', encoding: 'utf-8',
+        ud, ky: kjkey, start: '1', display: '50', encoding: 'utf-8',
       });
       notices.push(...parseNotices(html, kjkey, name));
     } catch { /* ignore */ }
