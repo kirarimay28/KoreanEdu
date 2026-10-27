@@ -56,7 +56,7 @@ export default function CLCSettings({ uid }: Props) {
       if (!res.ok) throw new Error(json.error ?? '동기화 실패');
       const d = json._d;
       const msg = d
-        ? `완료! 과목${d.courses}\nframes: ${JSON.stringify(d.frameSrcs)}\n[HTML] ${String(d.htmlSnippet ?? '').slice(0, 200)}`
+        ? `완료! 과목${d.courses} len:${d.htmlLen}\nurls:${JSON.stringify(d.ilosUrls)}\ncourse:${d.courseSnippet}\nbody:${String(d.bodySnippet ?? '').slice(0, 200)}`
         : '동기화 완료!';
       setSyncMsg(msg);
       setTimeout(() => setSyncMsg(''), 30000);

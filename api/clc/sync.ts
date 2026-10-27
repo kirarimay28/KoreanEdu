@@ -332,19 +332,25 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     const mainHtmlForDebug = result.mainHtml;
-    // Extract frame/iframe src URLs
-    const frameSrcs: string[] = [];
-    const frameRe = /<(?:frame|iframe)\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
-    let fm: RegExpExecArray | null;
-    while ((fm = frameRe.exec(mainHtmlForDebug)) !== null) frameSrcs.push(fm[1]);
+    const htmlLen = mainHtmlForDebug.length;
+    // Extract all /ilos/ URLs from script content
+    const ilosUrls = [...new Set([...mainHtmlForDebug.matchAll(/["'`](\/?ilos\/[^"'`\s?#]{4,50}\.acl)[^"'`]*/gi)].map(m => m[1]))];
+    // Find where 'course' keyword appears
+    const courseIdx = mainHtmlForDebug.toLowerCase().indexOf('course');
+    const courseSnippet = courseIdx >= 0 ? mainHtmlForDebug.slice(Math.max(0, courseIdx - 20), courseIdx + 100) : '';
+    // Show first non-whitespace content after head
+    const bodyIdx = mainHtmlForDebug.toLowerCase().indexOf('<body');
+    const bodySnippet = bodyIdx >= 0 ? mainHtmlForDebug.slice(bodyIdx, bodyIdx + 300) : mainHtmlForDebug.slice(500, 800);
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
     res.status(200).json({
       ok: true,
       scrapedAt: result.scrapedAt,
       _d: {
         courses: result.courses.length,
-        frameSrcs,
-        htmlSnippet: mainHtmlForDebug.slice(0, 300),
+        htmlLen,
+        ilosUrls,
+        courseSnippet,
+        bodySnippet,
       },
     });
   } catch (e: any) {
