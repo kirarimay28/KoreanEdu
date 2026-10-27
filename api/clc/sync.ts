@@ -4,7 +4,7 @@ import { IncomingMessage } from 'http';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface Course { kjkey: string; name: string; section: string; schedule: string; ledgYear?: string; ledgSessn?: string }
+interface Course { kjkey: string; name: string; section: string; schedule: string; ledgYear?: string; ledgSessn?: string; orgSect?: string }
 interface Assignment { courseKjkey: string; courseName: string; title: string; deadline: string | null; submitted: boolean }
 interface OnlineLecture { courseKjkey: string; courseName: string; weekNo: number; title: string; attendStart: string | null; attendEnd: string | null; completed: boolean }
 interface Notice { courseKjkey: string; courseName: string; title: string; date: string | null; seq: string }
@@ -156,10 +156,11 @@ function parseCourses(html: string): Course[] {
     seen.add(kjkey);
     const ledgYear = (attrs.match(/ledg_year\s*=\s*["']([^"']+)["']/i) ?? [])[1] ?? '';
     const ledgSessn = (attrs.match(/ledg_sessn\s*=\s*["']([^"']+)["']/i) ?? [])[1] ?? '';
+    const orgSect = (attrs.match(/org_sect\s*=\s*["']([^"']+)["']/i) ?? [])[1] ?? '';
     const parenIdx = raw.indexOf('(');
     const name = parenIdx > 0 ? raw.slice(0, parenIdx).trim() : raw;
     const section = parenIdx > 0 ? raw.slice(parenIdx).replace(/[()]/g, '').trim() : '';
-    courses.push({ kjkey, name, section, schedule: '', ledgYear, ledgSessn });
+    courses.push({ kjkey, name, section, schedule: '', ledgYear, ledgSessn, orgSect });
   }
   // Keep only the most recent semester
   if (courses.length === 0) return courses;
@@ -259,10 +260,15 @@ async function scrapeAll(cookie: string, userId: string) {
 
   let apiSample: { ky: string; ud: string; len: number; info: string } | null = null;
 
-  for (const { kjkey, name } of courses) {
-    // Visit course main page first — eClass requires this to register the course in the server session
-    const courseRef = `${BASE}/ilos/st/course/main_form.acl?ky=${kjkey}`;
-    try { await clcGet(`/ilos/st/course/main_form.acl?ky=${kjkey}`, cookie); } catch { /* ignore */ }
+  for (const { kjkey, name, ledgYear, ledgSessn, orgSect } of courses) {
+    // eClass requires POSTing all 4 course params to main_form.acl to register the course in the server session.
+    // This is what the browser's goRoom() JS does on course click.
+    const courseRef = `${BASE}/ilos/st/course/main_form.acl`;
+    try {
+      await clcPost('/ilos/st/course/main_form.acl', cookie, {
+        ky: kjkey, org_sect: orgSect ?? '', ledg_year: ledgYear ?? '', ledg_sessn: ledgSessn ?? '', encoding: 'utf-8',
+      });
+    } catch { /* ignore */ }
 
     try {
       const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
@@ -271,7 +277,7 @@ async function scrapeAll(cookie: string, userId: string) {
       if (!apiSample) {
         const compact = html.replace(/\s+/g, ' ');
         const redirect = /login_form|로그인이|다시 로그인/.test(compact);
-        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '세션만료(여전히)' : compact.slice(0, 250) };
+        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? 'POST후도세션만료' : compact.slice(0, 250) };
       }
       assignments.push(...parseAssignments(html, kjkey, name));
     } catch (e: any) {
