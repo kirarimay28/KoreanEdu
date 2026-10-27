@@ -249,6 +249,18 @@ async function scrapeAll(cookie: string, userId: string) {
   const lectures: OnlineLecture[] = [];
   const notices: Notice[] = [];
 
+  const firstCourse = courses[0];
+  if (firstCourse) {
+    try {
+      const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
+        ud, ky: firstCourse.kjkey, start: '1', display: '50', SCH_VALUE: '', encoding: 'utf-8',
+      });
+      console.log(`[CLC-DEBUG] ud="${ud}" ky="${firstCourse.kjkey}" resp_len=${html.length} snippet=${html.replace(/\s+/g,' ').slice(0,300)}`);
+    } catch (e: any) {
+      console.log(`[CLC-DEBUG] assign error: ${e?.message}`);
+    }
+  }
+
   for (const { kjkey, name } of courses) {
     try {
       const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
