@@ -73,7 +73,10 @@ export default function MessagesTab({ currentUser }: Props) {
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [newRecipIds, setNewRecipIds] = useState<string[]>([]);
   const [input, setInput] = useState('');
+  const [asClaud, setAsClaud] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'subadmin';
 
   const conversations = buildConversations(currentUser.id);
   const allUsers = getUsers().filter(u => u.id !== currentUser.id);
@@ -106,11 +109,12 @@ export default function MessagesTab({ currentUser }: Props) {
       if (newRecipIds.length === 0) return;
       const recipients = allUsers.filter(u => newRecipIds.includes(u.id));
       const now = new Date().toISOString();
+      const displayName = (isAdmin && asClaud) ? 'Claude' : currentUser.username;
       for (const recipient of recipients) {
         sendMessage({
           id: crypto.randomUUID(),
           senderId: currentUser.id,
-          senderName: currentUser.username,
+          senderName: displayName,
           receiverId: recipient.id,
           receiverName: recipient.username,
           content: msgContent,
@@ -120,7 +124,7 @@ export default function MessagesTab({ currentUser }: Props) {
       }
       sendPush({
         userIds: recipients.map(r => r.id),
-        title: `✉️ ${currentUser.username}님의 쪽지`,
+        title: `✉️ ${displayName}님의 쪽지`,
         body: msgContent.length > 60 ? msgContent.slice(0, 60) + '…' : msgContent,
       });
       setInput('');
@@ -297,6 +301,21 @@ export default function MessagesTab({ currentUser }: Props) {
             })}
           </div>
         </div>
+
+        <div className="flex-1" />
+
+        {/* Claude 발신자 토글 (방장/부방장 전용) */}
+        {isAdmin && (
+          <div className="flex-shrink-0 py-2 border-b border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-500">Claude로 보내기</span>
+            <button
+              onClick={() => setAsClaud(v => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${asClaud ? 'bg-primary-500' : 'bg-gray-200'}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${asClaud ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+        )}
 
         <div className="flex-1" />
 
