@@ -104,18 +104,22 @@ async function clcPost(path: string, cookie: string, bodyObj: Record<string, str
   return text;
 }
 
-// Form POST: no AJAX headers, follows redirects, returns updated cookie
+// Form POST: no AJAX headers, follows redirects, returns updated cookie + debug info
 // Mirrors what the browser does when goRoom() submits myform to main_form.acl
-async function enterCourse(cookie: string, course: Course): Promise<string> {
+async function enterCourse(cookie: string, course: Course): Promise<{ cookie: string; dbg: string }> {
   const body = new URLSearchParams({ ky: course.kjkey, org_sect: course.orgSect ?? '', ledg_year: course.ledgYear ?? '', ledg_sessn: course.ledgSessn ?? '', encoding: 'utf-8' }).toString();
   try {
-    const { rawCookies } = await httpsReq({
+    const result = await httpsReq({
       path: '/ilos/st/course/main_form.acl', method: 'POST',
       headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': UA, Referer: `${BASE}/ilos/st/main/course_ing_list.acl` },
     }, body, 5);
-    if (rawCookies.length) return mergeCookies(cookie, rawCookies);
-  } catch { /* ignore */ }
-  return cookie;
+    const mfRedirect = /login_form|로그인이|다시 로그인/.test(result.text.replace(/\s+/g, ' '));
+    const dbg = `mf=${result.statusCode}/${result.text.length}${mfRedirect ? '(redir)' : ''}`;
+    const updatedCookie = result.rawCookies.length ? mergeCookies(cookie, result.rawCookies) : cookie;
+    return { cookie: updatedCookie, dbg };
+  } catch (e: any) {
+    return { cookie, dbg: `mf=ERR:${e?.message?.slice(0,30)}` };
+  }
 }
 
 // ── CLC Login ──────────────────────────────────────────────────────────────
@@ -267,11 +271,18 @@ function parseNotices(html: string, kjkey: string, courseName: string): Notice[]
 // ── Scrape all ─────────────────────────────────────────────────────────────
 
 async function scrapeAll(cookie: string, userId: string) {
-  const mainHtml = await clcGet('/ilos/main/main_form.acl', cookie);
-  // Fetch actual course list data (AJAX endpoint)
-  const courseListHtml = await clcPost('/ilos/st/main/course_ing_list.acl', cookie, {
-    encoding: 'utf-8',
-  });
+  // Accumulate cookies from every response — browsers do this automatically, we must do it manually
+  let sessionCookie = cookie;
+
+  const mainResult = await httpsReq({ path: '/ilos/main/main_form.acl', method: 'GET', headers: { Cookie: sessionCookie, 'User-Agent': UA, Referer: BASE } });
+  if (mainResult.rawCookies.length) sessionCookie = mergeCookies(sessionCookie, mainResult.rawCookies);
+  const mainHtml = mainResult.text;
+
+  const clBody = new URLSearchParams({ encoding: 'utf-8' }).toString();
+  const clResult = await httpsReq({ path: '/ilos/st/main/course_ing_list.acl', method: 'POST', headers: { Cookie: sessionCookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(clBody), 'User-Agent': UA, Referer: BASE, 'X-Requested-With': 'XMLHttpRequest', Origin: `https://${BASE_HOST}` } }, clBody);
+  if (clResult.rawCookies.length) sessionCookie = mergeCookies(sessionCookie, clResult.rawCookies);
+  const courseListHtml = clResult.text;
+
   const courses = parseCourses(courseListHtml);
   // Extract ud: try HTML sources first, fall back to student ID (eClass standard)
   const udMatch =
@@ -290,7 +301,7 @@ async function scrapeAll(cookie: string, userId: string) {
   for (const course of courses) {
     const { kjkey, name } = course;
     // Enter the course room (browser goRoom() pattern: form POST, follow redirects, capture new cookies)
-    const courseCookie = await enterCourse(cookie, course);
+    const { cookie: courseCookie, dbg: mfDbg } = await enterCourse(sessionCookie, course);
     const courseRef = `${BASE}/ilos/st/course/main_form.acl`;
 
     try {
@@ -301,11 +312,11 @@ async function scrapeAll(cookie: string, userId: string) {
       if (!apiSample) {
         const compact = html.replace(/\s+/g, ' ');
         const redirect = /login_form|로그인이|다시 로그인/.test(compact);
-        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '여전히세션만료' : compact.slice(0, 250) };
+        apiSample = { ky: kjkey, ud, len: compact.length, info: `${mfDbg} rl=${compact.length}${redirect ? '(redir)' : ': ' + compact.slice(0, 150)}` };
       }
       assignments.push(...parseAssignments(html, kjkey, name));
     } catch (e: any) {
-      if (!apiSample) apiSample = { ky: kjkey, ud, len: 0, info: `ERR:${e?.message}` };
+      if (!apiSample) apiSample = { ky: kjkey, ud, len: 0, info: `${mfDbg} rl=ERR:${e?.message?.slice(0,30)}` };
     }
 
     try {
