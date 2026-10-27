@@ -1,4 +1,6 @@
 import { createDecipheriv } from 'crypto';
+import https from 'https';
+import { IncomingMessage } from 'http';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -43,67 +45,61 @@ async function getDb() {
 
 // ── HTTP helpers ───────────────────────────────────────────────────────────
 
-const BASE = 'https://clc.chosun.ac.kr';
-
-function makeSignal(ms: number) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
-}
-
+const BASE_HOST = 'clc.chosun.ac.kr';
+const BASE = `https://${BASE_HOST}`;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-async function clcGet(path: string, cookie: string): Promise<string> {
-  const { signal, clear } = makeSignal(8000);
-  try {
-    const res = await fetch(`${BASE}${path}`, {
-      headers: { Cookie: cookie, 'User-Agent': UA, Referer: BASE },
-      signal,
+// Use https module (not fetch/undici) to avoid TLS compat issues with older servers
+function httpsReq(opts: https.RequestOptions, body?: string): Promise<{ statusCode: number; rawCookies: string[]; text: string }> {
+  return new Promise((resolve, reject) => {
+    const req = https.request({ host: BASE_HOST, ...opts }, (res: IncomingMessage) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (c: Buffer) => chunks.push(c));
+      res.on('end', () => resolve({
+        statusCode: res.statusCode ?? 0,
+        rawCookies: (res.headers['set-cookie'] ?? []) as string[],
+        text: Buffer.concat(chunks).toString('utf8'),
+      }));
     });
-    return res.text();
-  } finally { clear(); }
+    req.setTimeout(9000, () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
 }
 
-async function clcPost(path: string, cookie: string, body: Record<string, string>): Promise<string> {
-  const { signal, clear } = makeSignal(8000);
-  try {
-    const res = await fetch(`${BASE}${path}`, {
-      method: 'POST',
-      headers: {
-        Cookie: cookie,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': UA,
-        Referer: BASE,
-      },
-      body: new URLSearchParams(body),
-      signal,
-    });
-    return res.text();
-  } finally { clear(); }
+async function clcGet(path: string, cookie: string): Promise<string> {
+  const { text } = await httpsReq({ path, method: 'GET', headers: { Cookie: cookie, 'User-Agent': UA, Referer: BASE } });
+  return text;
+}
+
+async function clcPost(path: string, cookie: string, bodyObj: Record<string, string>): Promise<string> {
+  const body = new URLSearchParams(bodyObj).toString();
+  const { text } = await httpsReq({
+    path,
+    method: 'POST',
+    headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': UA, Referer: BASE },
+  }, body);
+  return text;
 }
 
 // ── CLC Login ──────────────────────────────────────────────────────────────
 
 async function clcLogin(userId: string, password: string): Promise<string> {
-  const { signal, clear } = makeSignal(8000);
-  let res: Response;
-  try {
-    res = await fetch(`${BASE}/ilos/lo/login.acl`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': UA,
-        Referer: `${BASE}/ilos/lo/login_form.acl`,
-      },
-      body: new URLSearchParams({ usr_id: userId, usr_pwd: password, encoding: 'utf-8' }),
-      redirect: 'manual',
-      signal,
-    });
-  } finally { clear(); }
+  const body = new URLSearchParams({ usr_id: userId, usr_pwd: password, encoding: 'utf-8' }).toString();
+  const { rawCookies } = await httpsReq({
+    path: '/ilos/lo/login.acl',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(body),
+      'User-Agent': UA,
+      Referer: `${BASE}/ilos/lo/login_form.acl`,
+    },
+  }, body);
 
-  const rawCookies = res.headers.getSetCookie?.() ?? [];
   if (rawCookies.length === 0) throw new Error('로그인 실패: 쿠키 없음');
-  const cookie = rawCookies.map(c => c.split(';')[0]).join('; ');
+  const cookie = rawCookies.map((c: string) => c.split(';')[0]).join('; ');
 
   const check = await clcGet('/ilos/main/main_form.acl', cookie);
   if (!check.includes('sub_open') && !check.includes('logout') && !check.includes('로그아웃')) {
