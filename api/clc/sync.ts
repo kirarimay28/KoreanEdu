@@ -68,12 +68,12 @@ function httpsReq(opts: https.RequestOptions, body?: string): Promise<{ statusCo
   });
 }
 
-async function clcGet(path: string, cookie: string): Promise<string> {
-  const { text } = await httpsReq({ path, method: 'GET', headers: { Cookie: cookie, 'User-Agent': UA, Referer: BASE } });
+async function clcGet(path: string, cookie: string, referer?: string): Promise<string> {
+  const { text } = await httpsReq({ path, method: 'GET', headers: { Cookie: cookie, 'User-Agent': UA, Referer: referer ?? BASE } });
   return text;
 }
 
-async function clcPost(path: string, cookie: string, bodyObj: Record<string, string>): Promise<string> {
+async function clcPost(path: string, cookie: string, bodyObj: Record<string, string>, referer?: string): Promise<string> {
   const body = new URLSearchParams(bodyObj).toString();
   const { text } = await httpsReq({
     path,
@@ -83,7 +83,7 @@ async function clcPost(path: string, cookie: string, bodyObj: Record<string, str
       'Content-Type': 'application/x-www-form-urlencoded',
       'Content-Length': Buffer.byteLength(body),
       'User-Agent': UA,
-      Referer: BASE,
+      Referer: referer ?? BASE,
       'X-Requested-With': 'XMLHttpRequest',
       Origin: `https://${BASE_HOST}`,
     },
@@ -260,14 +260,18 @@ async function scrapeAll(cookie: string, userId: string) {
   let apiSample: { ky: string; ud: string; len: number; info: string } | null = null;
 
   for (const { kjkey, name } of courses) {
+    // Visit course main page first — eClass requires this to register the course in the server session
+    const courseRef = `${BASE}/ilos/st/course/main_form.acl?ky=${kjkey}`;
+    try { await clcGet(`/ilos/st/course/main_form.acl?ky=${kjkey}`, cookie); } catch { /* ignore */ }
+
     try {
       const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
         ud, ky: kjkey, encoding: 'utf-8',
-      });
+      }, courseRef);
       if (!apiSample) {
         const compact = html.replace(/\s+/g, ' ');
         const redirect = /login_form|로그인이|다시 로그인/.test(compact);
-        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '세션만료' : compact.slice(0, 250) };
+        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '세션만료(여전히)' : compact.slice(0, 250) };
       }
       assignments.push(...parseAssignments(html, kjkey, name));
     } catch (e: any) {
@@ -275,13 +279,13 @@ async function scrapeAll(cookie: string, userId: string) {
     }
 
     try {
-      const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, cookie);
+      const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, cookie, courseRef);
       const weeks = parseWeekNumbers(outerHtml);
       for (const weekNo of (weeks.length ? weeks : [1])) {
         try {
           const html = await clcPost('/ilos/st/course/online_list.acl', cookie, {
             ud, ky: kjkey, WEEK_NO: String(weekNo), encoding: 'utf-8',
-          });
+          }, courseRef);
           lectures.push(...parseOnlineLectures(html, kjkey, name, weekNo));
         } catch { /* ignore */ }
       }
@@ -290,7 +294,7 @@ async function scrapeAll(cookie: string, userId: string) {
     try {
       const html = await clcPost('/ilos/st/course/notice_list.acl', cookie, {
         ud, ky: kjkey, encoding: 'utf-8',
-      });
+      }, courseRef);
       notices.push(...parseNotices(html, kjkey, name));
     } catch { /* ignore */ }
   }
