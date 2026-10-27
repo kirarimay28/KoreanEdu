@@ -51,10 +51,15 @@ function makeSignal(ms: number) {
   return { signal: ctrl.signal, clear: () => clearTimeout(timer) };
 }
 
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 async function clcGet(path: string, cookie: string): Promise<string> {
   const { signal, clear } = makeSignal(8000);
   try {
-    const res = await fetch(`${BASE}${path}`, { headers: { Cookie: cookie }, signal });
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { Cookie: cookie, 'User-Agent': UA, Referer: BASE },
+      signal,
+    });
     return res.text();
   } finally { clear(); }
 }
@@ -64,7 +69,12 @@ async function clcPost(path: string, cookie: string, body: Record<string, string
   try {
     const res = await fetch(`${BASE}${path}`, {
       method: 'POST',
-      headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        Cookie: cookie,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': UA,
+        Referer: BASE,
+      },
       body: new URLSearchParams(body),
       signal,
     });
@@ -80,7 +90,11 @@ async function clcLogin(userId: string, password: string): Promise<string> {
   try {
     res = await fetch(`${BASE}/ilos/lo/login.acl`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': UA,
+        Referer: `${BASE}/ilos/lo/login_form.acl`,
+      },
       body: new URLSearchParams({ usr_id: userId, usr_pwd: password, encoding: 'utf-8' }),
       redirect: 'manual',
       signal,
