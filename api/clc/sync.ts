@@ -227,7 +227,7 @@ async function scrapeAll(cookie: string) {
   const ud = udMatch ? udMatch[1] : '';
   // Fetch actual course list data (AJAX endpoint)
   const courseListHtml = await clcPost('/ilos/st/main/course_ing_list.acl', cookie, {
-    ud, encoding: 'utf-8',
+    ud, start: '1', display: '20', encoding: 'utf-8',
   });
   const courses = parseCourses(courseListHtml);
 
@@ -285,7 +285,7 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
-    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
+    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt, courses: result.courses.length });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
     const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';
