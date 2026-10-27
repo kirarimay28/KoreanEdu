@@ -15,6 +15,7 @@ export default function CLCSettings({ uid }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [syncMsg, setSyncMsg] = useState('');
+  const [dbg, setDbg] = useState('');
 
   const isConnected = !!credMeta?.enabled;
 
@@ -55,6 +56,7 @@ export default function CLCSettings({ uid }: Props) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '동기화 실패');
       setSyncMsg('동기화 완료!');
+      if (json.dbg) setDbg(json.dbg); else setDbg('');
       setTimeout(() => setSyncMsg(''), 4000);
     } catch (e: any) {
       setSyncMsg(e.message ?? '동기화 오류');
@@ -134,6 +136,9 @@ export default function CLCSettings({ uid }: Props) {
             <p className={`text-xs text-center font-medium ${syncMsg.includes('완료') ? 'text-green-600' : 'text-red-500'}`}>
               {syncMsg}
             </p>
+          )}
+          {dbg && (
+            <p className="text-xs text-gray-400 break-all bg-gray-50 rounded-lg p-2 select-all">{dbg}</p>
           )}
         </div>
       ) : (

@@ -78,7 +78,15 @@ async function clcPost(path: string, cookie: string, bodyObj: Record<string, str
   const { text } = await httpsReq({
     path,
     method: 'POST',
-    headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': UA, Referer: BASE },
+    headers: {
+      Cookie: cookie,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(body),
+      'User-Agent': UA,
+      Referer: BASE,
+      'X-Requested-With': 'XMLHttpRequest',
+      Origin: `https://${BASE_HOST}`,
+    },
   }, body);
   return text;
 }
@@ -249,25 +257,22 @@ async function scrapeAll(cookie: string, userId: string) {
   const lectures: OnlineLecture[] = [];
   const notices: Notice[] = [];
 
-  const firstCourse = courses[0];
-  if (firstCourse) {
-    try {
-      const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
-        ud, ky: firstCourse.kjkey, start: '1', display: '50', SCH_VALUE: '', encoding: 'utf-8',
-      });
-      console.log(`[CLC-DEBUG] ud="${ud}" ky="${firstCourse.kjkey}" resp_len=${html.length} snippet=${html.replace(/\s+/g,' ').slice(0,300)}`);
-    } catch (e: any) {
-      console.log(`[CLC-DEBUG] assign error: ${e?.message}`);
-    }
-  }
+  let apiSample: { ky: string; ud: string; len: number; info: string } | null = null;
 
   for (const { kjkey, name } of courses) {
     try {
       const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
-        ud, ky: kjkey, start: '1', display: '50', SCH_VALUE: '', encoding: 'utf-8',
+        ud, ky: kjkey, encoding: 'utf-8',
       });
+      if (!apiSample) {
+        const compact = html.replace(/\s+/g, ' ');
+        const redirect = /login_form|로그인이|다시 로그인/.test(compact);
+        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '세션만료' : compact.slice(0, 250) };
+      }
       assignments.push(...parseAssignments(html, kjkey, name));
-    } catch { /* ignore */ }
+    } catch (e: any) {
+      if (!apiSample) apiSample = { ky: kjkey, ud, len: 0, info: `ERR:${e?.message}` };
+    }
 
     try {
       const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, cookie);
@@ -284,13 +289,13 @@ async function scrapeAll(cookie: string, userId: string) {
 
     try {
       const html = await clcPost('/ilos/st/course/notice_list.acl', cookie, {
-        ud, ky: kjkey, start: '1', display: '50', encoding: 'utf-8',
+        ud, ky: kjkey, encoding: 'utf-8',
       });
       notices.push(...parseNotices(html, kjkey, name));
     } catch { /* ignore */ }
   }
 
-  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString() };
+  return { courses, assignments, lectures, notices, scrapedAt: new Date().toISOString(), apiSample };
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -310,8 +315,14 @@ export default async function handler(req: any, res: any) {
     catch { return res.status(500).json({ error: '자격증명 복호화 실패' }); }
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie, creds.id);
-    await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
-    res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
+    const { apiSample, ...dataToSave } = result;
+    await db.collection('clcData').doc(uid).set({ ...dataToSave, updatedAt: new Date().toISOString() });
+    const noData = result.assignments.length === 0 && result.lectures.length === 0;
+    res.status(200).json({
+      ok: true,
+      scrapedAt: result.scrapedAt,
+      ...(noData && apiSample ? { dbg: `ky=...${apiSample.ky.slice(-6)} ud=${apiSample.ud} len=${apiSample.len} | ${apiSample.info}` } : {}),
+    });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
     const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';
