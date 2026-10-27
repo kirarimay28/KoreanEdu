@@ -128,24 +128,78 @@ function extractKoreanDate(text: string): string | null {
   return `${y}-${mo}-${d}T23:59:00+09:00`;
 }
 
+function extractCourseName(raw: string): { name: string; section: string } {
+  const text = raw.trim();
+  const parenIdx = text.indexOf('(');
+  if (parenIdx > 0) {
+    return { name: text.slice(0, parenIdx).trim(), section: text.slice(parenIdx).replace(/[()]/g, '').trim() };
+  }
+  return { name: text, section: '' };
+}
+
 function parseCourses(html: string): Course[] {
   const courses: Course[] = [];
-  const emRe = /<em\b([^>]*)>([\s\S]*?)<\/em>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = emRe.exec(html)) !== null) {
-    const attrs = m[1];
-    if (!attrs.includes('sub_open')) continue;
-    const kjMatch = attrs.match(/\bkj="([^"]+)"/i);
-    if (!kjMatch) continue;
-    const kjkey = kjMatch[1].trim();
-    if (!kjkey) continue;
-    const raw = stripTags(m[2]);
-    if (!raw) continue;
-    const parenIdx = raw.indexOf('(');
-    const name = parenIdx > 0 ? raw.slice(0, parenIdx).trim() : raw;
-    const section = parenIdx > 0 ? raw.slice(parenIdx).replace(/[()]/g, '').trim() : '';
-    courses.push({ kjkey, name, section, schedule: '' });
+  const seen = new Set<string>();
+
+  function addCourse(kjkey: string, rawName: string) {
+    const k = kjkey.trim();
+    if (!k || seen.has(k)) return;
+    const raw = stripTags(rawName).trim();
+    if (!raw || raw.length < 2) return;
+    seen.add(k);
+    const { name, section } = extractCourseName(raw);
+    courses.push({ kjkey: k, name, section, schedule: '' });
   }
+
+  // Pattern A: any element with kj="..." attribute that also has sub_open nearby
+  const tagRe = /<([a-z]+)\b([^>]*)\b(?:kj|KJ)\s*=\s*["']([^"']+)["']([^>]*)>([\s\S]*?)<\/\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(html)) !== null) {
+    const fullAttrs = m[2] + m[4];
+    const inner = m[5];
+    if (!fullAttrs.toLowerCase().includes('sub_open') && !inner.toLowerCase().includes('sub_open')) continue;
+    addCourse(m[3], inner);
+  }
+
+  // Pattern B: onclick="sub_open('KJKEY', ...)" — extract kj from JS call, name from surrounding element
+  if (courses.length === 0) {
+    const onclickRe = /<([a-z]+)\b[^>]*onclick\s*=\s*["'][^"']*sub_open\s*\(\s*['"]([A-Za-z0-9_\-]+)['"]/gi;
+    while ((m = onclickRe.exec(html)) !== null) {
+      const tag = m[1];
+      const kjkey = m[2];
+      // Try to grab text up to closing tag
+      const afterTag = html.slice((m.index ?? 0) + m[0].length);
+      const closeM = afterTag.match(new RegExp(`<\\/${tag}>`, 'i'));
+      const inner = closeM ? afterTag.slice(0, closeM.index) : m[0];
+      addCourse(kjkey, inner);
+    }
+  }
+
+  // Pattern C: JavaScript sub_open('KJKEY', ...) calls anywhere in script blocks
+  if (courses.length === 0) {
+    const scriptRe = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    while ((m = scriptRe.exec(html)) !== null) {
+      const scriptBody = m[1];
+      const callRe = /sub_open\s*\(\s*['"]([A-Za-z0-9_\-]+)['"]/gi;
+      let cm: RegExpExecArray | null;
+      while ((cm = callRe.exec(scriptBody)) !== null) {
+        // No course name available from script alone; use kjkey as placeholder
+        if (!seen.has(cm[1])) {
+          seen.add(cm[1]);
+          courses.push({ kjkey: cm[1], name: cm[1], section: '', schedule: '' });
+        }
+      }
+    }
+  }
+
+  // Pattern D: href links like ky=KJKEY in course URLs
+  if (courses.length === 0) {
+    const hrefRe = /<a\b[^>]*href=["'][^"']*[?&]ky=([A-Za-z0-9_\-]+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+    while ((m = hrefRe.exec(html)) !== null) {
+      addCourse(m[1], m[2]);
+    }
+  }
+
   return courses;
 }
 
@@ -278,17 +332,19 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     const mainHtmlForDebug = result.mainHtml;
-    const emTags = (mainHtmlForDebug.match(/<em\b[^>]*>/gi) ?? []);
-    const subOpenTags = emTags.filter(t => t.includes('sub_open'));
+    const subOpenOccurrences = (mainHtmlForDebug.match(/sub_open/gi) ?? []).length;
+    const kjOccurrences = (mainHtmlForDebug.match(/\bkj\s*=\s*["']/gi) ?? []).length;
+    const kyOccurrences = (mainHtmlForDebug.match(/[?&]ky=/gi) ?? []).length;
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
     res.status(200).json({
       ok: true,
       scrapedAt: result.scrapedAt,
       _d: {
         courses: result.courses.length,
-        emTotal: emTags.length,
-        subOpenTags,
-        htmlSnippet: mainHtmlForDebug.slice(0, 500),
+        subOpenOccurrences,
+        kjOccurrences,
+        kyOccurrences,
+        htmlSnippet: mainHtmlForDebug.slice(0, 800),
       },
     });
   } catch (e: any) {
