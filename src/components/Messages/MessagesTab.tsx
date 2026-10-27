@@ -306,18 +306,16 @@ export default function MessagesTab({ currentUser }: Props) {
 
         {/* Claude 발신자 토글 (방장/부방장 전용) */}
         {isAdmin && (
-          <div className="flex-shrink-0 py-2 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex-shrink-0 py-2 border-b border-gray-100 flex items-center justify-between gap-2">
             <span className="text-xs text-gray-500">Claude로 보내기</span>
             <button
               onClick={() => setAsClaud(v => !v)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${asClaud ? 'bg-primary-500' : 'bg-gray-200'}`}
+              className={`relative flex-shrink-0 w-10 h-5 rounded-full overflow-hidden transition-colors ${asClaud ? 'bg-primary-500' : 'bg-gray-200'}`}
             >
-              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${asClaud ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${asClaud ? 'translate-x-[18px]' : 'translate-x-0'}`} />
             </button>
           </div>
         )}
-
-        <div className="flex-1" />
 
         {/* Input bar */}
         <div className="flex-shrink-0 pt-2 border-t border-gray-100 flex gap-2 items-end">
