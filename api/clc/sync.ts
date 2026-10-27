@@ -134,12 +134,17 @@ function extractKoreanDate(text: string): string | null {
 
 function parseCourses(html: string): Course[] {
   const courses: Course[] = [];
-  const re = /kj="([^"]+)"[^>]*class="[^"]*sub_open[^"]*"[^>]*>([\s\S]*?)<\/em>|class="[^"]*sub_open[^"]*"[^>]*kj="([^"]+)"[^>]*>([\s\S]*?)<\/em>/gi;
+  const emRe = /<em\b([^>]*)>([\s\S]*?)<\/em>/gi;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(html)) !== null) {
-    const kjkey = (m[1] || m[3] || '').trim();
-    const raw = stripTags(m[2] || m[4] || '');
-    if (!kjkey || !raw) continue;
+  while ((m = emRe.exec(html)) !== null) {
+    const attrs = m[1];
+    if (!attrs.includes('sub_open')) continue;
+    const kjMatch = attrs.match(/\bkj="([^"]+)"/i);
+    if (!kjMatch) continue;
+    const kjkey = kjMatch[1].trim();
+    if (!kjkey) continue;
+    const raw = stripTags(m[2]);
+    if (!raw) continue;
     const parenIdx = raw.indexOf('(');
     const name = parenIdx > 0 ? raw.slice(0, parenIdx).trim() : raw;
     const section = parenIdx > 0 ? raw.slice(parenIdx).replace(/[()]/g, '').trim() : '';

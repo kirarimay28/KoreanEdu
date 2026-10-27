@@ -44,6 +44,7 @@ import LocationNoticeBar from './components/Admin/LocationNoticeBar';
 import VenueReminderBanner from './components/Admin/VenueReminderBanner';
 import StudyRoomPanel from './components/StudyRoom/StudyRoomPanel';
 import { LITERARY_QUOTES } from './data/literaryQuotes';
+import CLCDeadlineList from './components/CLC/CLCDeadlineList';
 
 // ── 테마별 배경 오버레이 ──────────────────────────────────
 const OVERLAY_STYLE: React.CSSProperties = {
@@ -1016,6 +1017,11 @@ export default function App() {
             <AnnouncementBar currentUser={currentUser} />
             <LocationNoticeBar currentUser={currentUser} />
             <DailyVocab date={date} />
+            {currentUser && (
+              <div className="mb-3">
+                <CLCDeadlineList uid={currentUser.id} />
+              </div>
+            )}
             <div className="flex gap-2 mb-3">
               <a
                 href="https://drive.google.com/drive/folders/1glzn6syR6vLhlE7TpsbRJHgrRBGtbTF1?usp=sharing"
