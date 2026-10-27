@@ -274,12 +274,13 @@ function parseNotices(html: string, kjkey: string, courseName: string): Notice[]
 
 async function scrapeAll(cookie: string) {
   const mainHtml = await clcGet('/ilos/main/main_form.acl', cookie);
-  // Course list is dynamically loaded — fetch the actual course list page
-  const courseListHtml = await clcGet('/ilos/st/main/course_ing_list_form.acl', cookie);
-  const courses = parseCourses(courseListHtml);
-  const udMatch = mainHtml.match(/["']ud["']\s*:\s*["']([^"']+)["']/) ||
-                  courseListHtml.match(/["']ud["']\s*:\s*["']([^"']+)["']/);
+  const udMatch = mainHtml.match(/["']ud["']\s*:\s*["']([^"']+)["']/);
   const ud = udMatch ? udMatch[1] : '';
+  // Fetch actual course list data (AJAX endpoint)
+  const courseListHtml = await clcPost('/ilos/st/main/course_ing_list.acl', cookie, {
+    ud, encoding: 'utf-8',
+  });
+  const courses = parseCourses(courseListHtml);
 
   const assignments: Assignment[] = [];
   const lectures: OnlineLecture[] = [];
@@ -335,7 +336,8 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     const clHtml = result.courseListHtml;
-    const clIlosUrls = [...new Set([...clHtml.matchAll(/["'`](\/?ilos\/[^"'`\s?#]{4,60}\.acl)[^"'`]*/gi)].map(m => m[1]))];
+    const subOpen = (clHtml.match(/sub_open/gi) ?? []).length;
+    const kjCount = (clHtml.match(/\bkj\s*=\s*["']/gi) ?? []).length;
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
     res.status(200).json({
       ok: true,
@@ -343,7 +345,9 @@ export default async function handler(req: any, res: any) {
       _d: {
         courses: result.courses.length,
         clLen: clHtml.length,
-        clIlosUrls,
+        subOpen,
+        kjCount,
+        clSnippet: clHtml.replace(/\s+/g, ' ').slice(0, 500),
       },
     });
   } catch (e: any) {
