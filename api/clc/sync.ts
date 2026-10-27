@@ -49,17 +49,38 @@ const BASE_HOST = 'clc.chosun.ac.kr';
 const BASE = `https://${BASE_HOST}`;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+function mergeCookies(base: string, setCookies: string[]): string {
+  const map: Record<string, string> = {};
+  for (const c of base.split('; ').filter(Boolean)) {
+    const i = c.indexOf('='); if (i > 0) map[c.slice(0, i)] = c.slice(i + 1);
+  }
+  for (const sc of setCookies) {
+    const part = sc.split(';')[0].trim(); const i = part.indexOf('=');
+    if (i > 0) map[part.slice(0, i)] = part.slice(i + 1);
+  }
+  return Object.entries(map).map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
 // Use https module (not fetch/undici) to avoid TLS compat issues with older servers
-function httpsReq(opts: https.RequestOptions, body?: string): Promise<{ statusCode: number; rawCookies: string[]; text: string }> {
+// maxRedirects: follow HTTP 3xx responses this many times (capturing Set-Cookie at each hop)
+function httpsReq(opts: https.RequestOptions, body?: string, maxRedirects = 0): Promise<{ statusCode: number; rawCookies: string[]; text: string }> {
   return new Promise((resolve, reject) => {
     const req = https.request({ host: BASE_HOST, secureProtocol: 'TLSv1_2_method', rejectUnauthorized: false, ...opts }, (res: IncomingMessage) => {
+      const cookies = (res.headers['set-cookie'] ?? []) as string[];
+      if (maxRedirects > 0 && res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const loc = res.headers.location as string;
+        const nextPath = loc.startsWith('http') ? (new URL(loc).pathname + (new URL(loc).search || '')) : loc;
+        const baseCookie = (opts.headers as Record<string, string>)?.Cookie ?? '';
+        res.resume();
+        httpsReq(
+          { ...opts, path: nextPath, method: 'GET', headers: { ...(opts.headers as object), Cookie: mergeCookies(baseCookie, cookies) } },
+          undefined, maxRedirects - 1
+        ).then(r => resolve({ ...r, rawCookies: [...cookies, ...r.rawCookies] }), reject);
+        return;
+      }
       const chunks: Buffer[] = [];
       res.on('data', (c: Buffer) => chunks.push(c));
-      res.on('end', () => resolve({
-        statusCode: res.statusCode ?? 0,
-        rawCookies: (res.headers['set-cookie'] ?? []) as string[],
-        text: Buffer.concat(chunks).toString('utf8'),
-      }));
+      res.on('end', () => resolve({ statusCode: res.statusCode ?? 0, rawCookies: cookies, text: Buffer.concat(chunks).toString('utf8') }));
     });
     req.setTimeout(9000, () => req.destroy(new Error('timeout')));
     req.on('error', reject);
@@ -73,22 +94,28 @@ async function clcGet(path: string, cookie: string, referer?: string): Promise<s
   return text;
 }
 
+// AJAX POST: sends X-Requested-With for data endpoints
 async function clcPost(path: string, cookie: string, bodyObj: Record<string, string>, referer?: string): Promise<string> {
   const body = new URLSearchParams(bodyObj).toString();
   const { text } = await httpsReq({
-    path,
-    method: 'POST',
-    headers: {
-      Cookie: cookie,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': Buffer.byteLength(body),
-      'User-Agent': UA,
-      Referer: referer ?? BASE,
-      'X-Requested-With': 'XMLHttpRequest',
-      Origin: `https://${BASE_HOST}`,
-    },
+    path, method: 'POST',
+    headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': UA, Referer: referer ?? BASE, 'X-Requested-With': 'XMLHttpRequest', Origin: `https://${BASE_HOST}` },
   }, body);
   return text;
+}
+
+// Form POST: no AJAX headers, follows redirects, returns updated cookie
+// Mirrors what the browser does when goRoom() submits myform to main_form.acl
+async function enterCourse(cookie: string, course: Course): Promise<string> {
+  const body = new URLSearchParams({ ky: course.kjkey, org_sect: course.orgSect ?? '', ledg_year: course.ledgYear ?? '', ledg_sessn: course.ledgSessn ?? '', encoding: 'utf-8' }).toString();
+  try {
+    const { rawCookies } = await httpsReq({
+      path: '/ilos/st/course/main_form.acl', method: 'POST',
+      headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body), 'User-Agent': UA, Referer: `${BASE}/ilos/st/main/course_ing_list.acl` },
+    }, body, 5);
+    if (rawCookies.length) return mergeCookies(cookie, rawCookies);
+  } catch { /* ignore */ }
+  return cookie;
 }
 
 // ── CLC Login ──────────────────────────────────────────────────────────────
@@ -260,24 +287,21 @@ async function scrapeAll(cookie: string, userId: string) {
 
   let apiSample: { ky: string; ud: string; len: number; info: string } | null = null;
 
-  for (const { kjkey, name, ledgYear, ledgSessn, orgSect } of courses) {
-    // eClass requires POSTing all 4 course params to main_form.acl to register the course in the server session.
-    // This is what the browser's goRoom() JS does on course click.
+  for (const course of courses) {
+    const { kjkey, name } = course;
+    // Enter the course room (browser goRoom() pattern: form POST, follow redirects, capture new cookies)
+    const courseCookie = await enterCourse(cookie, course);
     const courseRef = `${BASE}/ilos/st/course/main_form.acl`;
-    try {
-      await clcPost('/ilos/st/course/main_form.acl', cookie, {
-        ky: kjkey, org_sect: orgSect ?? '', ledg_year: ledgYear ?? '', ledg_sessn: ledgSessn ?? '', encoding: 'utf-8',
-      });
-    } catch { /* ignore */ }
 
     try {
-      const html = await clcPost('/ilos/st/course/report_list.acl', cookie, {
-        ud, ky: kjkey, encoding: 'utf-8',
-      }, courseRef);
+      // Visit assignment form page first (_form → .acl pattern eClass uses)
+      try { await clcGet(`/ilos/st/course/report_list_form.acl?ky=${kjkey}`, courseCookie, courseRef); } catch { /* ignore */ }
+      const assignRef = `${BASE}/ilos/st/course/report_list_form.acl`;
+      const html = await clcPost('/ilos/st/course/report_list.acl', courseCookie, { ud, ky: kjkey, encoding: 'utf-8' }, assignRef);
       if (!apiSample) {
         const compact = html.replace(/\s+/g, ' ');
         const redirect = /login_form|로그인이|다시 로그인/.test(compact);
-        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? 'POST후도세션만료' : compact.slice(0, 250) };
+        apiSample = { ky: kjkey, ud, len: compact.length, info: redirect ? '여전히세션만료' : compact.slice(0, 250) };
       }
       assignments.push(...parseAssignments(html, kjkey, name));
     } catch (e: any) {
@@ -285,22 +309,19 @@ async function scrapeAll(cookie: string, userId: string) {
     }
 
     try {
-      const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, cookie, courseRef);
-      const weeks = parseWeekNumbers(outerHtml);
+      const outerHtml = await clcGet(`/ilos/st/course/online_list_form.acl?ky=${kjkey}`, courseCookie, courseRef);
+      const weeks = parseWeekNumbers(outerHtml).slice(0, 6);
       for (const weekNo of (weeks.length ? weeks : [1])) {
         try {
-          const html = await clcPost('/ilos/st/course/online_list.acl', cookie, {
-            ud, ky: kjkey, WEEK_NO: String(weekNo), encoding: 'utf-8',
-          }, courseRef);
+          const html = await clcPost('/ilos/st/course/online_list.acl', courseCookie, { ud, ky: kjkey, WEEK_NO: String(weekNo), encoding: 'utf-8' }, courseRef);
           lectures.push(...parseOnlineLectures(html, kjkey, name, weekNo));
         } catch { /* ignore */ }
       }
     } catch { /* ignore */ }
 
     try {
-      const html = await clcPost('/ilos/st/course/notice_list.acl', cookie, {
-        ud, ky: kjkey, encoding: 'utf-8',
-      }, courseRef);
+      try { await clcGet(`/ilos/st/course/notice_list_form.acl?ky=${kjkey}`, courseCookie, courseRef); } catch { /* ignore */ }
+      const html = await clcPost('/ilos/st/course/notice_list.acl', courseCookie, { ud, ky: kjkey, encoding: 'utf-8' }, `${BASE}/ilos/st/course/notice_list_form.acl`);
       notices.push(...parseNotices(html, kjkey, name));
     } catch { /* ignore */ }
   }
