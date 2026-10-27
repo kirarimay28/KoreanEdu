@@ -332,19 +332,19 @@ export default async function handler(req: any, res: any) {
     const cookie = await clcLogin(creds.id, creds.pwd);
     const result = await scrapeAll(cookie);
     const mainHtmlForDebug = result.mainHtml;
-    const subOpenOccurrences = (mainHtmlForDebug.match(/sub_open/gi) ?? []).length;
-    const kjOccurrences = (mainHtmlForDebug.match(/\bkj\s*=\s*["']/gi) ?? []).length;
-    const kyOccurrences = (mainHtmlForDebug.match(/[?&]ky=/gi) ?? []).length;
+    // Extract frame/iframe src URLs
+    const frameSrcs: string[] = [];
+    const frameRe = /<(?:frame|iframe)\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi;
+    let fm: RegExpExecArray | null;
+    while ((fm = frameRe.exec(mainHtmlForDebug)) !== null) frameSrcs.push(fm[1]);
     await db.collection('clcData').doc(uid).set({ ...result, updatedAt: new Date().toISOString() });
     res.status(200).json({
       ok: true,
       scrapedAt: result.scrapedAt,
       _d: {
         courses: result.courses.length,
-        subOpenOccurrences,
-        kjOccurrences,
-        kyOccurrences,
-        htmlSnippet: mainHtmlForDebug.slice(0, 800),
+        frameSrcs,
+        htmlSnippet: mainHtmlForDebug.slice(0, 300),
       },
     });
   } catch (e: any) {
