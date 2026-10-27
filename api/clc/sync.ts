@@ -52,7 +52,7 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 // Use https module (not fetch/undici) to avoid TLS compat issues with older servers
 function httpsReq(opts: https.RequestOptions, body?: string): Promise<{ statusCode: number; rawCookies: string[]; text: string }> {
   return new Promise((resolve, reject) => {
-    const req = https.request({ host: BASE_HOST, ...opts }, (res: IncomingMessage) => {
+    const req = https.request({ host: BASE_HOST, secureProtocol: 'TLSv1_2_method', rejectUnauthorized: false, ...opts }, (res: IncomingMessage) => {
       const chunks: Buffer[] = [];
       res.on('data', (c: Buffer) => chunks.push(c));
       res.on('end', () => resolve({
