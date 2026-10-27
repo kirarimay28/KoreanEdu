@@ -285,7 +285,9 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ ok: true, scrapedAt: result.scrapedAt });
   } catch (e: any) {
     console.error('[clc/sync]', e?.message ?? e);
-    const msg = String(e?.message ?? '').includes('로그인 실패') ? e.message : '동기화 실패: ' + String(e?.message ?? '');
+    const cause = (e?.cause as any)?.message ?? (e?.cause as any)?.code ?? '';
+    const base = String(e?.message ?? '');
+    const msg = base.includes('로그인 실패') ? base : '동기화 실패: ' + base + (cause ? ` [${cause}]` : '');
     res.status(500).json({ error: msg });
   }
 }
