@@ -2,10 +2,9 @@
  * 주간 리포트 — 일요일 저녁
  * Vercel Cron: "0 10 * * 0" (UTC) = 19:00 KST Sunday
  */
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import webpush from 'web-push';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
@@ -52,7 +51,7 @@ async function pushToOwner(title: string, body: string): Promise<void> {
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   try {

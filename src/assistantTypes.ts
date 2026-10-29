@@ -358,3 +358,16 @@ export const CARD_CHECKLIST_SEED: Array<{ subject: ASubject; chapter: string }> 
   { subject: '국교론', chapter: '화법 평가·지도 방법' },
   { subject: '국교론', chapter: '화법 기출 총정리' },
 ];
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ProposalData {
+  type: 'study_block' | 'deadline' | 'memo';
+  action: 'add' | 'edit' | 'delete' | 'skip';
+  summary: string;
+  reason: string;
+  data?: Record<string, unknown>;
+}

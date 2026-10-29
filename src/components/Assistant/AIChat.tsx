@@ -3,7 +3,7 @@ import type { User } from '../../types';
 import type { AssistantSettings } from '../../assistantTypes';
 import { subscribeMemos, deleteMemo, loadAssistantSettings } from '../../assistantStore';
 import type { AssistantMemo } from '../../assistantTypes';
-import type { ChatMessage, ProposalData } from '../../../api/assistant/chat';
+import type { ChatMessage, ProposalData } from '../../assistantTypes';
 import { Send, Bot, User as UserIcon, Trash2, StickyNote, ChevronDown, Check, X, Loader2 } from 'lucide-react';
 
 interface Props {

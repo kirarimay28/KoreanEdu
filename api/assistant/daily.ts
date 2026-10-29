@@ -2,10 +2,9 @@
  * 아침 브리핑 (07:00 KST) + 저녁 체크인 (21:00 KST)
  * Vercel Cron: "0 22,12 * * *" (UTC) = 07:00 & 21:00 Asia/Seoul
  */
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import webpush from 'web-push';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
@@ -117,7 +116,7 @@ async function eveningCheckIn(today: string): Promise<void> {
 
 // ── Handler ───────────────────────────────────────────────────
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   try {
