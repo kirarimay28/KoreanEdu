@@ -3,6 +3,7 @@ import type { User } from '../../types';
 import TodayView from './TodayView';
 import WeekView from './WeekView';
 import ScheduleInput from './ScheduleInput';
+import GradesView from './GradesView';
 import { getKSTToday } from '../common/DateNavigator';
 import { CalendarDays, Calendar, ListTodo, BarChart2, Bot } from 'lucide-react';
 
@@ -61,22 +62,13 @@ export default function AssistantTab({ currentUser }: Props) {
         {sub === 'today'    && <TodayView currentUser={currentUser} today={today} />}
         {sub === 'week'     && <WeekView currentUser={currentUser} today={today} />}
         {sub === 'schedule' && <ScheduleInput currentUser={currentUser} today={today} />}
-        {sub === 'grades'   && <GradesPlaceholder />}
+        {sub === 'grades'   && <GradesView currentUser={currentUser} />}
         {sub === 'ai'       && <AIPlaceholder />}
       </div>
     </div>
   );
 }
 
-function GradesPlaceholder() {
-  return (
-    <div className="card py-16 text-center space-y-2">
-      <BarChart2 className="w-8 h-8 text-gray-300 mx-auto" />
-      <p className="text-sm font-bold text-gray-400">성적 관리</p>
-      <p className="text-xs text-gray-300">Phase 3에서 구현 예정</p>
-    </div>
-  );
-}
 
 function AIPlaceholder() {
   return (
