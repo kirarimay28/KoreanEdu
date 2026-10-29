@@ -182,17 +182,16 @@ export function getAvailableMinutes(
 export function generateSemesterDayBlocks(
   date: string,
   config: StudyConfig,
-  classTimes: Array<{ start: string; end: string }> = [],
+  classSlots: Array<{ name: string; start: string; end: string }> = [],
   workSlot: { start: string; end: string; commuteMin: number; returnMin: number } | null = null,
 ): StudyBlock[] {
   const userId = config.userId;
   const dow = getDayOfWeek(date);
 
-  // 일요일 저녁은 휴식
   if (dow === '일') return [];
 
   let avail: Interval[] = [{ start: toMin(config.studyStartTime), end: toMin(config.studyEndTime) }];
-  for (const c of classTimes) avail = subtractIntervals(avail, [{ start: toMin(c.start), end: toMin(c.end) }]);
+  for (const c of classSlots) avail = subtractIntervals(avail, [{ start: toMin(c.start), end: toMin(c.end) }]);
   if (workSlot) {
     avail = subtractIntervals(avail, [{
       start: toMin(workSlot.start) - workSlot.commuteMin,
@@ -200,7 +199,6 @@ export function generateSemesterDayBlocks(
     }]);
   }
 
-  // Remove buffer from last slots
   let bufLeft = config.bufferMinutes;
   for (let i = avail.length - 1; i >= 0 && bufLeft > 0; i--) {
     const len = avail[i].end - avail[i].start;
@@ -213,65 +211,38 @@ export function generateSemesterDayBlocks(
   const usable = avail.filter(s => s.end - s.start >= config.minBlockMin);
   if (usable.length === 0) return [];
 
-  const totalMin = usable.reduce((s, i) => s + (i.end - i.start), 0);
-  const ratioSum = Object.values(config.ratios).reduce((s, r) => s + r, 0);
-  const subjectMin: Record<ASubject, number> = {
-    '문법':   Math.floor(totalMin * config.ratios['문법'] / ratioSum),
-    '문학':   Math.floor(totalMin * config.ratios['문학'] / ratioSum),
-    '국교론': Math.floor(totalMin * config.ratios['국교론'] / ratioSum),
-  };
-
+  // 오늘 수업 있는 과목 → 예습, 없는 과목 → 복습 (전체 시간표 과목 목록은 호출자에서 전달)
+  const todaySubjectNames = classSlots.map(c => c.name);
   const blocks: StudyBlock[] = [];
   const slots = usable.map(s => ({ ...s }));
 
-  // Grammar → longest slot (집중 필요 = 가장 긴 연속 시간)
-  const longestIdx = slots.reduce((bi, s, i) => (s.end - s.start) > (slots[bi].end - slots[bi].start) ? i : bi, 0);
-  const gSlot = slots[longestIdx];
-  const grammarSeq: Array<{ type: StudyBlockType; label: string; frac: number }> = [
-    { type: '문법_정독',   label: '문법 정독',   frac: 0.5 },
-    { type: '문법_카드',   label: '쟁점 카드',   frac: 0.25 },
-    { type: '문법_서술형', label: '문법 서술형', frac: 0.25 },
-  ];
-  for (const g of grammarSeq) {
-    const dur = Math.min(Math.ceil(subjectMin['문법'] * g.frac), gSlot.end - gSlot.start);
-    if (dur < config.minBlockMin || gSlot.start >= gSlot.end) continue;
-    blocks.push(makeBlock(userId, date, fromMin(gSlot.start), fromMin(gSlot.start + dur), '문법', g.type, g.label));
-    gSlot.start += dur;
-  }
+  if (todaySubjectNames.length === 0) return [];
 
-  // Literature + KorEdu in remaining slots
-  const afterSubjects: Array<{ subject: ASubject; seq: Array<{ type: StudyBlockType; label: string }> }> = [
-    { subject: '문학', seq: [
-      { type: '문학_강의복습', label: '문학 강의복습' },
-      { type: '문학_작품분석', label: '문학 작품분석' },
-      { type: '문학_기출',    label: '문학 기출' },
-    ]},
-    { subject: '국교론', seq: [
-      { type: '국교론_강의복습', label: '국교론 강의복습' },
-      { type: '국교론_단권화',   label: '국교론 단권화' },
-      { type: '국교론_기출',    label: '국교론 기출' },
-    ]},
-  ];
-  for (const subj of afterSubjects) {
-    const perType = Math.floor(subjectMin[subj.subject] / subj.seq.length);
-    for (const st of subj.seq) {
-      for (const slot of slots) {
-        const avLen = slot.end - slot.start;
-        if (avLen < config.minBlockMin) continue;
-        const dur = Math.min(perType, avLen, config.defaultBlockMin);
-        if (dur < config.minBlockMin) continue;
-        blocks.push(makeBlock(userId, date, fromMin(slot.start), fromMin(slot.start + dur), subj.subject, st.type, st.label));
-        slot.start += dur;
-        break;
-      }
+  const totalMin = usable.reduce((s, i) => s + (i.end - i.start), 0);
+  const perSubjectMin = Math.floor(totalMin / todaySubjectNames.length);
+
+  for (const name of todaySubjectNames) {
+    const isToday = classSlots.some(c => c.name === name);
+    const blockType: StudyBlockType = isToday ? '학기_예습' : '학기_복습';
+    const label = `${name} ${isToday ? '예습' : '복습'}`;
+    let remaining = perSubjectMin;
+    for (const slot of slots) {
+      if (remaining <= 0) break;
+      const avLen = slot.end - slot.start;
+      if (avLen < config.minBlockMin) continue;
+      const dur = Math.min(remaining, avLen, config.defaultBlockMin);
+      if (dur < config.minBlockMin) continue;
+      blocks.push(makeBlock(userId, date, fromMin(slot.start), fromMin(slot.start + dur), '학기과목', blockType, label));
+      slot.start += dur;
+      remaining -= dur;
     }
   }
 
-  // 자투리: [20, minBlockMin) 분 남은 슬롯
+  // 자투리
   for (const slot of slots) {
     const len = slot.end - slot.start;
     if (len >= 20 && len < config.minBlockMin) {
-      blocks.push(makeBlock(userId, date, fromMin(slot.start), fromMin(slot.end), '문법', '자투리', '자투리 (카드 복습)'));
+      blocks.push(makeBlock(userId, date, fromMin(slot.start), fromMin(slot.end), '학기과목', '자투리', '자투리 (카드 복습)'));
     }
   }
 
@@ -281,7 +252,7 @@ export function generateSemesterDayBlocks(
 export function generateSemesterWeekBlocks(
   weekStart: string,
   config: StudyConfig,
-  timetable: { subjects: Array<{ times: Array<{ day: string; start: string; end: string }> }> } | null,
+  timetable: { subjects: Array<{ name: string; times: Array<{ day: string; start: string; end: string }> }> } | null,
   workSlots: Array<{ day: string; start: string; end: string }> | null,
   commuteMinutes: number,
   returnMinutes: number,
@@ -290,12 +261,15 @@ export function generateSemesterWeekBlocks(
   for (let i = 0; i < 7; i++) {
     const date = addDays(weekStart, i);
     const dow = getDayOfWeek(date);
-    const classTimes = timetable
-      ? timetable.subjects.flatMap(s => s.times.filter(t => t.day === dow).map(t => ({ start: t.start, end: t.end })))
+    // 오늘 수업 과목 (이름 포함)
+    const classSlots = timetable
+      ? timetable.subjects.flatMap(s =>
+          s.times.filter(t => t.day === dow).map(t => ({ name: s.name, start: t.start, end: t.end }))
+        )
       : [];
     const ws = workSlots?.find(s => s.day === dow) ?? null;
     const workSlot = ws ? { start: ws.start, end: ws.end, commuteMin: commuteMinutes, returnMin: returnMinutes } : null;
-    blocks.push(...generateSemesterDayBlocks(date, config, classTimes, workSlot));
+    blocks.push(...generateSemesterDayBlocks(date, config, classSlots, workSlot));
   }
   return blocks;
 }
@@ -442,5 +416,6 @@ export function buildDayTimeline(
 function getBlockColor(subject: ASubject): string {
   if (subject === '문법') return 'violet';
   if (subject === '문학') return 'emerald';
+  if (subject === '학기과목') return 'blue';
   return 'primary';
 }

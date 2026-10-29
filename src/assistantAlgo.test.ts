@@ -192,18 +192,16 @@ describe('generateSemesterDayBlocks', () => {
     }
   });
   it('respects class time exclusion', () => {
-    const classTimes = [{ start: '09:00', end: '12:00' }];
+    const classTimes = [{ name: '현대소설론', start: '09:00', end: '12:00' }];
     const blocks = generateSemesterDayBlocks('2026-10-26', SEMESTER_CONFIG, classTimes);
     expect(blocks.every(b => b.start >= '12:00')).toBe(true);
   });
-  it('grammar goes to longest slot', () => {
-    // Give two slots: short 09:00-10:30 (90m), long 13:00-18:00 (300m)
-    const classTimes = [{ start: '10:30', end: '13:00' }];
+  it('blocks are for timetable subjects', () => {
+    const classTimes = [{ name: '현대소설론', start: '10:30', end: '13:00' }];
     const blocks = generateSemesterDayBlocks('2026-10-26', SEMESTER_CONFIG, classTimes);
-    const grammarBlocks = blocks.filter(b => b.subject === '문법' && b.blockType !== '자투리');
-    // Grammar should start at or after 13:00 (the longer afternoon slot)
-    if (grammarBlocks.length > 0) {
-      expect(grammarBlocks[0].start >= '13:00').toBe(true);
+    const semesterBlocks = blocks.filter(b => b.subject === '학기과목' && b.blockType !== '자투리');
+    if (semesterBlocks.length > 0) {
+      expect(semesterBlocks[0].start >= '13:00').toBe(true);
     }
   });
   it('no block starts before studyStartTime', () => {

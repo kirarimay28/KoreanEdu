@@ -5,8 +5,9 @@ export type SpeechStyle = '반말' | '존댓말';
 export type AssistantWeekday = '월' | '화' | '수' | '목' | '금' | '토' | '일';
 export const ALL_AWEEKDAYS: AssistantWeekday[] = ['월', '화', '수', '목', '금', '토', '일'];
 
-export type ASubject = '문법' | '문학' | '국교론';
-export const ASUBJECTS: ASubject[] = ['문법', '문학', '국교론'];
+export type ImyongSubject = '문법' | '문학' | '국교론';
+export type ASubject = ImyongSubject | '학기과목';
+export const ASUBJECTS: ImyongSubject[] = ['문법', '문학', '국교론'];
 
 export type BlockStatus = '예정' | '진행' | '완료' | '부분' | '미완' | '건너뜀';
 
@@ -14,7 +15,8 @@ export type StudyBlockType =
   | '문법_정독' | '문법_카드' | '문법_서술형'
   | '문학_강의복습' | '문학_작품분석' | '문학_기출'
   | '국교론_강의복습' | '국교론_단권화' | '국교론_기출'
-  | '주말강의' | '주간복습' | '자투리' | '모의고사';
+  | '주말강의' | '주간복습' | '자투리' | '모의고사'
+  | '학기_복습' | '학기_예습';
 
 export interface CustomDndSlot {
   id: string;
@@ -52,7 +54,7 @@ export interface AssistantSettings {
   bufferMinutes: number;
   minBlockMin: number;
   defaultBlockMin: number;
-  ratios: Record<ASubject, number>;
+  ratios: Record<ImyongSubject, number>;
   dnd: DndConfig;
   urgent: UrgentConfig;
   updatedAt: string;
@@ -179,7 +181,7 @@ export interface StudyConfig {
   minBlockMin: number;
   defaultBlockMin: number;
   bufferMinutes: number;
-  ratios: Record<ASubject, number>;
+  ratios: Record<ImyongSubject, number>;
   studyStartTime: string;
   studyEndTime: string;
   updatedAt: string;
