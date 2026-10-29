@@ -32,18 +32,25 @@ export default async function handler(req: any, res: any) {
 - 알 수 없는 값은 기본값으로`;
   }
 
-  try {
-    const result = await model.generateContent([
-      { inlineData: { data: imageBase64, mimeType: mimeType ?? 'image/jpeg' } },
-      { text: prompt },
-    ]);
-    const raw = result.response.text().trim();
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('JSON 파싱 실패: ' + raw.slice(0, 200));
-    const json = JSON.parse(match[0]);
-    return res.status(200).json(json);
-  } catch (err: any) {
-    console.error('parse-schedule error:', err.message);
-    return res.status(500).json({ error: err.message });
+  const parts = [
+    { inlineData: { data: imageBase64, mimeType: mimeType ?? 'image/jpeg' } },
+    { text: prompt },
+  ];
+
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 1500));
+      const result = await model.generateContent(parts);
+      const raw = result.response.text().trim();
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('JSON 파싱 실패: ' + raw.slice(0, 200));
+      return res.status(200).json(JSON.parse(match[0]));
+    } catch (err: any) {
+      lastErr = err;
+      if (!err.message?.includes('503')) break;
+    }
   }
+  console.error('parse-schedule error:', lastErr?.message);
+  return res.status(500).json({ error: lastErr?.message });
 }
