@@ -1,8 +1,9 @@
 import webpush from 'web-push';
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!)) });
+if (!getApps().length) {
+  initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!)) });
 }
 
 webpush.setVapidDetails(
@@ -11,7 +12,7 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!,
 );
 
-const db = admin.firestore();
+const db = getFirestore();
 const OWNER = '서연';
 
 function isDndActive(settings: any, nowHHMM: string, weekday: string, classTimes: any[], workSlot: any): boolean {
