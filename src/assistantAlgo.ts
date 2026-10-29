@@ -217,25 +217,20 @@ export function generateSemesterDayBlocks(
   if (subjects.length === 0) return [];
 
   const todayNames = new Set(classSlots.map(c => c.name));
-  const totalMin = usable.reduce((s, i) => s + (i.end - i.start), 0);
-  const perSubjectMin = Math.floor(totalMin / subjects.length);
-
   const blocks: StudyBlock[] = [];
   const slots = usable.map(s => ({ ...s }));
 
+  // 과목마다 한 블록씩 순서대로 채움 (시간 부족 시 중단)
   for (const name of subjects) {
     const blockType: StudyBlockType = todayNames.has(name) ? '학기_예습' : '학기_복습';
     const label = `${name} ${todayNames.has(name) ? '예습' : '복습'}`;
-    let remaining = perSubjectMin;
     for (const slot of slots) {
-      if (remaining <= 0) break;
       const avLen = slot.end - slot.start;
       if (avLen < config.minBlockMin) continue;
-      const dur = Math.min(remaining, avLen, config.defaultBlockMin);
-      if (dur < config.minBlockMin) continue;
+      const dur = Math.min(avLen, config.defaultBlockMin);
       blocks.push(makeBlock(userId, date, fromMin(slot.start), fromMin(slot.start + dur), '학기과목', blockType, label));
       slot.start += dur;
-      remaining -= dur;
+      break;
     }
   }
 
