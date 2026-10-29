@@ -16,7 +16,7 @@ import {
   saveStudyBlocks,
 } from '../../assistantStore';
 import {
-  getDayOfWeek, getWeekMonday, addDays,
+  getWeekMonday,
   generateVacationWeekBlocks, getVacationWeekNum,
 } from '../../assistantAlgo';
 import { ChevronDown, ChevronUp, Plus, Trash2, Check } from 'lucide-react';

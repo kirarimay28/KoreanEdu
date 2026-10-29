@@ -142,7 +142,7 @@ export default function AIChat({ currentUser }: Props) {
           <WelcomeBubble speechStyle={settings?.speechStyle ?? '반말'} onTap={send} />
         )}
         {messages.map(msg => (
-          <MessageBubble key={msg.id} msg={msg} uid={uid} onConfirm={() => {
+          <MessageBubble key={msg.id} msg={msg} onConfirm={() => {
             // Proposal confirmed — for now dismiss and inform user to apply manually
             // Full apply integration would call the relevant store function
             setMessages(prev => prev.map(m =>
@@ -182,9 +182,8 @@ export default function AIChat({ currentUser }: Props) {
 
 // ── Message bubble ────────────────────────────────────────────
 
-function MessageBubble({ msg, uid, onConfirm }: {
+function MessageBubble({ msg, onConfirm }: {
   msg: DisplayMessage;
-  uid: string;
   onConfirm: () => void;
 }) {
   const isUser = msg.role === 'user';

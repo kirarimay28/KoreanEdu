@@ -15,7 +15,6 @@ interface Props {
   today: string;
 }
 
-type BlockAction = 'none' | 'checkin';
 
 interface TimeItem {
   start: string;

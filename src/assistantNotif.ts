@@ -4,7 +4,6 @@ import type {
   StudyBlock,
   SpeechStyle,
   AssistantWeekday,
-  CustomDndSlot,
 } from './assistantTypes';
 
 // ── Types ─────────────────────────────────────────────────────
@@ -231,7 +230,7 @@ export interface NotifGateInput {
 }
 
 export function judgeNotifications(input: NotifGateInput): NotifPayload[] {
-  const { settings, ctx, blocks, deadlines, today, nowHHMM, nowISO, sentCountToday } = input;
+  const { settings, ctx, blocks, deadlines, today, nowHHMM, sentCountToday } = input;
   const style = settings.speechStyle;
   const dndOn = isDndActive(settings, ctx);
   const payloads: NotifPayload[] = [];

@@ -376,7 +376,7 @@ export interface TimelineSlot {
 }
 
 export function buildDayTimeline(
-  date: string,
+  _date: string,
   classSlots: Array<{ start: string; end: string; name: string }>,
   workSlot: { start: string; end: string; commuteMin: number; returnMin: number } | null,
   lectureSlots: Array<{ start: string; end: string; source: string }>,
