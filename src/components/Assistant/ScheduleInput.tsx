@@ -247,18 +247,16 @@ export default function ScheduleInput({ currentUser, today }: Props) {
               if (!file || !timetable) return;
               setTtParsing(true);
               try {
-                const reader = new FileReader();
-                const base64: string = await new Promise((resolve, reject) => {
-                  reader.onload = () => resolve((reader.result as string).split(',')[1]);
-                  reader.onerror = reject;
-                  reader.readAsDataURL(file);
-                });
+                const base64 = await compressImage(file, 1200);
                 const resp = await fetch('/api/parse-schedule', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ imageBase64: base64, mimeType: file.type, type: 'timetable' }),
+                  body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg', type: 'timetable' }),
                 });
-                if (!resp.ok) throw new Error('인식 실패');
+                if (!resp.ok) {
+                  const e = await resp.json().catch(() => ({}));
+                  throw new Error(e.error ?? `서버 오류 ${resp.status}`);
+                }
                 const data = await resp.json();
                 setTimetable({
                   ...timetable,
@@ -327,18 +325,16 @@ export default function ScheduleInput({ currentUser, today }: Props) {
               if (!file || !work) return;
               setWorkParsing(true);
               try {
-                const reader = new FileReader();
-                const base64: string = await new Promise((resolve, reject) => {
-                  reader.onload = () => resolve((reader.result as string).split(',')[1]);
-                  reader.onerror = reject;
-                  reader.readAsDataURL(file);
-                });
+                const base64 = await compressImage(file, 1200);
                 const resp = await fetch('/api/parse-schedule', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ imageBase64: base64, mimeType: file.type, type: 'work' }),
+                  body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg', type: 'work' }),
                 });
-                if (!resp.ok) throw new Error('인식 실패');
+                if (!resp.ok) {
+                  const e = await resp.json().catch(() => ({}));
+                  throw new Error(e.error ?? `서버 오류 ${resp.status}`);
+                }
                 const data = await resp.json();
                 setWork({
                   ...work,
@@ -526,4 +522,24 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       </Section>
     </div>
   );
+}
+
+function compressImage(file: File, maxPx: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }
