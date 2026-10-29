@@ -1,6 +1,6 @@
 import { db } from './firebase';
 import {
-  collection, doc, setDoc, getDoc, deleteDoc,
+  collection, doc, setDoc, getDoc, deleteDoc, getDocs,
   onSnapshot, query, where,
 } from 'firebase/firestore';
 import type {
@@ -145,6 +145,18 @@ export async function saveStudyBlock(b: StudyBlock): Promise<void> {
 }
 export async function saveStudyBlocks(blocks: StudyBlock[]): Promise<void> {
   await Promise.all(blocks.map(b => saveStudyBlock(b)));
+}
+export async function deleteStudyBlocksForWeek(userId: string, weekStart: string, weekEnd: string): Promise<void> {
+  try {
+    const q = query(
+      collection(db, 'assistantStudyBlocks'),
+      where('userId', '==', userId),
+      where('date', '>=', weekStart),
+      where('date', '<=', weekEnd),
+    );
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  } catch (e) { console.warn('deleteStudyBlocksForWeek', e); }
 }
 export async function updateBlockStatus(
   id: string,

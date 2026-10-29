@@ -13,10 +13,10 @@ import {
   subscribeLectureSlots, saveLectureSlot, deleteLectureSlot,
   subscribeDeadlines, saveDeadline, deleteDeadline, completeDeadline,
   loadStudyConfig, saveStudyConfig,
-  saveStudyBlocks,
+  saveStudyBlocks, deleteStudyBlocksForWeek,
 } from '../../assistantStore';
 import {
-  getWeekMonday,
+  getWeekMonday, addDays,
   generateVacationWeekBlocks, getVacationWeekNum,
   generateSemesterWeekBlocks,
 } from '../../assistantAlgo';
@@ -232,6 +232,8 @@ export default function ScheduleInput({ currentUser, today }: Props) {
     setBlockGenLoading(true);
     setBlockGenMsg('');
     const weekStart = getWeekMonday(today);
+    const weekEnd = addDays(weekStart, 6);
+    await deleteStudyBlocksForWeek(uid, weekStart, weekEnd);
     if (studyConfig.mode === '학기') {
       const blocks = generateSemesterWeekBlocks(
         weekStart, { ...studyConfig, userId: uid },
