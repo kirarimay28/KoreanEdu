@@ -4,6 +4,7 @@ import TodayView from './TodayView';
 import WeekView from './WeekView';
 import ScheduleInput from './ScheduleInput';
 import GradesView from './GradesView';
+import AIChat from './AIChat';
 import { getKSTToday } from '../common/DateNavigator';
 import { CalendarDays, Calendar, ListTodo, BarChart2, Bot } from 'lucide-react';
 
@@ -63,19 +64,10 @@ export default function AssistantTab({ currentUser }: Props) {
         {sub === 'week'     && <WeekView currentUser={currentUser} today={today} />}
         {sub === 'schedule' && <ScheduleInput currentUser={currentUser} today={today} />}
         {sub === 'grades'   && <GradesView currentUser={currentUser} />}
-        {sub === 'ai'       && <AIPlaceholder />}
+        {sub === 'ai'       && <AIChat currentUser={currentUser} />}
       </div>
     </div>
   );
 }
 
 
-function AIPlaceholder() {
-  return (
-    <div className="card py-16 text-center space-y-2">
-      <Bot className="w-8 h-8 text-gray-300 mx-auto" />
-      <p className="text-sm font-bold text-gray-400">AI 비서 채팅</p>
-      <p className="text-xs text-gray-300">Phase 4에서 구현 예정</p>
-    </div>
-  );
-}
