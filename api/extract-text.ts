@@ -26,7 +26,8 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const pdfParse = (await import('pdf-parse')).default;
+    const pdfParseModule = await import('pdf-parse');
+    const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
     const data = await pdfParse(buffer);
     res.status(200).json({ text: data.text ?? '' });
   } catch (e: unknown) {
