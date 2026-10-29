@@ -3,7 +3,7 @@
  * Vercel Cron: "0 22,12 * * *" (UTC) = 07:00 & 21:00 Asia/Seoul
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import webpush from 'web-push';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -19,7 +19,7 @@ webpush.setVapidDetails(
 );
 
 const db = getFirestore();
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 const OWNER = '서연';
 
 // ── Seoul time helpers ────────────────────────────────────────
@@ -51,13 +51,9 @@ async function pushToOwner(title: string, body: string): Promise<void> {
 // ── LLM message generator ─────────────────────────────────────
 
 async function generateMessage(system: string, user: string): Promise<string> {
-  const res = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 200,
-    system,
-    messages: [{ role: 'user', content: user }],
-  });
-  return res.content.map(b => b.type === 'text' ? b.text : '').join('').trim();
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: system });
+  const result = await model.generateContent(user);
+  return result.response.text().trim();
 }
 
 // ── Morning brief ─────────────────────────────────────────────

@@ -1,15 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import type { MessageParam, Tool } from '@anthropic-ai/sdk/resources/messages';
 
 if (!getApps().length) {
   initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!)) });
 }
 
 const db = getFirestore();
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -28,35 +27,37 @@ export interface ProposalData {
 
 // ── Tools ─────────────────────────────────────────────────────
 
-const TOOLS: Tool[] = [
-  {
-    name: 'propose_change',
-    description: '일정(공부 블록·마감일) 변경을 제안한다. 사용자가 확인하면 그때 반영되고, 확인 전까지 아무것도 바뀌지 않는다.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        type:    { type: 'string', enum: ['study_block', 'deadline'], description: '변경 대상 종류' },
-        action:  { type: 'string', enum: ['add', 'edit', 'delete', 'skip'], description: '수행할 동작' },
-        summary: { type: 'string', description: '사용자에게 보여줄 변경 요약 (1~2줄)' },
-        reason:  { type: 'string', description: '변경 이유' },
-        data:    { type: 'object', description: '변경 내용 (선택)' },
+const TOOLS = [{
+  functionDeclarations: [
+    {
+      name: 'propose_change',
+      description: '일정(공부 블록·마감일) 변경을 제안한다. 사용자가 확인하면 그때 반영되고, 확인 전까지 아무것도 바뀌지 않는다.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          type:    { type: 'STRING', description: '변경 대상 종류 (study_block 또는 deadline)' },
+          action:  { type: 'STRING', description: '수행할 동작 (add, edit, delete, skip 중 하나)' },
+          summary: { type: 'STRING', description: '사용자에게 보여줄 변경 요약 (1~2줄)' },
+          reason:  { type: 'STRING', description: '변경 이유' },
+          data:    { type: 'OBJECT', description: '변경 내용 (선택)' },
+        },
+        required: ['type', 'action', 'summary', 'reason'],
       },
-      required: ['type', 'action', 'summary', 'reason'],
     },
-  },
-  {
-    name: 'add_memo',
-    description: '비서 메모에 중요한 내용을 저장한다. 사용자 선호, 기억해야 할 사항, 학습 패턴 등을 기록할 때 사용.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        content:  { type: 'string', description: '저장할 메모 내용' },
-        category: { type: 'string', description: '메모 분류 (예: 선호, 패턴, 기타)' },
+    {
+      name: 'add_memo',
+      description: '비서 메모에 중요한 내용을 저장한다. 사용자 선호, 기억해야 할 사항, 학습 패턴 등을 기록할 때 사용.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          content:  { type: 'STRING', description: '저장할 메모 내용' },
+          category: { type: 'STRING', description: '메모 분류 (예: 선호, 패턴, 기타)' },
+        },
+        required: ['content'],
       },
-      required: ['content'],
     },
-  },
-];
+  ],
+}];
 
 // ── Context loader ────────────────────────────────────────────
 
@@ -68,7 +69,6 @@ async function loadContext(userId: string): Promise<string> {
 
   const lines: string[] = [`오늘: ${today}`];
 
-  // Today's study blocks (label, time, status only — no PII)
   try {
     const blocksSnap = await db.collection('assistantStudyBlocks')
       .where('userId', '==', userId).where('date', '==', today).get();
@@ -81,10 +81,8 @@ async function loadContext(userId: string): Promise<string> {
     }
   } catch {}
 
-  // Upcoming deadlines (next 14 days)
   try {
-    const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-      .toISOString().slice(0, 10);
+    const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const dlSnap = await db.collection('assistantDeadlines')
       .where('userId', '==', userId).where('completed', '==', false).get();
     const upcoming = dlSnap.docs.map(d => d.data())
@@ -100,7 +98,6 @@ async function loadContext(userId: string): Promise<string> {
     }
   } catch {}
 
-  // Recent memos
   try {
     const memoSnap = await db.collection('assistantMemos')
       .where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get();
@@ -126,8 +123,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   if (!userId || !messages?.length) return res.status(400).json({ error: 'missing fields' });
-
-  // Only allow the assistant owner
   if (userId !== '서연') return res.status(403).json({ error: 'forbidden' });
 
   try {
@@ -137,39 +132,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : '반말로 짧고 단정하게 답해. 불필요한 군더더기는 빼.';
 
     const systemPrompt = `너는 임용 시험 준비생의 AI 비서야. ${styleNote}
-공부 블록·마감일을 바꿀 때는 절대 혼자 결정하지 말고, propose_change 툴로 제안만 해. 사용자가 확인 버튼을 누르면 그때 반영돼.
+공부 블록·마감일을 바꿀 때는 절대 혼자 결정하지 말고, propose_change 함수로 제안만 해. 사용자가 확인 버튼을 누르면 그때 반영돼.
 중요한 선호나 패턴을 발견하면 add_memo로 저장해.
-모르는 건 모른다고 해. 가이드라인 없는 내용은 추측하지 마.
+모르는 건 모른다고 해.
 
 현재 상황:
 ${context}`;
 
-    const apiMessages: MessageParam[] = messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      tools: TOOLS,
-      messages: apiMessages,
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemPrompt,
+      tools: TOOLS as any,
     });
 
-    // Extract text and tool calls
+    const history = messages.slice(0, -1).map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }],
+    }));
+
+    const chat = model.startChat({ history });
+    const lastMsg = messages[messages.length - 1].content;
+    const result = await chat.sendMessage(lastMsg);
+    const parts = result.response.candidates?.[0]?.content?.parts ?? [];
+
     let text = '';
     let proposal: ProposalData | null = null;
     let memoSaved: string | null = null;
 
-    for (const block of response.content) {
-      if (block.type === 'text') {
-        text += block.text;
-      } else if (block.type === 'tool_use') {
-        if (block.name === 'propose_change') {
-          proposal = block.input as ProposalData;
-        } else if (block.name === 'add_memo') {
-          const input = block.input as { content: string; category?: string };
+    for (const part of parts) {
+      if ('text' in part && part.text) {
+        text += part.text;
+      } else if ('functionCall' in part && part.functionCall) {
+        const { name, args } = part.functionCall;
+        if (name === 'propose_change') {
+          proposal = args as ProposalData;
+        } else if (name === 'add_memo') {
+          const input = args as { content: string; category?: string };
           try {
             const id = `${userId}_memo_${Date.now()}`;
             await db.collection('assistantMemos').doc(id).set({
@@ -184,20 +182,10 @@ ${context}`;
       }
     }
 
-    // If tool_use with no text, generate a brief follow-up
-    if (!text && proposal) {
-      text = `이렇게 바꿀까?`;
-    }
-    if (!text && memoSaved) {
-      text = `메모해 뒀어.`;
-    }
+    if (!text && proposal) text = '이렇게 바꿀까?';
+    if (!text && memoSaved) text = '메모해 뒀어.';
 
-    return res.status(200).json({
-      message: text,
-      proposal,
-      memoSaved,
-      stopReason: response.stop_reason,
-    });
+    return res.status(200).json({ message: text, proposal, memoSaved });
   } catch (err: any) {
     console.error('assistant/chat error:', err.message);
     return res.status(500).json({ error: err.message });

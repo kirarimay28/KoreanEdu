@@ -3,7 +3,7 @@
  * Vercel Cron: "0 10 * * 0" (UTC) = 19:00 KST Sunday
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import webpush from 'web-push';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -19,7 +19,7 @@ webpush.setVapidDetails(
 );
 
 const db = getFirestore();
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 const OWNER = '서연';
 
 function getWeekRange(): { monday: string; sunday: string } {
@@ -114,12 +114,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ].filter(Boolean).join('\n');
 
     const system = '임용 준비생의 AI 비서. 반말로 3~4줄로 이번 주 요약과 다음 주 조언을 써. 수고했다고 격려하되 부족한 점도 간단히 짚어줘.';
-    const body = await anthropic.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 256,
-      system,
-      messages: [{ role: 'user', content: contextStr }],
-    }).then(r => r.content.map(b => b.type === 'text' ? b.text : '').join('').trim());
+    const weeklyModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: system });
+    const body = await weeklyModel.generateContent(contextStr).then(r => r.response.text().trim());
 
     await pushToOwner('📊 주간 리포트', body);
 
