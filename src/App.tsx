@@ -24,11 +24,12 @@ import MedievalTab from './components/Medieval/MedievalTab';
 import ExamPeriodTab from './components/ExamPeriod/ExamPeriodTab';
 import AdminManualTab from './components/Admin/AdminManualTab';
 import MeetingTab from './components/Meeting/MeetingTab';
+import AssistantTab from './components/Assistant/AssistantTab';
 import DateNavigator, { getKSTToday } from './components/common/DateNavigator';
 import {
   BookOpen, Wallet, CalendarCheck, CalendarDays,
   LogOut, RefreshCw, Inbox, Users, Plane, ListChecks, HelpCircle, Mail,
-  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown, NotebookPen, Bell,
+  BookMarked, Menu, ChevronLeft, Map, TableProperties, Settings, X, Languages, GraduationCap, ClipboardList, Scroll, BookText, Crown, NotebookPen, Bell, Bot,
 } from 'lucide-react';
 import AppLogo from './components/common/AppLogo';
 import NameWithCrown from './components/common/NameWithCrown';
@@ -456,6 +457,7 @@ interface MenuTabDef {
   iconColor: string;
   adminOnly?: boolean;
   treasurerVisible?: boolean; // 방장+부방장+총무 열람 가능
+  ownerOnly?: boolean; // 서연 전용
 }
 
 const MENU_TABS: MenuTabDef[] = [
@@ -474,6 +476,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-amber-50',  iconColor: 'text-amber-600',  adminOnly: true },
   { id: 'meeting',     label: '회의록',     icon: NotebookPen,  iconBg: 'bg-violet-50', iconColor: 'text-violet-600', treasurerVisible: true },
+  { id: 'assistant',  label: 'AI 비서',  icon: Bot,       iconBg: 'bg-primary-50', iconColor: 'text-primary-500', ownerOnly: true },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
   { id: 'settings',   label: '설정',     icon: Settings,  iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
 ];
@@ -828,6 +831,7 @@ export default function App() {
                 const isPriv = currentUser.role === 'admin' || currentUser.role === 'subadmin';
                 if (tab.adminOnly && !isPriv) return false;
                 if (tab.treasurerVisible && !isPriv && !currentUser.isTreasurer) return false;
+                if (tab.ownerOnly && currentUser.username !== '서연') return false;
                 return true;
               }).map(tab => {
                 const Icon = tab.icon;
@@ -999,6 +1003,7 @@ export default function App() {
               {activeTab === 'examperiod' && <ExamPeriodTab currentUser={currentUser} />}
               {activeTab === 'adminmanual' && <AdminManualTab />}
               {activeTab === 'meeting'    && <MeetingTab currentUser={currentUser} />}
+              {activeTab === 'assistant'  && currentUser.username === '서연' && <AssistantTab currentUser={currentUser} />}
               {activeTab === 'tutorial'   && <TutorialTab />}
               {activeTab === 'settings'   && (
                 <SettingsTab
