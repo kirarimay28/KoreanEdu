@@ -66,19 +66,62 @@ async function loadContext(userId: string): Promise<string> {
     timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
   }).replace(/\. /g, '-').replace('.', '');
 
-  const lines: string[] = [`오늘: ${today}`];
+  const KR_DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+  const todayDow = KR_DAYS[new Date(today + 'T00:00:00+09:00').getDay()];
+  const lines: string[] = [`오늘: ${today} (${todayDow}요일)`];
+
+  // 수업 시간표 (오늘 해당 요일)
+  try {
+    const ttSnap = await db.collection('assistantSchedule').doc(userId).get();
+    if (ttSnap.exists) {
+      const tt = ttSnap.data() as any;
+      const todayClasses: string[] = [];
+      for (const subj of (tt.subjects ?? [])) {
+        for (const t of (subj.times ?? [])) {
+          if (t.day === todayDow) {
+            todayClasses.push(`  ${t.start}~${t.end} ${subj.name}`);
+          }
+        }
+      }
+      lines.push('\n오늘 수업:');
+      if (todayClasses.length > 0) {
+        todayClasses.sort().forEach(l => lines.push(l));
+      } else {
+        lines.push('  (없음)');
+      }
+    }
+  } catch {}
+
+  // 근무 일정 (오늘 해당 요일 슬롯)
+  try {
+    const wsSnap = await db.collection('assistantWorkSchedule').doc(userId).get();
+    if (wsSnap.exists) {
+      const ws = wsSnap.data() as any;
+      const todaySlot = (ws.slots ?? []).find((s: any) => s.day === todayDow);
+      lines.push('\n오늘 근무:');
+      if (todaySlot) {
+        const commute = ws.commuteMinutes ?? 0;
+        const ret = ws.returnMinutes ?? 0;
+        lines.push(`  ${todaySlot.start}~${todaySlot.end} (출근 이동 ${commute}분, 퇴근 이동 ${ret}분)`);
+      } else {
+        lines.push('  (없음)');
+      }
+    }
+  } catch {}
 
   try {
     const blocksSnap = await db.collection('assistantStudyBlocks')
       .where('userId', '==', userId).where('date', '==', today).get();
     const blocks = blocksSnap.docs.map(d => d.data());
+    lines.push('\n오늘 공부 블록:');
     if (blocks.length > 0) {
-      lines.push('\n오늘 공부 블록:');
       for (const b of blocks.sort((a, b) => a.start.localeCompare(b.start))) {
         lines.push(`  [${b.status}] ${b.start}~${b.end} ${b.label}`);
       }
+    } else {
+      lines.push('  (없음 — 아직 생성되지 않았거나 오늘은 공부 블록이 없습니다)');
     }
-  } catch {}
+  } catch { lines.push('\n오늘 공부 블록: (조회 실패)'); }
 
   try {
     const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -88,14 +131,16 @@ async function loadContext(userId: string): Promise<string> {
       .filter(d => d.date <= cutoff)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 5);
+    lines.push('\n마감·행사 (14일 이내):');
     if (upcoming.length > 0) {
-      lines.push('\n마감·행사 (14일 이내):');
       for (const d of upcoming) {
         const diff = Math.ceil((new Date(d.date + 'T00:00:00+09:00').getTime() - now.getTime()) / 86400000);
         lines.push(`  D-${diff} ${d.date} ${d.title}`);
       }
+    } else {
+      lines.push('  (없음)');
     }
-  } catch {}
+  } catch { lines.push('\n마감·행사: (조회 실패)'); }
 
   try {
     const memoSnap = await db.collection('assistantMemos')
@@ -133,7 +178,7 @@ export default async function handler(req: any, res: any) {
     const systemPrompt = `너는 임용 시험 준비생의 AI 조교야. ${styleNote}
 공부 블록·마감일을 바꿀 때는 절대 혼자 결정하지 말고, propose_change 함수로 제안만 해. 사용자가 확인 버튼을 누르면 그때 반영돼.
 중요한 선호나 패턴을 발견하면 add_memo로 저장해.
-모르는 건 모른다고 해.
+아래 "현재 상황" 섹션에 있는 정보가 네가 알 수 있는 전부야. 정보가 없으면 없다고 솔직하게 말해. "일정을 조회할 수 없다", "기능이 없다"는 말은 절대 하지 마 — 실제로 데이터를 받고 있으니까.
 
 현재 상황:
 ${context}`;
