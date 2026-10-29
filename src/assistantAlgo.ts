@@ -184,11 +184,13 @@ export function generateSemesterDayBlocks(
   config: StudyConfig,
   classSlots: Array<{ name: string; start: string; end: string }> = [],
   workSlot: { start: string; end: string; commuteMin: number; returnMin: number } | null = null,
+  allSubjectNames: string[] = [],
 ): StudyBlock[] {
   const userId = config.userId;
   const dow = getDayOfWeek(date);
 
-  if (dow === '일') return [];
+  // 휴일
+  if (dow === (config.restDay ?? '일')) return [];
 
   let avail: Interval[] = [{ start: toMin(config.studyStartTime), end: toMin(config.studyEndTime) }];
   for (const c of classSlots) avail = subtractIntervals(avail, [{ start: toMin(c.start), end: toMin(c.end) }]);
@@ -211,20 +213,19 @@ export function generateSemesterDayBlocks(
   const usable = avail.filter(s => s.end - s.start >= config.minBlockMin);
   if (usable.length === 0) return [];
 
-  // 오늘 수업 있는 과목 → 예습, 없는 과목 → 복습 (전체 시간표 과목 목록은 호출자에서 전달)
-  const todaySubjectNames = classSlots.map(c => c.name);
+  const subjects = allSubjectNames.length > 0 ? allSubjectNames : classSlots.map(c => c.name);
+  if (subjects.length === 0) return [];
+
+  const todayNames = new Set(classSlots.map(c => c.name));
+  const totalMin = usable.reduce((s, i) => s + (i.end - i.start), 0);
+  const perSubjectMin = Math.floor(totalMin / subjects.length);
+
   const blocks: StudyBlock[] = [];
   const slots = usable.map(s => ({ ...s }));
 
-  if (todaySubjectNames.length === 0) return [];
-
-  const totalMin = usable.reduce((s, i) => s + (i.end - i.start), 0);
-  const perSubjectMin = Math.floor(totalMin / todaySubjectNames.length);
-
-  for (const name of todaySubjectNames) {
-    const isToday = classSlots.some(c => c.name === name);
-    const blockType: StudyBlockType = isToday ? '학기_예습' : '학기_복습';
-    const label = `${name} ${isToday ? '예습' : '복습'}`;
+  for (const name of subjects) {
+    const blockType: StudyBlockType = todayNames.has(name) ? '학기_예습' : '학기_복습';
+    const label = `${name} ${todayNames.has(name) ? '예습' : '복습'}`;
     let remaining = perSubjectMin;
     for (const slot of slots) {
       if (remaining <= 0) break;
@@ -238,7 +239,6 @@ export function generateSemesterDayBlocks(
     }
   }
 
-  // 자투리
   for (const slot of slots) {
     const len = slot.end - slot.start;
     if (len >= 20 && len < config.minBlockMin) {
@@ -257,11 +257,11 @@ export function generateSemesterWeekBlocks(
   commuteMinutes: number,
   returnMinutes: number,
 ): StudyBlock[] {
+  const allSubjectNames = timetable ? [...new Set(timetable.subjects.map(s => s.name))] : [];
   const blocks: StudyBlock[] = [];
   for (let i = 0; i < 7; i++) {
     const date = addDays(weekStart, i);
     const dow = getDayOfWeek(date);
-    // 오늘 수업 과목 (이름 포함)
     const classSlots = timetable
       ? timetable.subjects.flatMap(s =>
           s.times.filter(t => t.day === dow).map(t => ({ name: s.name, start: t.start, end: t.end }))
@@ -269,7 +269,7 @@ export function generateSemesterWeekBlocks(
       : [];
     const ws = workSlots?.find(s => s.day === dow) ?? null;
     const workSlot = ws ? { start: ws.start, end: ws.end, commuteMin: commuteMinutes, returnMin: returnMinutes } : null;
-    blocks.push(...generateSemesterDayBlocks(date, config, classSlots, workSlot));
+    blocks.push(...generateSemesterDayBlocks(date, config, classSlots, workSlot, allSubjectNames));
   }
   return blocks;
 }

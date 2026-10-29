@@ -178,6 +178,7 @@ export interface StudyConfig {
   userId: string;
   mode: StudyMode;
   vacationStartDate?: string;
+  restDay?: AssistantWeekday;
   minBlockMin: number;
   defaultBlockMin: number;
   bufferMinutes: number;

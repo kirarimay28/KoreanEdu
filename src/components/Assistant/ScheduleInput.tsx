@@ -531,6 +531,12 @@ export default function ScheduleInput({ currentUser, today }: Props) {
                 </div>
               )}
               <div>
+                <p className="text-[10px] text-gray-400 mb-1">휴일</p>
+                <select value={studyConfig.restDay ?? '일'} onChange={e => setStudyConfig({ ...studyConfig, restDay: e.target.value as import('../../assistantTypes').AssistantWeekday })} className={inputCls}>
+                  {(['월','화','수','목','금','토','일'] as const).map(d => <option key={d} value={d}>{d}요일</option>)}
+                </select>
+              </div>
+              <div>
                 <p className="text-[10px] text-gray-400 mb-1">공부 시작</p>
                 <input type="time" value={studyConfig.studyStartTime} onChange={e => setStudyConfig({ ...studyConfig, studyStartTime: e.target.value })} className={inputCls} />
               </div>
