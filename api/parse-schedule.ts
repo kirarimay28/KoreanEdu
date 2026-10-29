@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
   if (!imageBase64 || !type) return res.status(400).json({ error: 'missing fields' });
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
+  const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
   let prompt = '';
   if (type === 'timetable') {
@@ -38,9 +38,9 @@ export default async function handler(req: any, res: any) {
   ];
 
   let lastErr: any;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (const modelName of MODELS) {
     try {
-      if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 1500));
+      const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(parts);
       const raw = result.response.text().trim();
       const match = raw.match(/\{[\s\S]*\}/);
@@ -48,7 +48,7 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json(JSON.parse(match[0]));
     } catch (err: any) {
       lastErr = err;
-      if (!err.message?.includes('503')) break;
+      if (!err.message?.includes('503') && !err.message?.includes('404')) break;
     }
   }
   console.error('parse-schedule error:', lastErr?.message);
