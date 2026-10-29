@@ -107,11 +107,15 @@ export interface ClassTimetable {
 }
 
 // ── Work Schedule ────────────────────────────────────────────
+export interface WorkDaySlot {
+  day: AssistantWeekday;
+  start: string;
+  end: string;
+}
+
 export interface WorkSchedule {
   userId: string;
-  workDays: AssistantWeekday[];
-  workStart: string;
-  workEnd: string;
+  slots: WorkDaySlot[];
   commuteMinutes: number;
   returnMinutes: number;
   updatedAt: string;

@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
   if (!imageBase64 || !type) return res.status(400).json({ error: 'missing fields' });
 
-  const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+  const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash'];
 
   let prompt = '';
   if (type === 'timetable') {
@@ -26,9 +26,10 @@ export default async function handler(req: any, res: any) {
 - semesterStart/semesterEnd를 알 수 없으면 빈 문자열로`;
   } else {
     prompt = `이 이미지에서 출근 일정을 분석해서 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
-{"workDays":["월","화","수","목","금"],"workStart":"HH:MM","workEnd":"HH:MM","commuteMinutes":0,"returnMinutes":0}
+{"slots":[{"day":"월","start":"HH:MM","end":"HH:MM"},{"day":"화","start":"HH:MM","end":"HH:MM"}],"commuteMinutes":0,"returnMinutes":0}
 - 요일은 반드시 월/화/수/목/금/토/일 중 하나
 - 시간은 24시간 HH:MM 형식
+- 요일별로 출퇴근 시간이 다를 경우 각각 별도 슬롯으로
 - 알 수 없는 값은 기본값으로`;
   }
 
@@ -40,7 +41,7 @@ export default async function handler(req: any, res: any) {
   let lastErr: any;
   for (const modelName of MODELS) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
+      const model = genAI.getGenerativeModel({ model: modelName, generationConfig: { maxOutputTokens: 512 } });
       const result = await model.generateContent(parts);
       const raw = result.response.text().trim();
       const match = raw.match(/\{[\s\S]*\}/);

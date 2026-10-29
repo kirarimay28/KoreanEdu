@@ -138,20 +138,32 @@ export default async function handler(req: any, res: any) {
 현재 상황:
 ${context}`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.8-flash',
-      systemInstruction: systemPrompt,
-      tools: TOOLS as any,
-    });
-
     const history = messages.slice(0, -1).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }],
     }));
-
-    const chat = model.startChat({ history });
     const lastMsg = messages[messages.length - 1].content;
-    const result = await chat.sendMessage(lastMsg);
+
+    const MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    let result: any;
+    let lastModelErr: any;
+    for (const modelName of MODELS) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: systemPrompt,
+          tools: TOOLS as any,
+        });
+        const chat = model.startChat({ history });
+        result = await chat.sendMessage(lastMsg);
+        break;
+      } catch (err: any) {
+        lastModelErr = err;
+        if (!err.message?.includes('503') && !err.message?.includes('404')) break;
+      }
+    }
+    if (!result) throw lastModelErr;
+
     const parts = result.response.candidates?.[0]?.content?.parts ?? [];
 
     let text = '';

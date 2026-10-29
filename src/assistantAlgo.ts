@@ -278,6 +278,28 @@ export function generateSemesterDayBlocks(
   return blocks.sort((a, b) => a.start.localeCompare(b.start));
 }
 
+export function generateSemesterWeekBlocks(
+  weekStart: string,
+  config: StudyConfig,
+  timetable: { subjects: Array<{ times: Array<{ day: string; start: string; end: string }> }> } | null,
+  workSlots: Array<{ day: string; start: string; end: string }> | null,
+  commuteMinutes: number,
+  returnMinutes: number,
+): StudyBlock[] {
+  const blocks: StudyBlock[] = [];
+  for (let i = 0; i < 7; i++) {
+    const date = addDays(weekStart, i);
+    const dow = getDayOfWeek(date);
+    const classTimes = timetable
+      ? timetable.subjects.flatMap(s => s.times.filter(t => t.day === dow).map(t => ({ start: t.start, end: t.end })))
+      : [];
+    const ws = workSlots?.find(s => s.day === dow) ?? null;
+    const workSlot = ws ? { start: ws.start, end: ws.end, commuteMin: commuteMinutes, returnMin: returnMinutes } : null;
+    blocks.push(...generateSemesterDayBlocks(date, config, classTimes, workSlot));
+  }
+  return blocks;
+}
+
 // ── Carry-over ────────────────────────────────────────────────
 
 export interface CarryOverResult {

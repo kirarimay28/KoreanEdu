@@ -60,15 +60,16 @@ export default function TodayView({ currentUser, today }: Props) {
       const built: TimeItem[] = [];
 
       // Work + commute
-      if (work && work.workDays.includes(todayDow)) {
+      const todaySlot = work?.slots?.find(s => s.day === todayDow);
+      if (work && todaySlot) {
         if (work.commuteMinutes > 0) {
-          const cs = fromMin(toMin(work.workStart) - work.commuteMinutes);
-          built.push({ start: cs, end: work.workStart, type: 'commute', label: '출근 이동', color: 'gray' });
+          const cs = fromMin(toMin(todaySlot.start) - work.commuteMinutes);
+          built.push({ start: cs, end: todaySlot.start, type: 'commute', label: '출근 이동', color: 'gray' });
         }
-        built.push({ start: work.workStart, end: work.workEnd, type: 'work', label: '근무', color: 'gray' });
+        built.push({ start: todaySlot.start, end: todaySlot.end, type: 'work', label: '근무', color: 'gray' });
         if (work.returnMinutes > 0) {
-          const re = fromMin(toMin(work.workEnd) + work.returnMinutes);
-          built.push({ start: work.workEnd, end: re, type: 'return', label: '퇴근 이동', color: 'gray' });
+          const re = fromMin(toMin(todaySlot.end) + work.returnMinutes);
+          built.push({ start: todaySlot.end, end: re, type: 'return', label: '퇴근 이동', color: 'gray' });
         }
       }
 
