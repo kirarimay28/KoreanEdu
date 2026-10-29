@@ -65,7 +65,7 @@ export default function AIChat({ currentUser }: Props) {
         body: JSON.stringify({
           messages: history,
           userId: uid,
-          speechStyle: settings?.speechStyle ?? '존댓말',
+          speechStyle: '존댓말',
         }),
       });
 
@@ -139,7 +139,7 @@ export default function AIChat({ currentUser }: Props) {
       {/* Message list */}
       <div className="space-y-3 flex-1">
         {messages.length === 0 && (
-          <WelcomeBubble speechStyle={settings?.speechStyle ?? '존댓말'} onTap={send} />
+          <WelcomeBubble speechStyle="존댓말" onTap={send} />
         )}
         {messages.map(msg => (
           <MessageBubble key={msg.id} msg={msg} onConfirm={() => {
@@ -158,7 +158,7 @@ export default function AIChat({ currentUser }: Props) {
         <textarea
           ref={inputRef}
           className="flex-1 resize-none text-xs leading-relaxed bg-transparent outline-none min-h-[36px] max-h-24 text-gray-800 placeholder-gray-300"
-          placeholder={settings?.speechStyle === '존댓말' ? '무엇이든 물어보세요...' : '뭐든 물어봐...'}
+          placeholder="무엇이든 물어보세요..."
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
+
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 export default async function handler(req: any, res: any) {
