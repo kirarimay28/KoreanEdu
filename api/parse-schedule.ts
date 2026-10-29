@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
   if (!imageBase64 || !type) return res.status(400).json({ error: 'missing fields' });
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash' });
 
   let prompt = '';
   if (type === 'timetable') {

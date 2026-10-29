@@ -113,7 +113,7 @@ export default async function handler(req: any, res: any) {
     ].filter(Boolean).join('\n');
 
     const system = '임용 준비생의 AI 조교. 존댓말로 3~4줄로 이번 주 요약과 다음 주 조언을 써. 수고했다고 격려하되 부족한 점도 간단히 짚어줘.';
-    const weeklyModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: system });
+    const weeklyModel = genAI.getGenerativeModel({ model: 'gemini-3.8-flash', systemInstruction: system });
     const body = await weeklyModel.generateContent(contextStr).then(r => r.response.text().trim());
 
     await pushToOwner('📊 주간 리포트', body);

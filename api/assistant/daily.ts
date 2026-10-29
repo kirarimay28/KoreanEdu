@@ -50,7 +50,7 @@ async function pushToOwner(title: string, body: string): Promise<void> {
 // ── LLM message generator ─────────────────────────────────────
 
 async function generateMessage(system: string, user: string): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', systemInstruction: system });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.8-flash', systemInstruction: system });
   const result = await model.generateContent(user);
   return result.response.text().trim();
 }
