@@ -20,10 +20,26 @@ interface DisplayMessage {
 }
 
 const MAX_HISTORY = 10;
+const STORAGE_KEY = 'assistant_chat_messages';
+
+function loadSavedMessages(): DisplayMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return (JSON.parse(raw) as DisplayMessage[]).filter(m => !m.loading);
+  } catch { return []; }
+}
+
+function saveMessages(msgs: DisplayMessage[]) {
+  try {
+    const toSave = msgs.filter(m => !m.loading).slice(-30);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch {}
+}
 
 export default function AIChat({ currentUser }: Props) {
   const uid = currentUser.username;
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>(loadSavedMessages);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [memos, setMemos] = useState<AssistantMemo[]>([]);
@@ -37,6 +53,10 @@ export default function AIChat({ currentUser }: Props) {
     loadAssistantSettings(uid).then(setSettings);
     return unsub;
   }, [uid]);
+
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
