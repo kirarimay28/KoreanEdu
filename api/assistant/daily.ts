@@ -79,7 +79,7 @@ async function morningBrief(today: string): Promise<void> {
     ? urgent.map((d: any) => d.title).join(', ')
     : '';
 
-  const system = '임용 준비생의 AI 비서. 반말로 아주 짧게(2~3줄) 아침 브리핑 메시지를 써. 오늘 할 일과 마감이 있으면 챙겨 알려주고, 간단히 응원해.';
+  const system = '임용 준비생의 AI 조교. 존댓말로 아주 짧게(2~3줄) 아침 브리핑 메시지를 써. 오늘 할 일과 마감이 있으면 챙겨 알려주고, 간단히 응원해.';
   const userMsg = `오늘 블록: ${blockList}${deadlineStr ? `\n마감 임박: ${deadlineStr}` : ''}`;
 
   const body = await generateMessage(system, userMsg);
@@ -102,7 +102,7 @@ async function eveningCheckIn(today: string): Promise<void> {
   const missed = blocks.filter((b: any) => b.status === '미완' || b.status === '예정').length;
   const total  = blocks.length;
 
-  const system = '임용 준비생의 AI 비서. 반말로 아주 짧게(2~3줄) 저녁 체크인 메시지를 써. 오늘 실적을 보고 칭찬하거나 부드럽게 독려해.';
+  const system = '임용 준비생의 AI 조교. 존댓말로 아주 짧게(2~3줄) 저녁 체크인 메시지를 써. 오늘 실적을 보고 칭찬하거나 부드럽게 독려해.';
   const userMsg = `오늘 결과: 전체 ${total}개 중 완료 ${done}, 부분 ${partial}, 미완/예정 ${missed}`;
 
   const body = await generateMessage(system, userMsg);

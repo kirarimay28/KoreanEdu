@@ -19,7 +19,7 @@ import {
   getWeekMonday,
   generateVacationWeekBlocks, getVacationWeekNum,
 } from '../../assistantAlgo';
-import { ChevronDown, ChevronUp, Plus, Trash2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, Check, Camera } from 'lucide-react';
 
 interface Props {
   currentUser: User;
@@ -70,6 +70,10 @@ export default function ScheduleInput({ currentUser, today }: Props) {
   const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
   const [blockGenMsg, setBlockGenMsg] = useState('');
   const [blockGenLoading, setBlockGenLoading] = useState(false);
+
+  // --- Photo parsing ---
+  const [ttParsing, setTtParsing] = useState(false);
+  const [workParsing, setWorkParsing] = useState(false);
 
   const uid = currentUser.id;
 
@@ -235,6 +239,45 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       {/* 학기 시간표 */}
       <Section id="timetable" label="학기 시간표">
         <div className="space-y-2 mt-2">
+          <label className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border-2 border-dashed border-primary-200 text-primary-500 text-[11px] font-semibold cursor-pointer hover:bg-primary-50 transition ${ttParsing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Camera className="w-3.5 h-3.5" />
+            {ttParsing ? '인식 중...' : '사진으로 시간표 가져오기'}
+            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+              const file = e.target.files?.[0];
+              if (!file || !timetable) return;
+              setTtParsing(true);
+              try {
+                const reader = new FileReader();
+                const base64: string = await new Promise((resolve, reject) => {
+                  reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(file);
+                });
+                const resp = await fetch('/api/parse-schedule', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ imageBase64: base64, mimeType: file.type, type: 'timetable' }),
+                });
+                if (!resp.ok) throw new Error('인식 실패');
+                const data = await resp.json();
+                setTimetable({
+                  ...timetable,
+                  semesterStart: data.semesterStart || timetable.semesterStart,
+                  semesterEnd: data.semesterEnd || timetable.semesterEnd,
+                  subjects: (data.subjects ?? []).map((s: any, i: number) => ({
+                    id: `sub_img_${Date.now()}_${i}`,
+                    name: s.name ?? '',
+                    times: (s.times ?? []).map((t: any) => ({ day: t.day, start: t.start, end: t.end, location: '' })),
+                  })),
+                });
+              } catch (err: any) {
+                alert('시간표 인식 실패: ' + err.message);
+              } finally {
+                setTtParsing(false);
+                e.target.value = '';
+              }
+            }} />
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <p className="text-[10px] text-gray-400 mb-1">학기 시작</p>
@@ -276,6 +319,43 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       {/* 출근 일정 */}
       <Section id="work" label="출근 일정">
         <div className="space-y-3 mt-2">
+          <label className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border-2 border-dashed border-primary-200 text-primary-500 text-[11px] font-semibold cursor-pointer hover:bg-primary-50 transition ${workParsing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Camera className="w-3.5 h-3.5" />
+            {workParsing ? '인식 중...' : '사진으로 출근 일정 가져오기'}
+            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+              const file = e.target.files?.[0];
+              if (!file || !work) return;
+              setWorkParsing(true);
+              try {
+                const reader = new FileReader();
+                const base64: string = await new Promise((resolve, reject) => {
+                  reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(file);
+                });
+                const resp = await fetch('/api/parse-schedule', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ imageBase64: base64, mimeType: file.type, type: 'work' }),
+                });
+                if (!resp.ok) throw new Error('인식 실패');
+                const data = await resp.json();
+                setWork({
+                  ...work,
+                  workDays: data.workDays ?? work.workDays,
+                  workStart: data.workStart ?? work.workStart,
+                  workEnd: data.workEnd ?? work.workEnd,
+                  commuteMinutes: data.commuteMinutes ?? work.commuteMinutes,
+                  returnMinutes: data.returnMinutes ?? work.returnMinutes,
+                });
+              } catch (err: any) {
+                alert('출근 일정 인식 실패: ' + err.message);
+              } finally {
+                setWorkParsing(false);
+                e.target.value = '';
+              }
+            }} />
+          </label>
           <div>
             <p className="text-[10px] text-gray-400 mb-1.5">근무 요일</p>
             <div className="flex gap-1.5 flex-wrap">

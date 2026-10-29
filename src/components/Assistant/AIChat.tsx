@@ -65,7 +65,7 @@ export default function AIChat({ currentUser }: Props) {
         body: JSON.stringify({
           messages: history,
           userId: uid,
-          speechStyle: settings?.speechStyle ?? '반말',
+          speechStyle: settings?.speechStyle ?? '존댓말',
         }),
       });
 
@@ -117,7 +117,7 @@ export default function AIChat({ currentUser }: Props) {
           >
             <div className="flex items-center gap-1.5">
               <StickyNote className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-[11px] font-bold text-gray-700">비서 메모 ({memos.length})</span>
+              <span className="text-[11px] font-bold text-gray-700">조교 메모 ({memos.length})</span>
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${memosOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -139,7 +139,7 @@ export default function AIChat({ currentUser }: Props) {
       {/* Message list */}
       <div className="space-y-3 flex-1">
         {messages.length === 0 && (
-          <WelcomeBubble speechStyle={settings?.speechStyle ?? '반말'} onTap={send} />
+          <WelcomeBubble speechStyle={settings?.speechStyle ?? '존댓말'} onTap={send} />
         )}
         {messages.map(msg => (
           <MessageBubble key={msg.id} msg={msg} onConfirm={() => {

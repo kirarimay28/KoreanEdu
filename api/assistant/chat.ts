@@ -126,11 +126,11 @@ export default async function handler(req: any, res: any) {
 
   try {
     const context = await loadContext(userId);
-    const styleNote = speechStyle === '존댓말'
-      ? '존댓말로 정중하게 답해.'
-      : '반말로 짧고 단정하게 답해. 불필요한 군더더기는 빼.';
+    const styleNote = speechStyle === '반말'
+      ? '반말로 짧고 단정하게 답해. 불필요한 군더더기는 빼.'
+      : '존댓말로 정중하게 답해.';
 
-    const systemPrompt = `너는 임용 시험 준비생의 AI 비서야. ${styleNote}
+    const systemPrompt = `너는 임용 시험 준비생의 AI 조교야. ${styleNote}
 공부 블록·마감일을 바꿀 때는 절대 혼자 결정하지 말고, propose_change 함수로 제안만 해. 사용자가 확인 버튼을 누르면 그때 반영돼.
 중요한 선호나 패턴을 발견하면 add_memo로 저장해.
 모르는 건 모른다고 해.

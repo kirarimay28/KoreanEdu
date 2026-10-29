@@ -19,7 +19,7 @@ const SUBTABS: { id: SubTab; label: string; icon: React.ComponentType<{ classNam
   { id: 'week',     label: '주간',   icon: Calendar },
   { id: 'schedule', label: '일정',   icon: ListTodo },
   { id: 'grades',   label: '성적',   icon: BarChart2 },
-  { id: 'ai',       label: '비서',   icon: Bot },
+  { id: 'ai',       label: '조교',   icon: Bot },
 ];
 
 export default function AssistantTab({ currentUser }: Props) {
@@ -34,7 +34,7 @@ export default function AssistantTab({ currentUser }: Props) {
           <Bot className="w-4 h-4 text-primary-600" />
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900">임용 AI 비서</p>
+          <p className="text-sm font-bold text-gray-900">임용 AI 조교</p>
           <p className="text-[10px] text-gray-400">{today} · 서연 전용</p>
         </div>
       </div>
