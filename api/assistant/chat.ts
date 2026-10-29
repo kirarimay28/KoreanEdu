@@ -67,90 +67,80 @@ async function loadContext(userId: string): Promise<string> {
   }).replace(/\. /g, '-').replace('.', '');
 
   const KR_DAYS = ['일', '월', '화', '수', '목', '금', '토'];
-  const todayDow = KR_DAYS[new Date(today + 'T00:00:00+09:00').getDay()];
-  const lines: string[] = [`오늘: ${today} (${todayDow}요일)`];
+  const todayDow = KR_DAYS[new Date(today + 'T12:00:00+09:00').getDay()];
+  const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  // 수업 시간표 (오늘 해당 요일)
-  try {
-    const ttSnap = await db.collection('assistantSchedule').doc(userId).get();
-    if (ttSnap.exists) {
-      const tt = ttSnap.data() as any;
-      const todayClasses: string[] = [];
-      for (const subj of (tt.subjects ?? [])) {
-        for (const t of (subj.times ?? [])) {
-          if (t.day === todayDow) {
-            todayClasses.push(`  ${t.start}~${t.end} ${subj.name}`);
-          }
-        }
-      }
-      lines.push('\n오늘 수업:');
-      if (todayClasses.length > 0) {
-        todayClasses.sort().forEach(l => lines.push(l));
-      } else {
-        lines.push('  (없음)');
+  const [ttSnap, wsSnap, blocksSnap, dlSnap, memoSnap] = await Promise.allSettled([
+    db.collection('assistantSchedule').doc(userId).get(),
+    db.collection('assistantWorkSchedule').doc(userId).get(),
+    db.collection('assistantStudyBlocks').where('userId', '==', userId).where('date', '==', today).get(),
+    db.collection('assistantDeadlines').where('userId', '==', userId).where('completed', '==', false).get(),
+    db.collection('assistantMemos').where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get(),
+  ]);
+
+  const lines: string[] = [`오늘: ${today} (${todayDow ?? '?'}요일)`];
+
+  // 수업
+  if (ttSnap.status === 'fulfilled' && ttSnap.value.exists) {
+    const tt = ttSnap.value.data() as any;
+    const todayClasses: string[] = [];
+    for (const subj of (tt.subjects ?? [])) {
+      for (const t of (subj.times ?? [])) {
+        if (t.day === todayDow) todayClasses.push(`  ${t.start}~${t.end} ${subj.name}`);
       }
     }
-  } catch {}
+    lines.push('\n오늘 수업:');
+    if (todayClasses.length > 0) todayClasses.sort().forEach(l => lines.push(l));
+    else lines.push('  (없음)');
+  }
 
-  // 근무 일정 (오늘 해당 요일 슬롯)
-  try {
-    const wsSnap = await db.collection('assistantWorkSchedule').doc(userId).get();
-    if (wsSnap.exists) {
-      const ws = wsSnap.data() as any;
-      const todaySlot = (ws.slots ?? []).find((s: any) => s.day === todayDow);
-      lines.push('\n오늘 근무:');
-      if (todaySlot) {
-        const commute = ws.commuteMinutes ?? 0;
-        const ret = ws.returnMinutes ?? 0;
-        lines.push(`  ${todaySlot.start}~${todaySlot.end} (출근 이동 ${commute}분, 퇴근 이동 ${ret}분)`);
-      } else {
-        lines.push('  (없음)');
-      }
-    }
-  } catch {}
-
-  try {
-    const blocksSnap = await db.collection('assistantStudyBlocks')
-      .where('userId', '==', userId).where('date', '==', today).get();
-    const blocks = blocksSnap.docs.map(d => d.data());
-    lines.push('\n오늘 공부 블록:');
-    if (blocks.length > 0) {
-      for (const b of blocks.sort((a, b) => a.start.localeCompare(b.start))) {
-        lines.push(`  [${b.status}] ${b.start}~${b.end} ${b.label}`);
-      }
-    } else {
-      lines.push('  (없음 — 아직 생성되지 않았거나 오늘은 공부 블록이 없습니다)');
-    }
-  } catch { lines.push('\n오늘 공부 블록: (조회 실패)'); }
-
-  try {
-    const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const dlSnap = await db.collection('assistantDeadlines')
-      .where('userId', '==', userId).where('completed', '==', false).get();
-    const upcoming = dlSnap.docs.map(d => d.data())
-      .filter(d => d.date <= cutoff)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .slice(0, 5);
-    lines.push('\n마감·행사 (14일 이내):');
-    if (upcoming.length > 0) {
-      for (const d of upcoming) {
-        const diff = Math.ceil((new Date(d.date + 'T00:00:00+09:00').getTime() - now.getTime()) / 86400000);
-        lines.push(`  D-${diff} ${d.date} ${d.title}`);
-      }
+  // 근무
+  if (wsSnap.status === 'fulfilled' && wsSnap.value.exists) {
+    const ws = wsSnap.value.data() as any;
+    const todaySlot = (ws.slots ?? []).find((s: any) => s.day === todayDow);
+    lines.push('\n오늘 근무:');
+    if (todaySlot) {
+      lines.push(`  ${todaySlot.start}~${todaySlot.end} (출근 이동 ${ws.commuteMinutes ?? 0}분, 퇴근 이동 ${ws.returnMinutes ?? 0}분)`);
     } else {
       lines.push('  (없음)');
     }
-  } catch { lines.push('\n마감·행사: (조회 실패)'); }
+  }
 
-  try {
-    const memoSnap = await db.collection('assistantMemos')
-      .where('userId', '==', userId).orderBy('createdAt', 'desc').limit(5).get();
-    const memos = memoSnap.docs.map(d => d.data());
+  // 공부 블록
+  lines.push('\n오늘 공부 블록:');
+  if (blocksSnap.status === 'fulfilled') {
+    const blocks = blocksSnap.value.docs.map(d => d.data()).sort((a, b) => a.start.localeCompare(b.start));
+    if (blocks.length > 0) blocks.forEach(b => lines.push(`  [${b.status}] ${b.start}~${b.end} ${b.label}`));
+    else lines.push('  (없음)');
+  } else {
+    lines.push('  (조회 실패)');
+  }
+
+  // 마감
+  lines.push('\n마감·행사 (14일 이내):');
+  if (dlSnap.status === 'fulfilled') {
+    const upcoming = dlSnap.value.docs.map(d => d.data())
+      .filter(d => d.date <= cutoff)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 5);
+    if (upcoming.length > 0) {
+      upcoming.forEach(d => {
+        const diff = Math.ceil((new Date(d.date + 'T00:00:00+09:00').getTime() - now.getTime()) / 86400000);
+        lines.push(`  D-${diff} ${d.date} ${d.title}`);
+      });
+    } else {
+      lines.push('  (없음)');
+    }
+  }
+
+  // 메모
+  if (memoSnap.status === 'fulfilled') {
+    const memos = memoSnap.value.docs.map(d => d.data());
     if (memos.length > 0) {
       lines.push('\n비서 메모:');
-      for (const m of memos) lines.push(`  - ${m.content}`);
+      memos.forEach(m => lines.push(`  - ${m.content}`));
     }
-  } catch {}
+  }
 
   return lines.join('\n');
 }
