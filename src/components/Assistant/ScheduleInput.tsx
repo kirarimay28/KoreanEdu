@@ -524,10 +524,12 @@ export default function ScheduleInput({ currentUser, today }: Props) {
                   <option value="학기">학기</option>
                 </select>
               </div>
-              <div>
-                <p className="text-[10px] text-gray-400 mb-1">방학 시작일</p>
-                <input type="date" value={studyConfig.vacationStartDate ?? ''} onChange={e => setStudyConfig({ ...studyConfig, vacationStartDate: e.target.value })} className={inputCls} />
-              </div>
+              {studyConfig.mode === '방학' && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">방학 시작일</p>
+                  <input type="date" value={studyConfig.vacationStartDate ?? ''} onChange={e => setStudyConfig({ ...studyConfig, vacationStartDate: e.target.value })} className={inputCls} />
+                </div>
+              )}
               <div>
                 <p className="text-[10px] text-gray-400 mb-1">공부 시작</p>
                 <input type="time" value={studyConfig.studyStartTime} onChange={e => setStudyConfig({ ...studyConfig, studyStartTime: e.target.value })} className={inputCls} />
