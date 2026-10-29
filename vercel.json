@@ -1,4 +1,14 @@
 {
+  "crons": [
+    {
+      "path": "/api/assistant/daily",
+      "schedule": "0 22,12 * * *"
+    },
+    {
+      "path": "/api/assistant/weekly",
+      "schedule": "0 10 * * 0"
+    }
+  ],
   "headers": [
     {
       "source": "/(|index.html)",
