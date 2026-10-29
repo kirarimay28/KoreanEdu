@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
   if (!imageBase64 || !type) return res.status(400).json({ error: 'missing fields' });
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   let prompt = '';
   if (type === 'timetable') {
@@ -37,8 +37,10 @@ export default async function handler(req: any, res: any) {
       { inlineData: { data: imageBase64, mimeType: mimeType ?? 'image/jpeg' } },
       { text: prompt },
     ]);
-    const text = result.response.text().trim().replace(/```json\n?|\n?```/g, '');
-    const json = JSON.parse(text);
+    const raw = result.response.text().trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSON 파싱 실패: ' + raw.slice(0, 200));
+    const json = JSON.parse(match[0]);
     return res.status(200).json(json);
   } catch (err: any) {
     console.error('parse-schedule error:', err.message);
