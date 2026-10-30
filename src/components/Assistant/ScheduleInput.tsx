@@ -235,13 +235,14 @@ export default function ScheduleInput({ currentUser, today }: Props) {
     const weekEnd = addDays(weekStart, 6);
     await deleteStudyBlocksForWeek(uid, weekStart, weekEnd);
     if (studyConfig.mode === '학기') {
+      if (!timetable) { setBlockGenMsg('시간표가 로드되지 않았습니다. 잠시 후 다시 시도하세요.'); setBlockGenLoading(false); return; }
       const blocks = generateSemesterWeekBlocks(
         weekStart, { ...studyConfig, userId: uid },
         timetable, work?.slots ?? null,
         work?.commuteMinutes ?? 0, work?.returnMinutes ?? 0,
       );
       await saveStudyBlocks(blocks);
-      setBlockGenMsg(`학기 모드 블록 ${blocks.length}개 생성 완료`);
+      setBlockGenMsg(`학기 모드 블록 ${blocks.length}개 생성 완료 (과목 ${timetable.subjects.length}개)`);
     } else {
       if (!studyConfig.vacationStartDate) {
         setBlockGenMsg('방학 시작일을 먼저 설정하세요.');
