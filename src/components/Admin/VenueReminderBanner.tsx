@@ -5,14 +5,6 @@ import { ExternalLink } from 'lucide-react';
 
 const VENUE_URL = 'https://thechoa.chosun.ac.kr/clientMain/a/t/main.do';
 
-// "네!" 클릭 시 다음 월요일 날짜 반환 → 그 날부터 다시 표시
-function getNextMonday(today: string): string {
-  const d = new Date(today + 'T00:00:00');
-  const day = d.getDay(); // 0=일, 1=월, ...
-  const daysUntil = day === 0 ? 1 : 8 - day;
-  d.setDate(d.getDate() + daysUntil);
-  return d.toISOString().slice(0, 10);
-}
 
 interface Props { currentUser: User; }
 
@@ -23,15 +15,14 @@ export default function VenueReminderBanner({ currentUser }: Props) {
     if (!isPrivileged) return true;
     const stored = localStorage.getItem(`venue_reminder_${currentUser.id}`);
     if (!stored) return false;
-    // stored = "다음 월요일" 날짜 → 그 날이 지나기 전까지 숨김
+    if (stored === 'never') return true;
     return getKSTToday() < stored;
   });
 
   if (!isPrivileged || dismissed) return null;
 
   function handleYes() {
-    const nextMon = getNextMonday(getKSTToday());
-    localStorage.setItem(`venue_reminder_${currentUser.id}`, nextMon);
+    localStorage.setItem(`venue_reminder_${currentUser.id}`, 'never');
     setDismissed(true);
   }
 

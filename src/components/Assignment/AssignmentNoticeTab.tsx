@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Pencil, X, Check, Share2, Settings } from 'lucide-react';
+import { Pencil, X, Check, Share2, Settings, MessageSquare } from 'lucide-react';
 import type { User, AssignmentSubjectConfig } from '../../types';
 import {
   getAssignmentNotice, getAssignmentNoticeForWeek, setAssignmentNotice,
   clearAssignmentNotice, subscribeAssignmentNotices,
   getAssignmentNoticeConfig, saveAssignmentNoticeConfig,
+  sendMessage, getUsers, getAllUserIds,
 } from '../../store';
 import { shareAssignmentNotice } from '../../kakao';
 import { sendPush } from '../../notifications';
-import { getAllUserIds } from '../../store';
 import NameWithCrown from '../common/NameWithCrown';
 
 interface Props {
@@ -164,6 +164,44 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
     clearAssignmentNotice(thisWeekNotice?.id);
     setEditing(false);
     setTick(t => t + 1);
+  }
+
+  function handleSendAsMessage() {
+    if (!notice) return;
+    const lines: string[] = [`📚 ${formatDate(notice.date)} 과제 공지\n`];
+    subjects.forEach(subj => {
+      const val = subjectWorkValue(subj.key, {
+        classicPoet:  notice.classicPoetWork  ?? notice.classicWork ?? '',
+        classicProse: notice.classicProseWork ?? '',
+        modernPoet:   notice.modernPoetWork   ?? '',
+        modernProse:  notice.modernProseWork  ?? '',
+      });
+      if (val) lines.push(`[${subj.label}] ${val === '없음' ? '없음' : val}`);
+    });
+    lines.push(`\n★ 고전 어휘 ${notice.goeoStart}번 ~ ${notice.goeoEnd}번`);
+    lines.push(`\n${warningText}`);
+    const content = lines.join('\n');
+
+    const recipients = getUsers().filter(u => u.id !== currentUser.id);
+    const now = new Date().toISOString();
+    for (const recipient of recipients) {
+      sendMessage({
+        id: crypto.randomUUID(),
+        senderId: currentUser.id,
+        senderName: currentUser.username,
+        receiverId: recipient.id,
+        receiverName: recipient.username,
+        content,
+        createdAt: now,
+        read: false,
+      });
+    }
+    sendPush({
+      userIds: recipients.map(r => r.id),
+      title: '📚 과제 공지 쪽지',
+      body: `${formatDate(notice.date)} 과제가 쪽지로 전송되었습니다.`,
+    });
+    alert(`${recipients.length}명에게 과제 공지를 쪽지로 보냈습니다.`);
   }
 
   // ── Config mode helpers ─────────────────────────────────
@@ -418,25 +456,35 @@ export default function AssignmentNoticeTab({ currentUser }: Props) {
             <p className="text-xs font-semibold text-red-600">★ 이번 주 고전 어휘는 {notice.goeoStart}번부터 {notice.goeoEnd}번까지입니다.</p>
           </div>
 
-          {/* Share button */}
-          <button
-            onClick={() => shareAssignmentNotice({
-              date: notice.date,
-              works: {
-                classicPoet:  notice.classicPoetWork  ?? notice.classicWork ?? '',
-                classicProse: notice.classicProseWork ?? '',
-                modernPoet:   notice.modernPoetWork   ?? '',
-                modernProse:  notice.modernProseWork  ?? '',
-              },
-              goeoStart: notice.goeoStart,
-              goeoEnd:   notice.goeoEnd,
-              subjects,
-              warningText,
-            })}
-            className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-xl transition"
-          >
-            <Share2 className="w-3.5 h-3.5" />카카오톡 공유
-          </button>
+          {/* Share / message buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => shareAssignmentNotice({
+                date: notice.date,
+                works: {
+                  classicPoet:  notice.classicPoetWork  ?? notice.classicWork ?? '',
+                  classicProse: notice.classicProseWork ?? '',
+                  modernPoet:   notice.modernPoetWork   ?? '',
+                  modernProse:  notice.modernProseWork  ?? '',
+                },
+                goeoStart: notice.goeoStart,
+                goeoEnd:   notice.goeoEnd,
+                subjects,
+                warningText,
+              })}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-3 py-2 rounded-xl transition"
+            >
+              <Share2 className="w-3.5 h-3.5" />카카오톡 공유
+            </button>
+            {canEdit && (
+              <button
+                onClick={handleSendAsMessage}
+                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-xl transition"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />쪽지 발송
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-8 text-center">
