@@ -51,7 +51,7 @@ export default function WeekView({ currentUser, today }: Props) {
         const classCount = timetable
           ? timetable.subjects.reduce((n, s) => n + s.times.filter(t => t.day === dow).length, 0)
           : 0;
-        const hasWork = work ? work.workDays.includes(dow) : false;
+        const hasWork = work ? (work.slots?.some(s => s.day === dow) ?? false) : false;
         return { date, dow, classCount, hasWork, lectureCount: 0, studyBlocks: [] };
       });
 

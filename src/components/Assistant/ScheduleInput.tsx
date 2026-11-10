@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { User } from '../../types';
 import type {
-  ClassTimetable, WorkSchedule, ScheduleException, LectureSlot,
+  ClassTimetable, WorkSchedule, WorkDaySlot, ScheduleException, LectureSlot,
   AssistantDeadline, StudyConfig, AssistantWeekday, LectureSource,
   DeadlineType, ExceptionType,
 } from '../../assistantTypes';
@@ -13,13 +13,14 @@ import {
   subscribeLectureSlots, saveLectureSlot, deleteLectureSlot,
   subscribeDeadlines, saveDeadline, deleteDeadline, completeDeadline,
   loadStudyConfig, saveStudyConfig,
-  saveStudyBlocks,
+  saveStudyBlocks, deleteStudyBlocksForWeek,
 } from '../../assistantStore';
 import {
-  getWeekMonday,
+  getWeekMonday, addDays,
   generateVacationWeekBlocks, getVacationWeekNum,
+  generateSemesterWeekBlocks,
 } from '../../assistantAlgo';
-import { ChevronDown, ChevronUp, Plus, Trash2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, Check, Camera } from 'lucide-react';
 
 interface Props {
   currentUser: User;
@@ -71,18 +72,40 @@ export default function ScheduleInput({ currentUser, today }: Props) {
   const [blockGenMsg, setBlockGenMsg] = useState('');
   const [blockGenLoading, setBlockGenLoading] = useState(false);
 
+  // --- Photo parsing ---
+  const [ttParsing, setTtParsing] = useState(false);
+  const [workParsing, setWorkParsing] = useState(false);
+
   const uid = currentUser.id;
 
   useEffect(() => {
-    loadClassTimetable(uid).then(t => {
-      if (t) setTimetable(t);
-      else setTimetable({ userId: uid, semesterStart: '', semesterEnd: '', subjects: [], updatedAt: '' });
+    loadClassTimetable(uid).then(async t => {
+      if (t) {
+        setTimetable(t);
+      } else {
+        const defaultTT = SEED_TIMETABLE(uid);
+        await saveClassTimetable(defaultTT);
+        setTimetable(defaultTT);
+      }
     });
-    loadWorkSchedule(uid).then(w => {
-      if (w) setWork(w);
-      else setWork({ userId: uid, workDays: [], workStart: '09:00', workEnd: '18:00', commuteMinutes: 0, returnMinutes: 0, updatedAt: '' });
+    loadWorkSchedule(uid).then(async w => {
+      if (w) {
+        setWork(w);
+      } else {
+        const defaultW = SEED_WORK(uid);
+        await saveWorkSchedule(defaultW);
+        setWork(defaultW);
+      }
     });
-    loadStudyConfig(uid).then(c => setStudyConfig(c));
+    loadStudyConfig(uid).then(async c => {
+      if (c) {
+        setStudyConfig(c);
+      } else {
+        const defaultC = SEED_STUDY_CONFIG(uid);
+        await saveStudyConfig(defaultC);
+        setStudyConfig(defaultC);
+      }
+    });
     const u1 = subscribeExceptions(uid, setExceptions);
     const u2 = subscribeLectureSlots(uid, setLectures);
     const u3 = subscribeDeadlines(uid, setDeadlines);
@@ -131,8 +154,18 @@ export default function ScheduleInput({ currentUser, today }: Props) {
   // ── Work helpers ───────────────────────────────────────
   function toggleWorkDay(day: AssistantWeekday) {
     if (!work) return;
-    const days = work.workDays.includes(day) ? work.workDays.filter(d => d !== day) : [...work.workDays, day];
-    setWork({ ...work, workDays: days });
+    const exists = work.slots.some(s => s.day === day);
+    if (exists) {
+      setWork({ ...work, slots: work.slots.filter(s => s.day !== day) });
+    } else {
+      const newSlot: WorkDaySlot = { day, start: '09:00', end: '18:00' };
+      const slots = [...work.slots, newSlot].sort((a, b) => ALL_AWEEKDAYS.indexOf(a.day) - ALL_AWEEKDAYS.indexOf(b.day));
+      setWork({ ...work, slots });
+    }
+  }
+  function updateSlotTime(day: AssistantWeekday, field: 'start' | 'end', val: string) {
+    if (!work) return;
+    setWork({ ...work, slots: work.slots.map(s => s.day === day ? { ...s, [field]: val } : s) });
   }
   async function saveWork() {
     if (!work) return;
@@ -195,17 +228,32 @@ export default function ScheduleInput({ currentUser, today }: Props) {
 
   // ── Study block gen ────────────────────────────────────
   async function genWeekBlocks() {
-    if (!studyConfig || !studyConfig.vacationStartDate) {
-      setBlockGenMsg('방학 시작일을 먼저 설정하세요.');
-      return;
-    }
+    if (!studyConfig) { setBlockGenMsg('공부 설정을 먼저 저장하세요.'); return; }
     setBlockGenLoading(true);
     setBlockGenMsg('');
     const weekStart = getWeekMonday(today);
-    const weekNum = getVacationWeekNum(studyConfig.vacationStartDate, weekStart);
-    const blocks = generateVacationWeekBlocks(weekStart, weekNum, { ...studyConfig, userId: uid });
-    await saveStudyBlocks(blocks);
-    setBlockGenMsg(`${weekNum}주차 블록 ${blocks.length}개 생성 완료`);
+    const weekEnd = addDays(weekStart, 6);
+    await deleteStudyBlocksForWeek(uid, weekStart, weekEnd);
+    if (studyConfig.mode === '학기') {
+      if (!timetable) { setBlockGenMsg('시간표가 로드되지 않았습니다. 잠시 후 다시 시도하세요.'); setBlockGenLoading(false); return; }
+      const blocks = generateSemesterWeekBlocks(
+        weekStart, { ...studyConfig, userId: uid },
+        timetable, work?.slots ?? null,
+        work?.commuteMinutes ?? 0, work?.returnMinutes ?? 0,
+      );
+      await saveStudyBlocks(blocks);
+      setBlockGenMsg(`학기 모드 블록 ${blocks.length}개 생성 완료 (과목 ${timetable.subjects.length}개)`);
+    } else {
+      if (!studyConfig.vacationStartDate) {
+        setBlockGenMsg('방학 시작일을 먼저 설정하세요.');
+        setBlockGenLoading(false);
+        return;
+      }
+      const weekNum = getVacationWeekNum(studyConfig.vacationStartDate, weekStart);
+      const blocks = generateVacationWeekBlocks(weekStart, weekNum, { ...studyConfig, userId: uid });
+      await saveStudyBlocks(blocks);
+      setBlockGenMsg(`${weekNum}주차 블록 ${blocks.length}개 생성 완료`);
+    }
     setBlockGenLoading(false);
   }
 
@@ -235,6 +283,43 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       {/* 학기 시간표 */}
       <Section id="timetable" label="학기 시간표">
         <div className="space-y-2 mt-2">
+          <label className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border-2 border-dashed border-primary-200 text-primary-500 text-[11px] font-semibold cursor-pointer hover:bg-primary-50 transition ${ttParsing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Camera className="w-3.5 h-3.5" />
+            {ttParsing ? '인식 중...' : '사진으로 시간표 가져오기'}
+            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+              const file = e.target.files?.[0];
+              if (!file || !timetable) return;
+              setTtParsing(true);
+              try {
+                const base64 = await compressImage(file, 1200);
+                const resp = await fetch('/api/parse-schedule', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg', type: 'timetable' }),
+                });
+                if (!resp.ok) {
+                  const e = await resp.json().catch(() => ({}));
+                  throw new Error(e.error ?? `서버 오류 ${resp.status}`);
+                }
+                const data = await resp.json();
+                setTimetable({
+                  ...timetable,
+                  semesterStart: data.semesterStart || timetable.semesterStart,
+                  semesterEnd: data.semesterEnd || timetable.semesterEnd,
+                  subjects: (data.subjects ?? []).map((s: any, i: number) => ({
+                    id: `sub_img_${Date.now()}_${i}`,
+                    name: s.name ?? '',
+                    times: (s.times ?? []).map((t: any) => ({ day: t.day, start: t.start, end: t.end, location: '' })),
+                  })),
+                });
+              } catch (err: any) {
+                alert('시간표 인식 실패: ' + err.message);
+              } finally {
+                setTtParsing(false);
+                e.target.value = '';
+              }
+            }} />
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <p className="text-[10px] text-gray-400 mb-1">학기 시작</p>
@@ -276,26 +361,64 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       {/* 출근 일정 */}
       <Section id="work" label="출근 일정">
         <div className="space-y-3 mt-2">
+          <label className={`flex items-center justify-center gap-1.5 w-full py-2 rounded-xl border-2 border-dashed border-primary-200 text-primary-500 text-[11px] font-semibold cursor-pointer hover:bg-primary-50 transition ${workParsing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Camera className="w-3.5 h-3.5" />
+            {workParsing ? '인식 중...' : '사진으로 출근 일정 가져오기'}
+            <input type="file" accept="image/*" className="hidden" onChange={async e => {
+              const file = e.target.files?.[0];
+              if (!file || !work) return;
+              setWorkParsing(true);
+              try {
+                const base64 = await compressImage(file, 1200);
+                const resp = await fetch('/api/parse-schedule', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg', type: 'work' }),
+                });
+                if (!resp.ok) {
+                  const e = await resp.json().catch(() => ({}));
+                  throw new Error(e.error ?? `서버 오류 ${resp.status}`);
+                }
+                const data = await resp.json();
+                setWork({
+                  ...work,
+                  slots: data.slots ?? work.slots,
+                  commuteMinutes: data.commuteMinutes ?? work.commuteMinutes,
+                  returnMinutes: data.returnMinutes ?? work.returnMinutes,
+                });
+              } catch (err: any) {
+                alert('출근 일정 인식 실패: ' + err.message);
+              } finally {
+                setWorkParsing(false);
+                e.target.value = '';
+              }
+            }} />
+          </label>
           <div>
-            <p className="text-[10px] text-gray-400 mb-1.5">근무 요일</p>
+            <p className="text-[10px] text-gray-400 mb-1.5">근무 요일 (탭하여 추가·제거)</p>
             <div className="flex gap-1.5 flex-wrap">
               {ALL_AWEEKDAYS.map(d => (
                 <button key={d} onClick={() => toggleWorkDay(d)}
-                  className={`text-[11px] font-bold w-7 h-7 rounded-full transition ${work?.workDays.includes(d) ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  className={`text-[11px] font-bold w-7 h-7 rounded-full transition ${work?.slots.some(s => s.day === d) ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
                   {d}
                 </button>
               ))}
             </div>
           </div>
+          {work && work.slots.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] text-gray-400">요일별 출퇴근 시각</p>
+              {work.slots.map(slot => (
+                <div key={slot.day} className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-600 w-5 flex-shrink-0">{slot.day}</span>
+                  <input type="time" value={slot.start} onChange={e => updateSlotTime(slot.day, 'start', e.target.value)} className={`${selectCls} flex-1`} />
+                  <span className="text-gray-400 text-[10px]">~</span>
+                  <input type="time" value={slot.end} onChange={e => updateSlotTime(slot.day, 'end', e.target.value)} className={`${selectCls} flex-1`} />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-[10px] text-gray-400 mb-1">출근 시각</p>
-              <input type="time" value={work?.workStart ?? '09:00'} onChange={e => work && setWork({ ...work, workStart: e.target.value })} className={inputCls} />
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400 mb-1">퇴근 시각</p>
-              <input type="time" value={work?.workEnd ?? '18:00'} onChange={e => work && setWork({ ...work, workEnd: e.target.value })} className={inputCls} />
-            </div>
             <div>
               <p className="text-[10px] text-gray-400 mb-1">출근 이동(분)</p>
               <input type="number" min={0} value={work?.commuteMinutes ?? 0} onChange={e => work && setWork({ ...work, commuteMinutes: Number(e.target.value) })} className={inputCls} />
@@ -402,9 +525,17 @@ export default function ScheduleInput({ currentUser, today }: Props) {
                   <option value="학기">학기</option>
                 </select>
               </div>
+              {studyConfig.mode === '방학' && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">방학 시작일</p>
+                  <input type="date" value={studyConfig.vacationStartDate ?? ''} onChange={e => setStudyConfig({ ...studyConfig, vacationStartDate: e.target.value })} className={inputCls} />
+                </div>
+              )}
               <div>
-                <p className="text-[10px] text-gray-400 mb-1">방학 시작일</p>
-                <input type="date" value={studyConfig.vacationStartDate ?? ''} onChange={e => setStudyConfig({ ...studyConfig, vacationStartDate: e.target.value })} className={inputCls} />
+                <p className="text-[10px] text-gray-400 mb-1">휴일</p>
+                <select value={studyConfig.restDay ?? '일'} onChange={e => setStudyConfig({ ...studyConfig, restDay: e.target.value as import('../../assistantTypes').AssistantWeekday })} className={inputCls}>
+                  {(['월','화','수','목','금','토','일'] as const).map(d => <option key={d} value={d}>{d}요일</option>)}
+                </select>
               </div>
               <div>
                 <p className="text-[10px] text-gray-400 mb-1">공부 시작</p>
@@ -446,4 +577,95 @@ export default function ScheduleInput({ currentUser, today }: Props) {
       </Section>
     </div>
   );
+}
+
+// ── Seed data (first-time setup) ─────────────────────────────
+function SEED_TIMETABLE(userId: string): ClassTimetable {
+  const ts = Date.now();
+  return {
+    userId,
+    semesterStart: '2026-09-01',
+    semesterEnd: '2027-02-14',
+    updatedAt: new Date().toISOString(),
+    subjects: [
+      { id: `s${ts}1`, name: '이해교육론', times: [
+        { day: '월', start: '10:00', end: '11:00', location: '4115' },
+        { day: '수', start: '09:00', end: '10:00', location: '4115' },
+      ]},
+      { id: `s${ts}2`, name: '논리와사고', times: [
+        { day: '화', start: '09:00', end: '11:00', location: '대학 본관2105' },
+        { day: '목', start: '10:00', end: '11:00', location: '대학 본관2105' },
+      ]},
+      { id: `s${ts}3`, name: '현대소설론', times: [
+        { day: '월', start: '11:00', end: '13:00', location: '사범대학(4118)스마트' },
+        { day: '화', start: '13:00', end: '14:00', location: '사범대학(4118)스마트' },
+      ]},
+      { id: `s${ts}4`, name: '특수교육학개론', times: [
+        { day: '목', start: '11:00', end: '13:00', location: '사범대학(5208)브릿지STUDIO5' },
+      ]},
+      { id: `s${ts}5`, name: '중세국어의이해', times: [
+        { day: '화', start: '14:00', end: '16:00', location: '사범대학(5204)스마트' },
+        { day: '수', start: '14:00', end: '16:00', location: '사범대학' },
+      ]},
+      { id: `s${ts}6`, name: '국어의미론', times: [
+        { day: '월', start: '15:00', end: '17:00', location: '사범대학(4113)스마트' },
+        { day: '화', start: '16:00', end: '17:00', location: '사범대학(4113)스마트' },
+      ]},
+      { id: `s${ts}7`, name: '교육과정', times: [
+        { day: '월', start: '18:00', end: '20:00', location: '사범대학(3208)미래형수업분석실3' },
+      ]},
+      { id: `s${ts}8`, name: 'AI기반디지털학습환경설계', times: [
+        { day: '화', start: '21:00', end: '22:00', location: '미정' },
+      ]},
+    ],
+  };
+}
+
+function SEED_WORK(userId: string): WorkSchedule {
+  return {
+    userId,
+    slots: [
+      { day: '목', start: '18:00', end: '22:00' },
+      { day: '금', start: '14:30', end: '22:00' },
+      { day: '토', start: '15:30', end: '20:00' },
+      { day: '일', start: '12:30', end: '17:30' },
+    ],
+    commuteMinutes: 0,
+    returnMinutes: 0,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function SEED_STUDY_CONFIG(userId: string): import('../../assistantTypes').StudyConfig {
+  return {
+    userId,
+    mode: '학기',
+    minBlockMin: 45,
+    defaultBlockMin: 90,
+    bufferMinutes: 60,
+    ratios: { '문법': 3, '문학': 2.5, '국교론': 2.5 },
+    studyStartTime: '09:00',
+    studyEndTime: '23:30',
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function compressImage(file: File, maxPx: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }

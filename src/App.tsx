@@ -476,7 +476,7 @@ const MENU_TABS: MenuTabDef[] = [
   { id: 'examperiod', label: '시험기간', icon: BookText,  iconBg: 'bg-primary-50', iconColor: 'text-primary-500' },
   { id: 'adminmanual', label: '방장 매뉴얼', icon: Crown,        iconBg: 'bg-amber-50',  iconColor: 'text-amber-600',  adminOnly: true },
   { id: 'meeting',     label: '회의록',     icon: NotebookPen,  iconBg: 'bg-violet-50', iconColor: 'text-violet-600', treasurerVisible: true },
-  { id: 'assistant',  label: 'AI 비서',  icon: Bot,       iconBg: 'bg-primary-50', iconColor: 'text-primary-500', ownerOnly: true },
+  { id: 'assistant',  label: 'AI 조교',  icon: Bot,       iconBg: 'bg-primary-50', iconColor: 'text-primary-500', ownerOnly: true },
   { id: 'tutorial',   label: '튜토리얼', icon: Map,       iconBg: 'bg-teal-50',    iconColor: 'text-teal-500' },
   { id: 'settings',   label: '설정',     icon: Settings,  iconBg: 'bg-gray-100',   iconColor: 'text-gray-500' },
 ];

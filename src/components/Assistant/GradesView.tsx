@@ -431,21 +431,14 @@ function GPATab({ uid, courses }: { uid: string; courses: CourseGrade[] }) {
       {form && <GPAForm uid={uid} onSaved={() => setForm(false)} />}
       {courses.length === 0 && <EmptyState label="학점 기록이 없어" />}
       {groups.map(g => (
-        <div key={g.semester} className="space-y-1">
-          <div className="flex items-center justify-between px-1">
-            <p className="text-xs font-bold text-gray-700">{g.semester}</p>
-            <p className="text-xs text-gray-400">GPA {g.gpa.toFixed(2)}</p>
+        <div key={g.semester} className="card px-3 py-2 flex items-center justify-between">
+          <p className="text-xs font-bold text-gray-700">{g.semester}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-900">GPA {g.gpa.toFixed(2)}</span>
+            <button onClick={() => g.courses.forEach(c => handleDelete(c.id))} className="text-gray-200 hover:text-red-400 transition-colors">
+              <Trash2 className="w-3 h-3" />
+            </button>
           </div>
-          {g.courses.map(c => (
-            <div key={c.id} className="card px-3 py-2 flex items-center gap-2">
-              <span className="flex-1 text-xs text-gray-800 truncate">{c.courseName}</span>
-              <span className="text-[10px] text-gray-400">{c.credits}학점</span>
-              <span className="text-xs font-bold text-gray-700 w-6 text-center">{c.grade}</span>
-              <button onClick={() => handleDelete(c.id)} className="text-gray-200 hover:text-red-400 transition-colors">
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
         </div>
       ))}
     </div>
@@ -454,20 +447,17 @@ function GPATab({ uid, courses }: { uid: string; courses: CourseGrade[] }) {
 
 function GPAForm({ uid, onSaved }: { uid: string; onSaved: () => void }) {
   const [semester, setSemester] = useState('2026-1');
-  const [courseName, setCourseName] = useState('');
-  const [credits, setCredits] = useState('3');
-  const [grade, setGrade] = useState('A+');
-  const [gradePoint, setGradePoint] = useState('4.5');
+  const [gradePoint, setGradePoint] = useState('4.0');
 
   const save = () => {
-    if (!courseName) return;
+    if (!semester.trim()) return;
     const cg: CourseGrade = {
       id: `${uid}_gpa_${Date.now()}`,
       userId: uid,
       semester,
-      courseName,
-      credits: Number(credits),
-      grade,
+      courseName: '학기평균',
+      credits: 1,
+      grade: '-',
       gradePoint: Number(gradePoint),
       createdAt: new Date().toISOString(),
     };
@@ -478,12 +468,7 @@ function GPAForm({ uid, onSaved }: { uid: string; onSaved: () => void }) {
     <div className="card p-3 space-y-2 border border-primary-100">
       <div className="grid grid-cols-2 gap-2">
         <input className="input-sm" placeholder="학기 (예: 2026-1)" value={semester} onChange={e => setSemester(e.target.value)} />
-        <input className="input-sm" placeholder="과목명" value={courseName} onChange={e => setCourseName(e.target.value)} />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <input className="input-sm" type="number" placeholder="학점" value={credits} onChange={e => setCredits(e.target.value)} />
-        <input className="input-sm" placeholder="등급 (A+)" value={grade} onChange={e => setGrade(e.target.value)} />
-        <input className="input-sm" type="number" step="0.1" placeholder="평점" value={gradePoint} onChange={e => setGradePoint(e.target.value)} />
+        <input className="input-sm" type="number" step="0.01" min="0" max="4.5" placeholder="평점 (예: 4.2)" value={gradePoint} onChange={e => setGradePoint(e.target.value)} />
       </div>
       <button onClick={save} className="btn-primary w-full text-xs">저장</button>
     </div>

@@ -20,10 +20,26 @@ interface DisplayMessage {
 }
 
 const MAX_HISTORY = 10;
+const STORAGE_KEY = 'assistant_chat_messages';
+
+function loadSavedMessages(): DisplayMessage[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return (JSON.parse(raw) as DisplayMessage[]).filter(m => !m.loading);
+  } catch { return []; }
+}
+
+function saveMessages(msgs: DisplayMessage[]) {
+  try {
+    const toSave = msgs.filter(m => !m.loading).slice(-30);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch {}
+}
 
 export default function AIChat({ currentUser }: Props) {
   const uid = currentUser.username;
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>(loadSavedMessages);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [memos, setMemos] = useState<AssistantMemo[]>([]);
@@ -37,6 +53,10 @@ export default function AIChat({ currentUser }: Props) {
     loadAssistantSettings(uid).then(setSettings);
     return unsub;
   }, [uid]);
+
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +85,7 @@ export default function AIChat({ currentUser }: Props) {
         body: JSON.stringify({
           messages: history,
           userId: uid,
-          speechStyle: settings?.speechStyle ?? '반말',
+          speechStyle: '존댓말',
         }),
       });
 
@@ -117,7 +137,7 @@ export default function AIChat({ currentUser }: Props) {
           >
             <div className="flex items-center gap-1.5">
               <StickyNote className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-[11px] font-bold text-gray-700">비서 메모 ({memos.length})</span>
+              <span className="text-[11px] font-bold text-gray-700">조교 메모 ({memos.length})</span>
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${memosOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -139,7 +159,7 @@ export default function AIChat({ currentUser }: Props) {
       {/* Message list */}
       <div className="space-y-3 flex-1">
         {messages.length === 0 && (
-          <WelcomeBubble speechStyle={settings?.speechStyle ?? '반말'} onTap={send} />
+          <WelcomeBubble speechStyle="존댓말" onTap={send} />
         )}
         {messages.map(msg => (
           <MessageBubble key={msg.id} msg={msg} onConfirm={() => {
@@ -158,7 +178,7 @@ export default function AIChat({ currentUser }: Props) {
         <textarea
           ref={inputRef}
           className="flex-1 resize-none text-xs leading-relaxed bg-transparent outline-none min-h-[36px] max-h-24 text-gray-800 placeholder-gray-300"
-          placeholder={settings?.speechStyle === '존댓말' ? '무엇이든 물어보세요...' : '뭐든 물어봐...'}
+          placeholder="무엇이든 물어보세요..."
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
