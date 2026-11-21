@@ -2,7 +2,7 @@
   "crons": [
     { "path": "/api/assistant/daily",  "schedule": "0 22 * * *" },
     { "path": "/api/assistant/weekly", "schedule": "0 10 * * 0" },
-    { "path": "/api/concept-push",     "schedule": "0 11,15 * * *" }
+    { "path": "/api/concept-push",     "schedule": "0 11 * * *" }
   ],
   "headers": [
     {
