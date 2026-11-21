@@ -1,0 +1,10 @@
+name: Test Concept Push
+on:
+  workflow_dispatch:
+jobs:
+  invoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call concept-push
+        run: |
+          curl -sf "https://korean-ppj0upcaz-kirarimay28s-projects.vercel.app/api/concept-push"
