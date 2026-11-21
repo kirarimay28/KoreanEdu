@@ -13,7 +13,6 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 }
 
 export async function registerAndSubscribe(userId: string): Promise<{ ok: boolean; subscription?: PushSubscriptionJSON; error?: string }> {
-  if (!VAPID_PUBLIC_KEY) return { ok: false, error: 'VAPID key missing' };
   if (!('serviceWorker' in navigator)) return { ok: false, error: 'ServiceWorker not supported' };
   if (!('PushManager' in window)) return { ok: false, error: 'PushManager not supported' };
   try {
@@ -21,7 +20,13 @@ export async function registerAndSubscribe(userId: string): Promise<{ ok: boolea
     await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return { ok: false, error: 'Permission: ' + permission };
-    const appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    // 서버에서 직접 VAPID 키 조회 → 빌드 타임 키 불일치 방지
+    let vapidKey = VAPID_PUBLIC_KEY;
+    try {
+      const r = await fetch('/api/vapid-key');
+      if (r.ok) { const j = await r.json(); if (j.key) vapidKey = j.key; }
+    } catch {}
+    const appKey = urlBase64ToUint8Array(vapidKey);
     const existing = await reg.pushManager.getSubscription();
     if (existing) await existing.unsubscribe();
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
