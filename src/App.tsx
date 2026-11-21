@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { registerAndSubscribe } from './pushSubscription';
 import type { User, MainTab } from './types';
 import AuthPage from './components/Auth/AuthPage';
 import StudyTab from './components/Study/StudyTab';
@@ -531,6 +532,13 @@ export default function App() {
     if (!currentUser) return;
     const unsub = subscribeNotifications(currentUser.id, setNotifications);
     return unsub;
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!('serviceWorker' in navigator)) return;
+    registerAndSubscribe(currentUser.id).catch(() => {});
   }, [currentUser?.id]);
 
   useEffect(() => {
