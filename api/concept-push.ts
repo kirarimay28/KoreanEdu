@@ -155,9 +155,13 @@ export default async function handler(req: any, res: any) {
     );
 
     const sent = results.filter(r => r.status === 'fulfilled').length;
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map(r => ({ msg: r.reason?.message, code: r.reason?.statusCode }));
+    if (errors.length) console.error('concept-push failures:', JSON.stringify(errors));
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    return res.status(200).json({ concept: concept.title, sent, failed });
+    return res.status(200).json({ concept: concept.title, sent, failed, errors: errors.slice(0, 3) });
   } catch (err: any) {
     console.error('concept-push error:', err.message);
     return res.status(500).json({ error: err.message });
