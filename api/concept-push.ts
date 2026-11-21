@@ -148,7 +148,7 @@ export default async function handler(req: any, res: any) {
           webpush.sendNotification(doc.data().subscription, payload),
           5000,
         ).catch(async (err: any) => {
-          if (err?.statusCode === 410 || err?.statusCode === 404) await doc.ref.delete();
+          if (err?.statusCode === 410 || err?.statusCode === 404 || err?.statusCode === 403) await doc.ref.delete();
           throw err;
         });
       }),

@@ -26,7 +26,8 @@ export async function registerAndSubscribe(userId: string): Promise<{ ok: boolea
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
     const subJson = sub.toJSON();
-    const docId = userId + '_' + String(Date.now());
+    const endpointTail = subJson.endpoint!.split('/').pop()?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) ?? String(Date.now());
+    const docId = `${userId}_${endpointTail}`;
     await setDoc(doc(db, 'pushSubscriptions', docId), {
       userId,
       subscription: subJson,
