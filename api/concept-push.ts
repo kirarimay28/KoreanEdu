@@ -125,31 +125,37 @@ const CONCEPTS: { title: string; body: string }[] = [
   { title: '근대 국어의 특징', body: '구개음화·ㅸ 소멸·아래아 2단계 소멸·이어적기→끊어적기 전환 등이 일어나 현대 국어와 가까워졌다.' },
 ];
 
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`timeout ${ms}ms`)), ms)),
+  ]);
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   try {
     const concept = CONCEPTS[Math.floor(Math.random() * CONCEPTS.length)];
 
-    const subsSnap = await db.collection('pushSubscriptions').get();
+    const subsSnap = await withTimeout(db.collection('pushSubscriptions').get(), 6000);
 
-    let sent = 0;
-    let failed = 0;
+    const payload = JSON.stringify({ title: `📚 ${concept.title}`, body: concept.body });
 
-    for (const doc of subsSnap.docs) {
-      try {
-        await webpush.sendNotification(
-          doc.data().subscription,
-          JSON.stringify({ title: `📚 ${concept.title}`, body: concept.body }),
-        );
-        sent++;
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await doc.ref.delete();
-        }
-        failed++;
-      }
-    }
+    const results = await Promise.allSettled(
+      subsSnap.docs.map(async (doc) => {
+        await withTimeout(
+          webpush.sendNotification(doc.data().subscription, payload),
+          5000,
+        ).catch(async (err: any) => {
+          if (err?.statusCode === 410 || err?.statusCode === 404) await doc.ref.delete();
+          throw err;
+        });
+      }),
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
 
     return res.status(200).json({ concept: concept.title, sent, failed });
   } catch (err: any) {
