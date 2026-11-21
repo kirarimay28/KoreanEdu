@@ -1,7 +1,7 @@
 import { collection, doc, setDoc, deleteDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
-const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || 'BIE7KHBN5_nfWTXfdhP9cH4rApmvjhYhUyLRlq7fZMSIwBbVzuVxg-8JSHnxUyq5WwOxYptvH873786dDWX9i3A';
+const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || 'BAhmfbHBNox21YEILWLulh-rK6f4fRzySxImLtwr8psm-07igCuM_ag0xeoA9ehBAwtIUlVoK_gt0ZHESmBW-yM';
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
