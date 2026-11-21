@@ -7,4 +7,4 @@ jobs:
     steps:
       - name: Call concept-push
         run: |
-          curl -sf "https://korean-ppj0upcaz-kirarimay28s-projects.vercel.app/api/concept-push"
+          curl -sf "https://korean-edu-pink.vercel.app/api/concept-push"
