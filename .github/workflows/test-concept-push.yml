@@ -7,4 +7,4 @@ jobs:
     steps:
       - name: Call concept-push
         run: |
-          curl -sf "https://korean-edu-pink.vercel.app/api/concept-push"
+          curl -v --max-time 20 "https://korean-edu-pink.vercel.app/api/concept-push"

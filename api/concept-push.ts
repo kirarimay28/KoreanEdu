@@ -12,7 +12,7 @@ if (!getApps().length) {
 }
 
 webpush.setVapidDetails(
-  'mailto:contact@example.com',
+  'mailto:lil146588@gmail.com',
   process.env.VITE_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!,
 );
