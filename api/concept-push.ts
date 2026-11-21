@@ -153,7 +153,6 @@ export default async function handler(req: any, res: any) {
         });
       }),
     );
-
     const sent = results.filter(r => r.status === 'fulfilled').length;
     const errors = results
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
