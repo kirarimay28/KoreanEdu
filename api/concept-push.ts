@@ -160,7 +160,7 @@ export default async function handler(req: any, res: any) {
     if (errors.length) console.error('concept-push failures:', JSON.stringify(errors));
     const failed = results.filter(r => r.status === 'rejected').length;
 
-    return res.status(200).json({ concept: concept.title, sent, failed, errors: errors.slice(0, 3) });
+    return res.status(200).json({ concept: concept.title, sent, failed, errors: errors.slice(0, 3), vapidKey: process.env.VITE_VAPID_PUBLIC_KEY?.slice(0, 20) });
   } catch (err: any) {
     console.error('concept-push error:', err.message);
     return res.status(500).json({ error: err.message });
