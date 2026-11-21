@@ -40,7 +40,7 @@ async function pushToOwner(title: string, body: string): Promise<void> {
     try {
       await webpush.sendNotification(doc.data().subscription, JSON.stringify({ title, body }));
     } catch (err: any) {
-      if (err.statusCode === 410 || err.statusCode === 404) {
+      if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 403) {
         await doc.ref.delete();
       }
     }
