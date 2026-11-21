@@ -22,13 +22,9 @@ export async function registerAndSubscribe(userId: string): Promise<{ ok: boolea
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return { ok: false, error: 'Permission: ' + permission };
     const appKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-    let sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey })
-      .catch(async () => {
-        // 기존 구독이 다른 VAPID 키로 만들어진 경우 → 언서브 후 재서브
-        const existing = await reg.pushManager.getSubscription();
-        if (existing) await existing.unsubscribe();
-        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
-      });
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) await existing.unsubscribe();
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
     const subJson = sub.toJSON();
     const endpointTail = subJson.endpoint!.split('/').pop()?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) ?? String(Date.now());
     const docId = `${userId}_${endpointTail}`;
